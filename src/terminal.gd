@@ -30,6 +30,8 @@ var nodo_comandos = Node.new()
 
 # Indica si la terminal está activa, es decir si está visible
 var activa = true
+# Log de mensajes
+var log_mensajes = ""
 
 func inicializar(hub):
 	HUB = hub
@@ -63,15 +65,26 @@ func cerrar():
 	campo_mensajes.set_hidden(true)
 
 # Ejecuta un comando
-func ejecutar(comando_con_argumentos):
+func ejecutar(comando_con_argumentos, mostrar_mensaje=false):
+	if mostrar_mensaje:
+		HUB.mensaje("> " + comando_con_argumentos)
 	var argumentos = comando_con_argumentos.split(" ")
 	var comando = argumentos[0]
 	argumentos.remove(0)
-	nodo_comandos.ejecutar(comando, argumentos)
+	return nodo_comandos.ejecutar(comando, argumentos)
 
 # Limpia el campo de mensajes
 func borrar_mensajes():
+	log_mensajes += campo_mensajes.get_text()
 	campo_mensajes.set_text("")
+
+# Devuelve el log completo de mensajes
+func log_completo(restaurar=false):
+	var resultado = log_mensajes + "\n" + campo_mensajes.get_text()
+	if restaurar:
+		log_mensajes = ""
+		campo_mensajes.set_text(resultado)
+	return resultado
 
 # Funciones auxiliares
 
@@ -91,3 +104,17 @@ func inicializar_input():
 	HUB.eventos.registrar_press(KEY_UP, campo_entrada, "historial_arriba")
 	HUB.eventos.registrar_press(KEY_DOWN, campo_entrada, "historial_abajo")
 	HUB.eventos.registrar_press(KEY_RETURN, campo_entrada, "ingresar")
+
+# Errores
+
+# Comando inexistente
+func comando_inexistente(comando, stack_error=null):
+	return HUB.errores.error('Comando "' + comando + '" desconocido.', stack_error)
+
+# Error al cargar el comando
+func comando_no_cargado(comando, stack_error=null):
+	return HUB.errores.error('No se pudo cargar el comando "' + comando + '".', stack_error)
+
+# Comando fallido
+func comando_fallido(comando, stack_error=null):
+	return HUB.errores.error('Falló la ejecución del comando "' + comando + '".', stack_error)

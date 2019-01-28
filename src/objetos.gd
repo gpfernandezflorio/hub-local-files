@@ -19,9 +19,12 @@ var script_objeto = "objeto.gd"
 var script_comportamiento = "comportamiento.gd"
 # Carpeta de scripts de comportamiento
 var carpeta_comportamientos = "comportamiento/"
+# Codigo de comportamientos
+var codigo = "Comportamiento"
 
 func inicializar(hub):
 	HUB = hub
+	HUB.archivos.codigos_script.append(codigo)
 	script_objeto = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_objeto)
 	script_comportamiento = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_comportamiento)
 	return script_objeto != null and script_comportamiento != null
@@ -51,3 +54,12 @@ func localizar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 			var offset_nombre = nodo.length()+1
 			var siguientes = nombre_completo.substr(offset_nombre, nombre_completo.length() - offset_nombre)
 			return localizar(siguientes, hijo)
+	return HUB.error(objeto_inexistente(nombre_completo, desde.get_name()))
+
+# Errores
+
+# Objeto inexistente
+func objeto_inexistente(objeto, desde, stack_error=null):
+	return HUB.errores.error('No se encontró ningún objeto con nombre "' + \
+		objeto + '" en la jerarquía desde el objeto "' + desde + \
+		'".', stack_error)

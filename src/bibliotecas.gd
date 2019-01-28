@@ -12,16 +12,19 @@ var HUB
 var carpeta_bibliotecas = "bibliotecas/"
 # Diccionario con las bibliotecas cargadas (en nodos)
 var bibliotecas_cargadas = {} # Dicc(string : nodo)
+# Código de bibliotecas
+var codigo = "Biblioteca"
 
 func inicializar(hub):
 	HUB = hub
+	HUB.archivos.codigos_script.append(codigo)
 	return true
 
 # Devuelve el nodo correspondiente a la biblioteca solicitada
 func importar(biblioteca):
 	var nodo = cargar(biblioteca)
-	if nodo == null:
-		HUB.mensaje('Error: Biblioteca "' + biblioteca + '" no encontrada.')
+	if HUB.errores.fallo(nodo):
+		return HUB.error(biblioteca_no_cargada(biblioteca, nodo))
 	return nodo
 
 # Funciones auxiliares
@@ -29,9 +32,9 @@ func importar(biblioteca):
 func cargar(biblioteca):
 	if biblioteca in bibliotecas_cargadas:
 		return bibliotecas_cargadas[biblioteca]
-	var script_biblioteca = HUB.archivos.abrir(carpeta_bibliotecas, biblioteca + ".gd")
-	if script_biblioteca == null:
-		return null
+	var script_biblioteca = HUB.archivos.abrir(carpeta_bibliotecas, biblioteca + ".gd", codigo)
+	if HUB.errores.fallo(script_biblioteca):
+		return HUB.error(biblioteca_inexistente(biblioteca, script_biblioteca))
 	var nodo = Node.new()
 	add_child(nodo)
 	nodo.set_name(biblioteca)
@@ -39,3 +42,13 @@ func cargar(biblioteca):
 	bibliotecas_cargadas[biblioteca] = nodo
 	nodo.inicializar(HUB)
 	return nodo
+
+# Errores
+
+# Biblioteca inexistente
+func biblioteca_inexistente(biblioteca, stack_error=null):
+	return HUB.errores.error('Biblioteca "' + biblioteca + '" no encontrada.', stack_error)
+
+# Error al cargar la biblioteca
+func biblioteca_no_cargada(biblioteca, stack_error=null):
+	return HUB.errores.error('No se pudo cargar la biblioteca "' + biblioteca + '".', stack_error)

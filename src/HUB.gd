@@ -29,6 +29,8 @@ var nodo_usuario = Node.new()
 var errores = Node.new()
 # Controlador de procesos
 var procesos = Node.new()
+# Entorno de testing
+var testing = Node.new()
 
 func inicializar(hub):
 	ruta_raiz = get_parent().ruta_raiz
@@ -41,7 +43,8 @@ func inicializar(hub):
 		[terminal,     "terminal",   "Terminal"],
 		[nodo_usuario, "usuario",    "Nodo Usuario"],
 		[errores,      "errores",    "Errores"],
-		[procesos,     "procesos",   "Procesos"]
+		[procesos,     "procesos",   "Procesos"],
+		[testing,      "testing",    "Testing"]
 	]:
 		if not inicializar_componente(
 			componente[0],
@@ -57,7 +60,24 @@ func inicializar(hub):
 
 # Manda un mensaje a la terminal del HUB
 func mensaje(texto):
-	terminal.campo_mensajes.mensaje(texto)
+	if testing.testeando:
+		testing.redirigir_mensaje(texto)
+		return
+	var prefijo = ""
+	var proceso_actual = procesos.actual()
+	if proceso_actual != "HUB":
+		prefijo = "["+proceso_actual+"]" + prefijo
+	for comando in procesos.pila_comandos():
+		prefijo = "."+comando + prefijo
+	if prefijo.length() > 0:
+		prefijo += "\n\t"
+	terminal.campo_mensajes.mensaje(prefijo + texto.replace("\n","\n\t"))
+
+# Notifica un error
+func error(error):
+	if not testing.testeando:
+		mensaje('Error: ' + error.mensaje)
+	return error
 
 # Finaliza la ejecución
 func salir():

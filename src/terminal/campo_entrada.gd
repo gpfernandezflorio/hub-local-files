@@ -39,11 +39,10 @@ func ingresar():
 		HUB.terminal.cerrar()
 	else:
 		set_text("")
-		HUB.mensaje("> " + texto_ingresado)
 		if (historial.empty() || texto_ingresado != historial[0]):
 			historial.push_front(texto_ingresado)
 		indice_historial = -1
-		get_parent().ejecutar(texto_ingresado)
+		get_parent().ejecutar(texto_ingresado, true)
 
 func ventana_escalada(nueva_resolucion):
 	set_pos(Vector2(5, nueva_resolucion.y-25))
