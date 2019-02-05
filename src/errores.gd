@@ -45,12 +45,18 @@ func verificar_implementa_funcion(nodo, funcion, cantidad_de_parametros):
 func funcion_no_implementada(nodo, funcion, parametros, stack_error=null):
 	return error('El nodo "' + nodo.get_name() + '" no implementa ' + \
 	'la función "' + funcion + '" con ' + str(parametros) + \
-	' parámetro(s)', stack_error)
+	' parámetro(s).', stack_error)
 
 # Try falló
 func try_fallo(nodo, funcion, stack_error=null):
 	return error('(TRY) Falló la ejecución de la función "' + \
-	funcion + '" en el nodo "' + nodo.get_name() + '"', stack_error)
+	funcion + '" en el nodo "' + nodo.get_name() + '".', stack_error)
+
+# Inicialización fallida
+func inicializacion_fallo(nodo, stack_error=null):
+	return error('Falló al inicializar en nodo "' + \
+	nodo.get_name() + '" con el script "' + \
+	nodo.get_script().get_name() + '".', stack_error)
 
 class Error:
 	var mensaje = ""

@@ -39,8 +39,12 @@ func cargar(biblioteca):
 	add_child(nodo)
 	nodo.set_name(biblioteca)
 	nodo.set_script(script_biblioteca)
+	var resultado_inicializar = nodo.inicializar(HUB)
+	if HUB.errores.fallo(resultado_inicializar):
+		remove_child(nodo)
+		nodo.queue_free()
+		return HUB.error(biblioteca_no_cargada(biblioteca, resultado_inicializar))
 	bibliotecas_cargadas[biblioteca] = nodo
-	nodo.inicializar(HUB)
 	return nodo
 
 # Errores

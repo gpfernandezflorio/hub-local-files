@@ -39,6 +39,10 @@ func cargar(comando):
 	add_child(nodo)
 	nodo.set_name(comando)
 	nodo.set_script(script_comando)
+	var resultado_inicializar = nodo.inicializar(HUB)
+	if HUB.errores.fallo(resultado_inicializar):
+		remove_child(nodo)
+		nodo.queue_free()
+		return HUB.error(HUB.terminal.comando_no_cargado(comando, resultado_inicializar))
 	comandos_cargados[comando] = nodo
-	nodo.inicializar(HUB)
 	return nodo

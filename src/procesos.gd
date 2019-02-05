@@ -41,9 +41,15 @@ func nuevo(programa, argumentos):
 	add_child(nodo)
 	nodo.set_name(pid)
 	nodo.set_script(script_programa)
+	var resultado_inicializar = nodo.inicializar(HUB)
+	if HUB.errores.fallo(resultado_inicializar):
+		remove_child(nodo)
+		nodo.queue_free()
+		return HUB.error(programa_no_cargado(programa, resultado_inicializar))
 	procesos[pid] = nodo
-	nodo.inicializar(HUB)
 	return nodo
+
+# Funciones auxiliares
 
 # Apila un comando en la pila de comandos de un proceso
 func apilar_comando(comando, proceso=null):
@@ -78,3 +84,7 @@ class Proceso:
 # Programa inexistente
 func programa_inexistente(programa, stack_error=null):
 	return HUB.errores.error('Programa "' + programa + '" no encontrado.', stack_error)
+
+# Error al cargar el programa
+func programa_no_cargado(programa, stack_error=null):
+	return HUB.errores.error('No se pudo cargar el programa "' + programa + '".', stack_error)

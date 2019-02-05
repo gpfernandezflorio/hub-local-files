@@ -27,4 +27,4 @@ func mensaje(texto):
 
 func ventana_escalada(nueva_resolucion):
 	set_pos(Vector2(5,5))
-	set_size(Vector2(250,nueva_resolucion.y-35))
+	set_size(Vector2(nueva_resolucion.x-10,nueva_resolucion.y-35))

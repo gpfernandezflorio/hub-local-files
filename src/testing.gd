@@ -22,27 +22,43 @@ func inicializar(hub):
 func asegurar(condicion):
 	if HUB.errores.fallo(condicion):
 		return HUB.error(condicion_fallida(condicion))
-	if condicion:
-		return true
-	return HUB.error(condicion_fallida())
+	if not condicion:
+		return HUB.error(condicion_fallida())
+	return null
 
-# Verifica el resultado (devuelto e impreso) de ejecutrar un comando
-func resultado_comando(comando_ingresado, verificador_resultado, mensajes_esperados):
+# Ejecuta un test y verifica el resultado y/o los mensajes escritos
+func test(tester, verificador, mensajes_esperados=null):
 	testeando = true
 	mensajes_guardados = []
-	var resultado_obtenido = HUB.terminal.ejecutar(comando_ingresado)
+	var resultado_obtenido = tester.test()
 	testeando = false
-	var exito = asegurar(verificador_resultado.verificar(resultado_obtenido))
+	var exito = asegurar(verificador.verificar(resultado_obtenido))
 	if HUB.errores.fallo(exito):
+		HUB.mensaje(verificador.falla())
 		return HUB.error(test_fallido_resultado(exito))
-	if mensajes_esperados == mensajes_guardados:
-		HUB.mensaje("Test exitoso!")
-		return true
-	return HUB.error(test_fallido_salida(exito))
+	if mensajes_esperados != null:
+		if mensajes_esperados.size() != mensajes_guardados.size():
+			mostrar_diff_mensajes(mensajes_esperados, mensajes_guardados)
+			return HUB.error(test_fallido_salida(exito))
+		for i in range(mensajes_esperados.size()):
+			if mensajes_esperados[i] != mensajes_guardados[i]:
+				mostrar_diff_mensajes(mensajes_esperados, mensajes_guardados)
+				return HUB.error(test_fallido_salida(exito))
+	HUB.mensaje("Test exitoso!")
+	return null
+
+# Ejecuta un test y verifica que genere un error
+func test_genera_error(tester, error_esperado, mensaje_esperado=null):
+	var verificador = verificador_error(error_esperado)
+	return test(tester, verificador, mensaje_esperado)
+
+# Verifica el resultado (devuelto e impreso) de ejecutrar un comando
+func resultado_comando(comando_ingresado, verificador, mensajes_esperados=null):
+	return test(tester_comando(comando_ingresado), verificador, mensajes_esperados)
 
 # Verifica que la ejecución de un comando genere un error
-func comando_fallido(comando_ingresado, error_esperado, mensaje_esperado):
-	var verificador = VerificadorError.new(HUB, error_esperado)
+func comando_fallido(comando_ingresado, error_esperado, mensaje_esperado=null):
+	var verificador = verificador_error(error_esperado)
 	return resultado_comando(comando_ingresado, verificador, mensaje_esperado)
 
 # Funciones auxiliares
@@ -50,24 +66,54 @@ func comando_fallido(comando_ingresado, error_esperado, mensaje_esperado):
 func redirigir_mensaje(texto):
 	mensajes_guardados.append(texto)
 
+func mostrar_diff_mensajes(esperados, obtenidos):
+	var texto = "Se esperaba"
+	for mensaje in esperados:
+		texto += "\n\t" + mensaje.replace("\n","\n\t")
+	texto += "\nPero se obtuvo"
+	for mensaje in obtenidos:
+		texto += "\n\t" + mensaje.replace("\n","\n\t")
+	HUB.mensaje(texto)
+
+# Testers
+
+func tester_comando(comando_a_ejecutar):
+	return TesterComando.new(HUB, comando_a_ejecutar)
+
+class TesterComando:
+	var HUB
+	var comando_a_ejecutar
+	func _init(hub, comando_a_ejecutar):
+		HUB = hub
+		self.comando_a_ejecutar = comando_a_ejecutar
+	func test():
+		return HUB.terminal.ejecutar(comando_a_ejecutar)
+
 # Verificadores
 
 func verificador_trivial():
 	return VerificadorTrivial.new()
 func verificador_nulo():
 	return VerificadorNulo.new()
+func verificador_error(error_esperado):
+	return VerificadorError.new(HUB, error_esperado)
 
 class VerificadorTrivial:
 	func verificar(resultado):
 		return true
+	func falla():
+		return ""
 
 class VerificadorNulo:
 	func verificar(resultado):
 		return resultado == null
+	func falla():
+		return "El resultado no es null."
 
 class VerificadorError:
 	var HUB
 	var error_esperado
+	var error_encontrado
 	func _init(hub, error_esperado):
 		HUB = hub
 		self.error_esperado = error_esperado
@@ -76,11 +122,14 @@ class VerificadorError:
 			var primer_error = resultado
 			while primer_error.stack_error != null:
 				primer_error = primer_error.stack_error
-			#print(error_esperado.mensaje)
-			#print(primer_error.mensaje)
+			error_encontrado = primer_error
 			return (primer_error.mensaje == error_esperado.mensaje)
 		else:
 			return false
+	func falla():
+		return "Se esperaba error\n\t" + error_esperado.mensaje.replace("\n","\n\t") + \
+		("\nPero no fallo." if error_encontrado == null else "\nPero se obtuvo error\n\t" + \
+		error_encontrado.mensaje.replace("\n","\n\t"))
 
 # Errores
 
