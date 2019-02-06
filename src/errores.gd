@@ -8,6 +8,7 @@
 extends Node
 
 var HUB
+var modulo = "ERRORES"
 
 func inicializar(hub):
 	HUB = hub
@@ -27,7 +28,7 @@ func fallo(resultado):
 func try(nodo, funcion, parametros=[]):
 	var verificacion_funcion = verificar_implementa_funcion(nodo, funcion, parametros.size())
 	if HUB.errores.fallo(verificacion_funcion):
-		return HUB.error(try_fallo(nodo, funcion, verificacion_funcion))
+		return HUB.error(try_fallo(nodo, funcion, verificacion_funcion), modulo)
 	return nodo.callv(funcion, parametros)
 
 # Verifica que un nodo implemente una determinada función
@@ -37,7 +38,7 @@ func verificar_implementa_funcion(nodo, funcion, cantidad_de_parametros):
 			if metodo["args"].size() == cantidad_de_parametros:
 				return null
 			break
-	return HUB.error(funcion_no_implementada(nodo, funcion, cantidad_de_parametros))
+	return HUB.error(funcion_no_implementada(nodo, funcion, cantidad_de_parametros), modulo)
 
 # Errores:
 

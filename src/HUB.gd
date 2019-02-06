@@ -63,20 +63,16 @@ func mensaje(texto):
 	if testing.testeando:
 		testing.redirigir_mensaje(texto)
 		return
-	var prefijo = ""
-	var proceso_actual = procesos.actual()
-	if proceso_actual != "HUB":
-		prefijo = "["+proceso_actual+"]" + prefijo
-	for comando in procesos.pila_comandos():
-		prefijo = "."+comando + prefijo
-	if prefijo.length() > 0:
-		prefijo += "\n\t"
-	terminal.campo_mensajes.mensaje(prefijo + texto.replace("\n","\n\t"))
+	else:
+		terminal.campo_mensajes.mensaje(
+			"\t" + str(texto).replace("\n","\n\t"),
+			procesos.entorno())
 
 # Notifica un error
-func error(error):
+func error(error, emisor=""):
 	if not testing.testeando:
-		mensaje('Error: ' + error.mensaje)
+		mensaje('Error: ' + ("" if emisor.empty() else \
+		"[" + emisor + "] ") + error.mensaje)
 	return error
 
 # Finaliza la ejecución

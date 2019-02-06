@@ -8,6 +8,7 @@
 extends Node
 
 var HUB
+var modulo = "EVENTOS"
 # Diccionario que guarda, para cada accion, una lista de pares nodo-función registrados para esa acción
 var registro_eventos = {} # Dicc(string : [{nodo, función}])
 var modo_mouse = 0

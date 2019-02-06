@@ -8,7 +8,7 @@
 extends Node
 
 var HUB
-
+var modulo = "PROCESOS"
 # Ruta a la carpeta de programas de HUB
 var carpeta_programas = "programas/"
 # Código de programas
@@ -28,10 +28,10 @@ func actual():
 	return proceso_actual
 
 # Crea un nuevo proceso
-func nuevo(programa, argumentos):
-	var script_programa = HUB.archivos.abrir(carpeta_programas, programa)
+func nuevo(programa, argumentos=[]):
+	var script_programa = HUB.archivos.abrir(carpeta_programas, programa + ".gd")
 	if HUB.errores.fallo(script_programa):
-		return HUB.error(programa_inexistente(programa, script_programa))
+		return HUB.error(programa_inexistente(programa, script_programa), modulo)
 	var pid = programa
 	var i = 0
 	while pid in procesos.keys():
@@ -41,13 +41,24 @@ func nuevo(programa, argumentos):
 	add_child(nodo)
 	nodo.set_name(pid)
 	nodo.set_script(script_programa)
-	var resultado_inicializar = nodo.inicializar(HUB)
+	var resultado_inicializar = nodo.inicializar(HUB, pid, argumentos)
 	if HUB.errores.fallo(resultado_inicializar):
 		remove_child(nodo)
 		nodo.queue_free()
-		return HUB.error(programa_no_cargado(programa, resultado_inicializar))
+		return HUB.error(programa_no_cargado(programa, resultado_inicializar), modulo)
 	procesos[pid] = nodo
 	return nodo
+
+func entorno():
+	var resultado = ""
+	var proceso_actual = actual()
+	if proceso_actual != "HUB":
+		resultado = "[" + proceso_actual + "]" + resultado
+	for comando in pila_comandos():
+		resultado = " . "+comando + resultado
+	if resultado.length() > 0:
+		resultado += "\n"
+	return resultado
 
 # Funciones auxiliares
 

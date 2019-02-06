@@ -12,12 +12,14 @@
 extends Node
 
 var HUB
+var modulo = "OBJETOS"
+# Ruta a la carpeta de archivos fuente de este módulo
 var carpeta_src = "objetos/"
 # Script genérico de un objeto
 var script_objeto = "objeto.gd"
 # Script de comportamiento de un objeto
 var script_comportamiento = "comportamiento.gd"
-# Carpeta de scripts de comportamiento
+# Ruta a la carpeta de scripts de comportamiento
 var carpeta_comportamientos = "comportamiento/"
 # Codigo de comportamientos
 var codigo = "Comportamiento"
@@ -54,7 +56,7 @@ func localizar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 			var offset_nombre = nodo.length()+1
 			var siguientes = nombre_completo.substr(offset_nombre, nombre_completo.length() - offset_nombre)
 			return localizar(siguientes, hijo)
-	return HUB.error(objeto_inexistente(nombre_completo, desde.get_name()))
+	return HUB.error(objeto_inexistente(nombre_completo, desde.get_name()), modulo)
 
 # Errores
 

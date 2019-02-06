@@ -18,6 +18,7 @@
 extends Node
 
 var HUB
+var modulo = "TERMINAL"
 # Ruta a la carpeta de archivos fuente de la terminal
 var carpeta_src = "terminal/"
 
@@ -67,7 +68,7 @@ func cerrar():
 # Ejecuta un comando
 func ejecutar(comando_con_argumentos, mostrar_mensaje=false):
 	if mostrar_mensaje:
-		HUB.mensaje("> " + comando_con_argumentos)
+		campo_mensajes.mensaje("> " + comando_con_argumentos)
 	var argumentos = comando_con_argumentos.split(" ")
 	var comando = argumentos[0]
 	argumentos.remove(0)
@@ -80,11 +81,19 @@ func borrar_mensajes():
 
 # Devuelve el log completo de mensajes
 func log_completo(restaurar=false):
-	var resultado = log_mensajes + "\n" + campo_mensajes.get_text()
+	var resultado = log_mensajes + campo_mensajes.get_text()
 	if restaurar:
 		log_mensajes = ""
 		campo_mensajes.set_text(resultado)
 	return resultado
+
+# Activa o desactiva la impresión del entorno al mandar mensajes
+func imprimir_entorno(activado=true):
+	if activado:
+		campo_mensajes.imprimir_entorno = true
+	else:
+		campo_mensajes.imprimir_entorno = false
+		campo_mensajes.ultimo_entorno_impreso = ""
 
 # Funciones auxiliares
 

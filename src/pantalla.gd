@@ -8,6 +8,7 @@
 extends Node2D
 
 var HUB
+var modulo = "PANTALLA"
 # Resolución de la ventana de ejecución
 var resolucion
 

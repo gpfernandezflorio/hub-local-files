@@ -6,6 +6,7 @@
 extends LineEdit
 
 var HUB
+var modulo = get_parent().modulo
 # Historial de mensajes ingresados
 var historial = []
 # Índice en el historial cuando se explora

@@ -9,6 +9,8 @@
 extends Node
 
 var HUB
+var modulo = "USUARIO"
+
 # Nodo raíz para la interfaz gráfica
 var gui = Control.new()
 # Objeto raíz de la jerarquía de objetos

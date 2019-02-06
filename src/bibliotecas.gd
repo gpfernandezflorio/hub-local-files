@@ -8,6 +8,7 @@
 extends Node
 
 var HUB
+var modulo = "BIBLIOTECAS"
 # Ruta a la carpeta de bibliotecas
 var carpeta_bibliotecas = "bibliotecas/"
 # Diccionario con las bibliotecas cargadas (en nodos)
@@ -24,7 +25,7 @@ func inicializar(hub):
 func importar(biblioteca):
 	var nodo = cargar(biblioteca)
 	if HUB.errores.fallo(nodo):
-		return HUB.error(biblioteca_no_cargada(biblioteca, nodo))
+		return HUB.error(biblioteca_no_cargada(biblioteca, nodo), modulo)
 	return nodo
 
 # Funciones auxiliares
@@ -34,7 +35,7 @@ func cargar(biblioteca):
 		return bibliotecas_cargadas[biblioteca]
 	var script_biblioteca = HUB.archivos.abrir(carpeta_bibliotecas, biblioteca + ".gd", codigo)
 	if HUB.errores.fallo(script_biblioteca):
-		return HUB.error(biblioteca_inexistente(biblioteca, script_biblioteca))
+		return HUB.error(biblioteca_inexistente(biblioteca, script_biblioteca), modulo)
 	var nodo = Node.new()
 	add_child(nodo)
 	nodo.set_name(biblioteca)
@@ -43,7 +44,7 @@ func cargar(biblioteca):
 	if HUB.errores.fallo(resultado_inicializar):
 		remove_child(nodo)
 		nodo.queue_free()
-		return HUB.error(biblioteca_no_cargada(biblioteca, resultado_inicializar))
+		return HUB.error(biblioteca_no_cargada(biblioteca, resultado_inicializar), modulo)
 	bibliotecas_cargadas[biblioteca] = nodo
 	return nodo
 
