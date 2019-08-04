@@ -83,17 +83,20 @@ func verificar_encabezado(ruta, archivo, nombre, codigo_tipo):
 	# Asume que el archivo existe y por lo tanto, leer no falla
 	var contenido = leer(ruta, archivo).split("\n")
 	if contenido.size() < 2:
-		return HUB.error(encabezado_invalido(archivo), modulo)
-	if contenido[0].to_lower() != "## " + nombre.to_lower() or \
-		contenido[1] != "## " + codigo_tipo:
-		return HUB.error(encabezado_invalido(archivo), modulo)
+		return HUB.error(encabezado_faltante(archivo), modulo)
+	if not (contenido[0].begins_with("## ") and contenido[1].begins_with("## ")):
+		return HUB.error(encabezado_faltante(archivo), modulo)
+	if contenido[0].to_lower() != "## " + nombre.to_lower():
+		return HUB.error(encabezado_invalido_nombre(archivo, nombre), modulo)
+	if contenido[1] != "## " + codigo_tipo:
+		return HUB.error(encabezado_invalido_tipo(archivo, codigo_tipo), modulo)
 	if codigo_tipo == "Objeto":
 		if not (
 			contenido.size() > 2 and \
 			contenido[2].begins_with("## ") and \
 			contenido[2].substr(3,contenido[2].length()-3) in codigos_objeto
 		):
-			return HUB.error(encabezado_invalido(archivo), modulo)
+			return HUB.error(encabezado_invalido_objeto(archivo), modulo)
 
 func verificar_funciones(archivo, script, codigo_tipo):
 	var nodo = Node.new()
@@ -104,6 +107,10 @@ func verificar_funciones(archivo, script, codigo_tipo):
 			HUB.errores.verificar_implementa_funcion(nodo,"inicializar",3)
 		if HUB.errores.fallo(verificacion_inicializar):
 			return HUB.error(funciones_no_implementadas(archivo, codigo_tipo, verificacion_inicializar), modulo)
+		var verificacion_finalizar = \
+			HUB.errores.verificar_implementa_funcion(nodo,"finalizar",0)
+		if HUB.errores.fallo(verificacion_finalizar):
+			return HUB.error(funciones_no_implementadas(archivo, codigo_tipo, verificacion_finalizar), modulo)
 	else:
 		var verificacion_inicializar = \
 			HUB.errores.verificar_implementa_funcion(nodo,"inicializar",1)
@@ -163,10 +170,29 @@ func archivo_invalido(archivo, tipo, stack_error=null):
 	return HUB.errores.error('El archivo "' + archivo + \
 	'" no es un archivo válido de tipo "' + tipo + '".', stack_error)
 
-# Archivo inválido (encabezado inválido)
-func encabezado_invalido(archivo, stack_error=null):
+# Archivo faltante
+func encabezado_faltante(archivo, stack_error=null):
+	return HUB.errores.error('El archivo "' + archivo + \
+	'" no tiene encabezado. Las dos primeras líneas deberían ' + \
+	'contener empezar con "## ".', stack_error)
+
+# Archivo inválido nombre
+func encabezado_invalido_nombre(archivo, nombre, stack_error=null):
 	return HUB.errores.error('El encabezado del archivo "' + archivo + \
-	'" es inválido.', stack_error)
+	'" es inválido. La primera línea debería ser "## ' + nombre + '".',
+	stack_error)
+
+# Archivo inválido tipo
+func encabezado_invalido_tipo(archivo, tipo, stack_error=null):
+	return HUB.errores.error('El encabezado del archivo "' + archivo + \
+	'" es inválido. La segunda línea debería ser "## ' + tipo + '".',
+	stack_error)
+
+# Archivo inválido objeto
+func encabezado_invalido_objeto(archivo, tipo, stack_error=null):
+	return HUB.errores.error('El encabezado del archivo "' + archivo + \
+	'" es inválido. La tercera línea debería ser "## ", seguido del tipo de objeto.',
+	stack_error)
 
 # Archivo inválido (funciones no implementadas)
 func funciones_no_implementadas(archivo, tipo, stack_error=null):

@@ -156,13 +156,13 @@ class VerificadorError:
 # Errores
 
 # Condición fallida
-func condicion_fallida(stack_error = null):
+func condicion_fallida(stack_error=null):
 	return HUB.errores.error('La condición resulto ser falsa', stack_error)
 
 # Test fallido por resultado
-func test_fallido_resultado(stack_error = null):
+func test_fallido_resultado(stack_error=null):
 	return HUB.errores.error('El test falló. El resultado no cumple la condición del verificador.', stack_error)
 
 # Test fallido por salida
-func test_fallido_salida(stack_error = null):
+func test_fallido_salida(stack_error=null):
 	return HUB.errores.error('El test falló. La salida no fue la esperada.', stack_error)
