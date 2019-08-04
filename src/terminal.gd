@@ -108,11 +108,17 @@ func inicializar_componente(nodo, script, nombre):
 	return nodo.inicializar(HUB)
 
 func inicializar_input():
-	HUB.eventos.registrar_press(KEY_TAB, self, "abrir")
+	HUB.eventos.registrar_press(KEY_TAB, self, "autocompletar_o_abrir")
 	HUB.eventos.registrar_press(KEY_ESCAPE, self, "cerrar")
 	HUB.eventos.registrar_press(KEY_UP, campo_entrada, "historial_arriba")
 	HUB.eventos.registrar_press(KEY_DOWN, campo_entrada, "historial_abajo")
 	HUB.eventos.registrar_press(KEY_RETURN, campo_entrada, "ingresar")
+
+func autocompletar_o_abrir():
+	if activa:
+		campo_entrada.autocompletar()
+	else:
+		abrir()
 
 # Errores
 

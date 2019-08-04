@@ -33,6 +33,7 @@ func mensaje(texto, entorno=""):
 	else:
 		texto_completo += "\n" + texto_para_agregar
 	set_text(texto_completo)
+	cursor_set_line(get_line_count(), true)
 
 func ventana_escalada(nueva_resolucion):
 	set_pos(Vector2(5,5))

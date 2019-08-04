@@ -29,10 +29,19 @@ func comando(argumentos):
 		tester_escribir("", "hola.gd", "hola"),
 		HUB.archivos.archivo_inexistente("","hola.gd"), []
 	)
+	HUB.mensaje("* Testeando archivo no existe")
+	HUB.testing.asegurar(not HUB.archivos.existe("","hola.gd"))
 	HUB.mensaje("* Testeando crear un archivo nuevo")
 	HUB.testing.test(
 		tester_crear("", "hola.gd"),
 		verificador_archivo_existe("","hola.gd"), []
+	)
+	HUB.mensaje("* Testeando archivo existe")
+	HUB.testing.asegurar(HUB.archivos.existe("","hola.gd"))
+	HUB.mensaje("* Testeando listar un archivo")
+	HUB.testing.test_genera_error(
+		tester_listar("", "hola.gd"),
+		HUB.archivos.no_es_un_directorio("","hola.gd"), []
 	)
 	HUB.mensaje("* Testeando leer un archivo vacío")
 	HUB.testing.test(
@@ -79,6 +88,27 @@ func comando(argumentos):
 		tester_borrar("", "hola.gd"),
 		HUB.archivos.archivo_inexistente("","hola.gd"), []
 	)
+	HUB.mensaje("* Testeando crear una carpeta nueva")
+	HUB.testing.test(
+		tester_crear_carpeta("", "hola"),
+		verificador_archivo_existe("","hola"), []
+	)
+	HUB.mensaje("* Testeando listar una carpeta vacía")
+	HUB.testing.test(
+		tester_listar("", "hola"),
+		HUB.testing.verificador_por_igualdad(["..","."]), []
+	)
+	HUB.mensaje("* Testeando listar una carpeta con un archivo")
+	HUB.archivos.crear("hola/","hola")
+	HUB.testing.test(
+		tester_listar("", "hola"),
+		HUB.testing.verificador_por_igualdad(["hola","..","."]), []
+	)
+	HUB.mensaje("* Testeando borrar una carpeta")
+	HUB.testing.test(
+		tester_borrar("", "hola"),
+		verificador_archivo_no_existe("","hola"), []
+	)
 
 func tester_abrir(carpeta, archivo):
 	return TesterAbrir.new(HUB, carpeta, archivo)
@@ -90,8 +120,12 @@ func tester_sobrescribir(carpeta, archivo, contenido):
 	return TesterSobrescribir.new(HUB, carpeta, archivo, contenido)
 func tester_crear(carpeta, archivo):
 	return TesterCrear.new(HUB, carpeta, archivo)
+func tester_crear_carpeta(carpeta, archivo):
+	return TesterCrearCarpeta.new(HUB, carpeta, archivo)
 func tester_borrar(carpeta, archivo):
 	return TesterBorrar.new(HUB, carpeta, archivo)
+func tester_listar(carpeta, archivo):
+	return TesterListar.new(HUB, carpeta, archivo)
 
 class TesterAbrir:
 	var HUB
@@ -152,6 +186,17 @@ class TesterCrear:
 	func test():
 		return HUB.archivos.crear(carpeta, archivo)
 
+class TesterCrearCarpeta:
+	var HUB
+	var carpeta
+	var archivo
+	func _init(hub, carpeta, archivo):
+		HUB = hub
+		self.carpeta = carpeta
+		self.archivo = archivo
+	func test():
+		return HUB.archivos.crear_carpeta(carpeta, archivo)
+
 class TesterBorrar:
 	var HUB
 	var carpeta
@@ -162,6 +207,17 @@ class TesterBorrar:
 		self.archivo = archivo
 	func test():
 		return HUB.archivos.borrar(carpeta, archivo)
+
+class TesterListar:
+	var HUB
+	var carpeta
+	var archivo
+	func _init(hub, carpeta, archivo):
+		HUB = hub
+		self.carpeta = carpeta
+		self.archivo = archivo
+	func test():
+		return HUB.archivos.listar(carpeta, archivo)
 
 func verificador_archivo_existe(carpeta, archivo):
 	return VerificadorArchivoExiste.new(HUB, carpeta, archivo)

@@ -63,11 +63,30 @@ func sobrescribir(ruta, nombre, contenido):
 func existe(ruta, nombre):
 	return file_system.existe(HUB.ruta_raiz + ruta + nombre)
 
+# Determina si un archivo es un archivo (no es un directorio)
+func es_archivo(ruta, nombre):
+	if existe(ruta, nombre):
+		return file_system.es_archivo(HUB.ruta_raiz + ruta + nombre)
+	return HUB.error(archivo_inexistente(ruta, nombre))
+
+# Determina si un archivo es un directorio
+func es_directorio(ruta, nombre):
+	if existe(ruta, nombre):
+		return file_system.es_directorio(HUB.ruta_raiz + ruta + nombre)
+	return HUB.error(archivo_inexistente(ruta, nombre))
+
 # Crea un nuevo archivo vacío
 func crear(ruta, nombre):
 	if existe(ruta, nombre):
 		return HUB.error(archivo_ya_existe(ruta, nombre), modulo)
 	file_system.crear(HUB.ruta_raiz + ruta + nombre)
+	return null
+
+# Crea una nueva carpeta
+func crear_carpeta(ruta, nombre):
+	if existe(ruta, nombre):
+		return HUB.error(archivo_ya_existe(ruta, nombre), modulo)
+	file_system.crear_carpeta(HUB.ruta_raiz + ruta, nombre)
 	return null
 
 # Borrar un archivo
@@ -76,6 +95,14 @@ func borrar(ruta, nombre):
 		file_system.borrar(HUB.ruta_raiz + ruta + nombre)
 		return null
 	return HUB.error(archivo_inexistente(ruta, nombre))
+
+# Listar archivos en un directorio
+func listar(ruta, carpeta):
+	if existe(ruta, carpeta):
+		if es_directorio(ruta, carpeta):
+			return file_system.listar(HUB.ruta_raiz + ruta + carpeta)
+		return HUB.error(no_es_un_directorio(ruta, carpeta))
+	return HUB.error(archivo_inexistente(ruta, carpeta))
 
 # Funciones auxiliares
 
@@ -144,12 +171,36 @@ class FileSystem:
 		file.store_string(contenido)
 		file.close()
 	func existe(ruta_al_archivo):
+		return file.file_exists(ruta_al_archivo) or dir.dir_exists(ruta_al_archivo)
+	func es_archivo(ruta_al_archivo):
 		return file.file_exists(ruta_al_archivo)
+	func es_directorio(ruta_al_archivo):
+		return dir.dir_exists(ruta_al_archivo)
 	func crear(ruta_al_archivo):
 		file.open(ruta_al_archivo, File.WRITE)
 		file.close()
+	func crear_carpeta(ruta, archivo):
+		dir.open(ruta)
+		dir.make_dir(archivo)
 	func borrar(ruta_al_archivo):
-		dir.remove(ruta_al_archivo)
+		if es_archivo(ruta_al_archivo):
+			dir.remove(ruta_al_archivo)
+		else:
+			var archivos = listar(ruta_al_archivo)
+			for archivo in archivos:
+				if archivo != "." and archivo != "..":
+					borrar(ruta_al_archivo+"/"+archivo)
+			dir.remove(ruta_al_archivo)
+	func listar(ruta):
+		var archivos = []
+		dir.open(ruta)
+		dir.list_dir_begin()
+		var archivo = dir.get_next()
+		while (archivo != ""):
+			archivos.append(archivo)
+			archivo = dir.get_next()
+		dir.list_dir_end()
+		return archivos
 
 # Errores
 
@@ -170,25 +221,25 @@ func archivo_invalido(archivo, tipo, stack_error=null):
 	return HUB.errores.error('El archivo "' + archivo + \
 	'" no es un archivo válido de tipo "' + tipo + '".', stack_error)
 
-# Archivo faltante
+# Encabezado faltante
 func encabezado_faltante(archivo, stack_error=null):
 	return HUB.errores.error('El archivo "' + archivo + \
 	'" no tiene encabezado. Las dos primeras líneas deberían ' + \
 	'contener empezar con "## ".', stack_error)
 
-# Archivo inválido nombre
+# Encabezado inválido nombre
 func encabezado_invalido_nombre(archivo, nombre, stack_error=null):
 	return HUB.errores.error('El encabezado del archivo "' + archivo + \
 	'" es inválido. La primera línea debería ser "## ' + nombre + '".',
 	stack_error)
 
-# Archivo inválido tipo
+# Encabezado inválido tipo
 func encabezado_invalido_tipo(archivo, tipo, stack_error=null):
 	return HUB.errores.error('El encabezado del archivo "' + archivo + \
 	'" es inválido. La segunda línea debería ser "## ' + tipo + '".',
 	stack_error)
 
-# Archivo inválido objeto
+# Encabezado inválido objeto
 func encabezado_invalido_objeto(archivo, tipo, stack_error=null):
 	return HUB.errores.error('El encabezado del archivo "' + archivo + \
 	'" es inválido. La tercera línea debería ser "## ", seguido del tipo de objeto.',
@@ -199,3 +250,9 @@ func funciones_no_implementadas(archivo, tipo, stack_error=null):
 	return HUB.errores.error('El archivo "' + archivo + \
 	'" no implementa las funciones necesarias para ser un archivo ' + \
 	'válido de tipo "' + tipo + '".', stack_error)
+
+# No es un directorio
+func no_es_un_directorio(ruta, archivo, stack_error=null):
+	return HUB.errores.error('El archivo "' + archivo + \
+	'" en la ' + ('ruta raíz' if ruta.empty() else \
+	'carpeta "' + ruta + '"') + ' no es una carpeta.', stack_error)

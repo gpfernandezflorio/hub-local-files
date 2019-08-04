@@ -25,11 +25,13 @@ func historial_arriba():
 	if (indice_historial < historial.size()-1):
 		indice_historial += 1
 		set_text(historial[indice_historial])
+		set_cursor_pos(historial[indice_historial].length())
 
 func historial_abajo():
 	if (indice_historial > 0):
 		indice_historial -= 1
 		set_text(historial[indice_historial])
+		set_cursor_pos(historial[indice_historial].length())
 	elif (indice_historial == 0):
 		indice_historial = -1
 		set_text("")
@@ -44,6 +46,29 @@ func ingresar():
 			historial.push_front(texto_ingresado)
 		indice_historial = -1
 		get_parent().ejecutar(texto_ingresado, true)
+
+func autocompletar():
+	var todo_el_texto = get_text()
+	var preludio = todo_el_texto.substr(0,get_cursor_pos())
+	var ultima_diagonal = preludio.find_last("/")
+	var carpeta = preludio.substr(0,ultima_diagonal+1)
+	var archivos = HUB.archivos.listar("comandos/", carpeta)
+	if ultima_diagonal != -1:
+		preludio = preludio.substr(ultima_diagonal+1,preludio.length())
+	var archivos_posibles = []
+	for archivo in archivos:
+		if archivo.begins_with(preludio):
+			if archivo.ends_with(".gd"):
+				archivos_posibles.append(archivo.substr(0,archivo.length()-3)+" ")
+			else:
+				archivos_posibles.append(archivo+"/")
+	if archivos_posibles.size() == 1:
+		var autocompletado = \
+			carpeta + \
+			archivos_posibles[0]
+		var resto = todo_el_texto.substr(get_cursor_pos(),todo_el_texto.length())
+		set_text(autocompletado + resto)
+		set_cursor_pos(autocompletado.length())
 
 func ventana_escalada(nueva_resolucion):
 	set_pos(Vector2(5, nueva_resolucion.y-25))
