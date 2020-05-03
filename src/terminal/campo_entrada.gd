@@ -49,7 +49,11 @@ func ingresar():
 
 func autocompletar():
 	var todo_el_texto = get_text()
-	var preludio = todo_el_texto.substr(0,get_cursor_pos())
+	var ultimo_espacio = todo_el_texto.find_last(" ")
+	var inicio = todo_el_texto.substr(0,ultimo_espacio)
+	if (inicio.length() > 0):
+		inicio += " "
+	var preludio = todo_el_texto.substr(ultimo_espacio+1,get_cursor_pos())
 	var ultima_diagonal = preludio.find_last("/")
 	var carpeta = preludio.substr(0,ultima_diagonal+1)
 	var archivos = HUB.archivos.listar("comandos/", carpeta)
@@ -67,8 +71,13 @@ func autocompletar():
 			carpeta + \
 			archivos_posibles[0]
 		var resto = todo_el_texto.substr(get_cursor_pos(),todo_el_texto.length())
-		set_text(autocompletado + resto)
-		set_cursor_pos(autocompletado.length())
+		set_text(inicio + autocompletado + resto)
+		set_cursor_pos(inicio.length() + autocompletado.length())
+	elif archivos_posibles.size() > 1:
+		var msg = ""
+		for archivo in archivos_posibles:
+			msg += " " + archivo
+		HUB.mensaje(msg)
 
 func ventana_escalada(nueva_resolucion):
 	set_pos(Vector2(5, nueva_resolucion.y-25))
