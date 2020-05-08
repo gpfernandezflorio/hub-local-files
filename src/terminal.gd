@@ -76,8 +76,9 @@ func ejecutar(comando_con_argumentos, mostrar_mensaje=false):
 
 # Limpia el campo de mensajes
 func borrar_mensajes():
-	log_mensajes += campo_mensajes.get_text()
+	log_mensajes += campo_mensajes.get_text()+"\n"
 	campo_mensajes.set_text("")
+	campo_mensajes.ultimo_entorno_impreso = ""
 
 # Devuelve el log completo de mensajes
 func log_completo(restaurar=false):

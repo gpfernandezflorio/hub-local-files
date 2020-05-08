@@ -320,8 +320,8 @@ func se_deriva_en_lambda(w, G):
 		if i in G.VT:
 			return false
 	if w.size() == 1:
-		#if w[0] == G.fin:
-		#	return true
+		if w[0] == G.fin:
+			return true
 		for p in G.P:
 			if p[0] == w[0] and p[1].empty():
 				return true

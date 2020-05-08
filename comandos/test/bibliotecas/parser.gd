@@ -114,9 +114,7 @@ func comando(argumentos):
 			["E",["T"]],
 			["T",["int"]],
 			["T",["(","E",")"]]
-		],{
-			"int":"[0-9]+"
-		},
+		],{"int":"[0-9]+"},
 		tds
 	)
 	HUB.mensaje("    Testeando la cadena válida \"5\"")
