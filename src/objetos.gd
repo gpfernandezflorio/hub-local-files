@@ -56,12 +56,23 @@ func localizar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 			var offset_nombre = nodo.length()+1
 			var siguientes = nombre_completo.substr(offset_nombre, nombre_completo.length() - offset_nombre)
 			return localizar(siguientes, hijo)
-	return HUB.error(objeto_inexistente(nombre_completo, desde.get_name()), modulo)
+	return HUB.error(objeto_inexistente(nombre_completo, desde), modulo)
+
+# Ubica un objeto y lo elimina del mundo
+func borrar(nombre_completo, desde=HUB.nodo_usuario.mundo):
+	var objeto = localizar(nombre_completo, desde)
+	if HUB.errores.fallo(objeto):
+		return HUB.errores.error('No se pudo eliminar el objeto "' + \
+			nombre_completo + '".', objeto)
+	var padre = objeto.padre()
+	padre.quitar_hijo(objeto)
+	objeto.queue_free()
+	return ""
 
 # Errores
 
 # Objeto inexistente
-func objeto_inexistente(objeto, desde, stack_error=null):
+func objeto_inexistente(nombre_completo, desde, stack_error=null):
 	return HUB.errores.error('No se encontró ningún objeto con nombre "' + \
-		objeto + '" en la jerarquía desde el objeto "' + desde + \
+		nombre_completo + '" en la jerarquía desde el objeto "' + desde.get_name() + \
 		'".', stack_error)

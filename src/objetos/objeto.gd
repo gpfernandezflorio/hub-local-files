@@ -43,7 +43,7 @@ func nombrar(nombre_base):
 	return nombre # Devuelve el nuevo nombre
 
 # Agrega un componente al objeto
-func agregar_componente(componente, nombre):
+func agregar_componente(componente, nombre=null):
 	# TODO
 	componentes.add_child(componente)
 	return nombre # Devuelve el nuevo nombre
@@ -79,9 +79,49 @@ func agregar_hijo(objeto):
 	objeto.nombrar(nombre_original)
 	return objeto.get_name() # Devuelve el nuevo nombre
 
+# Quita un objeto hijo
+func quitar_hijo(objeto):
+	if not es_hijo(objeto):
+		return HUB.error(hijo_inexistente(objeto.nombre()))
+	hijos.remove_child(objeto)
+
+# Quita un objeto hijo
+func quitar_hijo_nombrado(nombre):
+	if not tiene_hijo_nombrado(nombre):
+		return HUB.error(hijo_inexistente(nombre))
+	hijos.remove_child(hijo_nombrado(nombre))
+
+# Devuelve si otro objeto es hijo de este
+func es_hijo(objeto):
+	return objeto in hijos()
+
+# Devuelve si tiene un hijo con ese nombre
+func tiene_hijo_nombrado(nombre):
+	for hijo in hijos():
+		if hijo.nombre() == nombre:
+			return true
+	return false
+
+# Devuelve al hijo con ese nombre
+func hijo_nombrado(nombre):
+	if not tiene_hijo_nombrado(nombre):
+		return HUB.error(hijo_inexistente(nombre))
+	for hijo in hijos():
+		if hijo.nombre() == nombre:
+			return hijo
+
 # Devuelve la lista de hijos en la jerarquía de objetos
 func hijos():
 	return hijos.get_children()
+
+# Devuelve el objeto padre
+func padre():
+	if get_parent():
+		return get_parent().get_parent()
+
+# Devuelve el nombre del objeto
+func nombre():
+	return get_name()
 
 # Errores
 
@@ -92,3 +132,7 @@ func componente_inexistente(componente, stack_error = null):
 # Comportamiento inexistente
 func comportamiento_inexistente(comportamiento, stack_error = null):
 	return HUB.errores.error('Comportamiento "' + comportamiento + '" no encontrado.', stack_error)
+
+# Hijo inexistente
+func hijo_inexistente(nombre, stack_error = null):
+	return HUB.errores.error('El objeto "' + nombre + '" no es hijo de "' + nombre() + '".', stack_error)
