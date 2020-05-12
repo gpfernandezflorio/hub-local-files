@@ -62,11 +62,14 @@ func localizar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 func borrar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 	var objeto = localizar(nombre_completo, desde)
 	if HUB.errores.fallo(objeto):
-		return HUB.errores.error('No se pudo eliminar el objeto "' + \
-			nombre_completo + '".', objeto)
+		return HUB.error(HUB.errores.error('No se pudo eliminar el objeto "' + \
+			nombre_completo + '".', objeto), modulo)
 	var padre = objeto.padre()
 	padre.quitar_hijo(objeto)
-	objeto.queue_free()
+	if objeto.is_inside_tree():
+		objeto.queue_free()
+	else:
+		pass # ¿no debería eliminarlo igual?
 	return ""
 
 # Errores

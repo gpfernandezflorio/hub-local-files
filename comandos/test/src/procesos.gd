@@ -156,8 +156,6 @@ class VerificadorProgramaCreado:
 		HUB = hub
 		self.nombre = nombre
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado: " + resultado.mensaje
 		if nombre in HUB.procesos.todos():
 			return ""
 		return 'Se esperaba que existiera un proceso con identificador "' + \
@@ -170,8 +168,6 @@ class VerificadorProgramaFinalizado:
 		HUB = hub
 		self.nombre = nombre
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado: " + resultado.mensaje
 		if nombre in HUB.procesos.todos():
 			return 'Se esperaba que el proceso con pid "' + nombre + \
 			'" hubiese finalizado pero aún existe.'

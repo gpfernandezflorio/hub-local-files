@@ -24,6 +24,11 @@ func comando(argumentos):
 		tester_crear("hola"),
 		verificador_objeto_existe("hola"), []
 	)
+	HUB.mensaje("* Testeando localizar un objeto existente")
+	HUB.testing.test(
+		tester_localizar("hola"),
+		verificador_objeto_localizado("hola"), []
+	)
 	HUB.mensaje("* Testeando eliminar un objeto")
 	HUB.testing.test(
 		tester_eliminar("hola"),
@@ -71,6 +76,9 @@ class TesterEliminar:
 func verificador_objeto_existe(nombre):
 	return VerificadorObjetoExiste.new(HUB, nombre)
 
+func verificador_objeto_localizado(nombre):
+	return VerificadorObjetoLocalizado.new(HUB, nombre)
+
 func verificador_objeto_no_existe(nombre):
 	return VerificadorObjetoNoExiste.new(HUB, nombre)
 
@@ -81,11 +89,21 @@ class VerificadorObjetoExiste:
 		HUB = hub
 		self.nombre = nombre
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		var localizado = HUB.objetos.localizar(nombre)
 		if HUB.errores.fallo(localizado):
 			return "Localizar el nuevo objeto generó un error inesperado."
+		return ""
+
+class VerificadorObjetoLocalizado:
+	var HUB
+	var nombre
+	func _init(hub, nombre):
+		HUB = hub
+		self.nombre = nombre
+	func verificar(resultado):
+		if resultado.nombre() != nombre:
+			return 'Se esperaba que el objeto localizado se llame "' + nombre + \
+				'" pero se llama "' + resultado.nombre() + '".'
 		return ""
 
 class VerificadorObjetoNoExiste:
@@ -95,8 +113,6 @@ class VerificadorObjetoNoExiste:
 		HUB = hub
 		self.nombre = nombre
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		var mundo = HUB.nodo_usuario.mundo
 		for hijo in mundo.hijos():
 			print(hijo.nombre())

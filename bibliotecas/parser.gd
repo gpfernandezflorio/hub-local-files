@@ -380,7 +380,7 @@ func token_invalido(reglon, linea, i, stack_error = null):
 
 # Se encontró un token inesperado
 func token_inesperado(token, stack_error = null):
-	return HUB.errores.error('Token "'+token[0]+'" con valor"' + \
+	return HUB.errores.error('Token "'+token[0]+'" con valor "' + \
 	token[1] + '" inesperado en la línea ' + str(token[2]+1) + \
 	' columna ' + str(token[3]+1) + '.', stack_error)
 

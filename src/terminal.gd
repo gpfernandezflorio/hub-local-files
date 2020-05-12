@@ -69,7 +69,7 @@ func cerrar():
 func ejecutar(comando_con_argumentos, mostrar_mensaje=false):
 	if mostrar_mensaje:
 		campo_mensajes.mensaje("> " + comando_con_argumentos)
-	var argumentos = comando_con_argumentos.split(" ")
+	var argumentos = parsear_argumentos(comando_con_argumentos)
 	var comando = argumentos[0]
 	argumentos.remove(0)
 	return nodo_comandos.ejecutar(comando, argumentos)
@@ -120,6 +120,26 @@ func autocompletar_o_abrir():
 		campo_entrada.autocompletar()
 	else:
 		abrir()
+
+func parsear_argumentos(argumentos):
+	var tokens = argumentos.split(" ")
+	var resultado = []
+	var tmp = ""
+	for token in tokens:
+		if token.begins_with('"'):
+			if token.ends_with('"'):
+				resultado.append(token.substr(1,token.length()-2))
+			else:
+				tmp = token.substr(1,token.length()-1)
+		elif token.ends_with('"'):
+			tmp += " " + token.substr(0,token.length()-1)
+			resultado.append(tmp)
+			tmp = ""
+		elif tmp.length() > 0:
+			tmp += " " + token
+		else:
+			resultado.append(token)
+	return resultado
 
 # Errores
 

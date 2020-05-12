@@ -35,8 +35,6 @@ class VerificadorMensajesBorrados:
 	func _init(hub):
 		HUB = hub
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		if HUB.terminal.campo_mensajes.get_text() == "":
 			return ""
 		return "El campo de mensajes no está vacío."

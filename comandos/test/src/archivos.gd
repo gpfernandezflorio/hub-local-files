@@ -235,8 +235,6 @@ class VerificadorArchivoExiste:
 		self.carpeta = carpeta
 		self.archivo = archivo
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		if HUB.archivos.existe(carpeta, archivo):
 			return ""
 		return 'Se esperaba que el archivo "' + archivo + \
@@ -251,8 +249,6 @@ class VerificadorArchivoNoExiste:
 		self.carpeta = carpeta
 		self.archivo = archivo
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		if HUB.archivos.existe(carpeta, archivo):
 			return 'Se esperaba que el archivo "' + archivo + \
 			'" no exista en la carpeta "' + carpeta + '" pero existe.'
@@ -269,8 +265,6 @@ class VerificadorContenidoArchivo:
 		self.archivo = archivo
 		contenido_esperado = contenido
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		var contenido_recibido = HUB.archivos.leer(carpeta, archivo)
 		if HUB.errores.fallo(contenido_recibido):
 			return 'Hubo un error al leer el archivo "' + archivo + '".'

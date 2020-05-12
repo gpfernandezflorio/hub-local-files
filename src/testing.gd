@@ -33,7 +33,14 @@ func test(tester, verificador, mensajes_esperados=null):
 	mensajes_guardados = []
 	var resultado_obtenido = tester.test()
 	testeando = false
-	var verificacion = verificador.verificar(resultado_obtenido)
+	var verificacion = null
+	if HUB.errores.fallo(resultado_obtenido):
+		if verificador.has_method("verificar_error"):
+			verificacion = verificador.verificar_error(resultado_obtenido)
+		else:
+			return HUB.error(test_fallido_error(resultado_obtenido), modulo)
+	else:
+		verificacion = verificador.verificar(resultado_obtenido)
 	var exito = asegurar(verificacion == "")
 	if HUB.errores.fallo(exito):
 		HUB.mensaje(verificacion)
@@ -106,8 +113,6 @@ class VerificadorTrivial:
 	func _init(hub):
 		HUB = hub
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		return ""
 
 class VerificadorNulo:
@@ -115,8 +120,6 @@ class VerificadorNulo:
 	func _init(hub):
 		HUB = hub
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		if resultado == null:
 			return ""
 		return "El resultado no es null."
@@ -128,8 +131,6 @@ class VerificadorIgualdad:
 		HUB = hub
 		resultado_esperado = resultado
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		if resultado == resultado_esperado:
 			return ""
 		return 'Se esperaba que el resultado sea "' + str(resultado_esperado) + \
@@ -141,15 +142,15 @@ class VerificadorError:
 	func _init(hub, error_esperado):
 		HUB = hub
 		self.error_esperado = error_esperado
+	func verificar_error(resultado):
+		var error_encontrado = resultado
+		while error_encontrado.stack_error != null:
+			error_encontrado = error_encontrado.stack_error
+		if error_encontrado.mensaje == error_esperado.mensaje:
+			return ""
+		return "Se esperaba el error\n\t" + error_esperado.mensaje.replace("\n","\n\t") + \
+		"\nPero se obtuvo el error\n\t" + error_encontrado.mensaje.replace("\n","\n\t")
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			var error_encontrado = resultado
-			while error_encontrado.stack_error != null:
-				error_encontrado = error_encontrado.stack_error
-			if error_encontrado.mensaje == error_esperado.mensaje:
-				return ""
-			return "Se esperaba el error\n\t" + error_esperado.mensaje.replace("\n","\n\t") + \
-			"\nPero se obtuvo el error\n\t" + error_encontrado.mensaje.replace("\n","\n\t")
 		return "Se esperaba el error\n\t" + error_esperado.mensaje.replace("\n","\n\t") + \
 		"\nPero no se generó ningún error."
 
@@ -166,3 +167,12 @@ func test_fallido_resultado(stack_error=null):
 # Test fallido por salida
 func test_fallido_salida(stack_error=null):
 	return HUB.errores.error('El test falló. La salida no fue la esperada.', stack_error)
+
+# Test fallido por error
+func test_fallido_error(stack_error=null):
+	var txt = 'El resultado generó un error inesperado'
+	if stack_error:
+		txt += ': ' + stack_error.mensaje()
+	else:
+		txt += '.'
+	return HUB.errores.error(txt, stack_error)

@@ -244,8 +244,6 @@ class VerificadorAST:
 		self.suma = suma
 		self.AST = AST
 	func verificar(resultado):
-		if HUB.errores.fallo(resultado):
-			return "El resultado generó un error inesperado."
 		var AST_recibido = resultado
 		if AST["hijos"].size() != resultado["hijos"].size():
 			return mensaje_falla(AST_recibido)

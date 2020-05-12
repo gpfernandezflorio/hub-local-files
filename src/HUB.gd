@@ -71,8 +71,8 @@ func mensaje(texto):
 # Notifica un error
 func error(error, emisor=""):
 	if not testing.testeando:
-		mensaje('Error: ' + ("" if emisor.empty() else \
-		"[" + emisor + "] ") + error.mensaje)
+		mensaje(("" if emisor.empty() else \
+		"[" + emisor + "] ") + 'Error: ' + error.mensaje)
 	return error
 
 # Finaliza la ejecución
