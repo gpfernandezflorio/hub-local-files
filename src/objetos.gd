@@ -29,7 +29,11 @@ func inicializar(hub):
 	HUB.archivos.codigos_script.append(codigo)
 	script_objeto = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_objeto)
 	script_comportamiento = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_comportamiento)
-	return script_objeto != null and script_comportamiento != null
+	if script_objeto != null and script_comportamiento != null:
+		script_objeto.set_name("Objeto")
+		script_comportamiento.set_name("Comportamiendo")
+		return true
+	return false
 
 # Crea y devuelve un objeto vacío sin comportamiento
 func crear(hijo_de=HUB.nodo_usuario.mundo):
@@ -71,6 +75,16 @@ func borrar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 	else:
 		pass # ¿no debería eliminarlo igual?
 	return ""
+
+# Determina si algo es un objeto del HUB
+func es_un_objeto(algo):
+	if typeof(algo) == 18: # No es un built-in type
+		var tipo = algo.get_type()
+		if tipo == "Spatial":
+			var script = algo.get_script()
+			if not script == null:
+				return script.get_name() == "Objeto"
+	return false
 
 # Errores
 
