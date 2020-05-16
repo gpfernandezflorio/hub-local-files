@@ -67,13 +67,13 @@ func existe(ruta, nombre):
 func es_archivo(ruta, nombre):
 	if existe(ruta, nombre):
 		return file_system.es_archivo(HUB.ruta_raiz + ruta + nombre)
-	return HUB.error(archivo_inexistente(ruta, nombre))
+	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Determina si un archivo es un directorio
 func es_directorio(ruta, nombre):
 	if existe(ruta, nombre):
 		return file_system.es_directorio(HUB.ruta_raiz + ruta + nombre)
-	return HUB.error(archivo_inexistente(ruta, nombre))
+	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Crea un nuevo archivo vacío
 func crear(ruta, nombre):
@@ -94,15 +94,15 @@ func borrar(ruta, nombre):
 	if existe(ruta, nombre):
 		file_system.borrar(HUB.ruta_raiz + ruta + nombre)
 		return null
-	return HUB.error(archivo_inexistente(ruta, nombre))
+	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Listar archivos en un directorio
 func listar(ruta, carpeta):
 	if existe(ruta, carpeta):
 		if es_directorio(ruta, carpeta):
 			return file_system.listar(HUB.ruta_raiz + ruta + carpeta)
-		return HUB.error(no_es_un_directorio(ruta, carpeta))
-	return HUB.error(archivo_inexistente(ruta, carpeta))
+		return HUB.error(no_es_un_directorio(ruta, carpeta), modulo)
+	return HUB.error(archivo_inexistente(ruta, carpeta), modulo)
 
 # Funciones auxiliares
 
@@ -124,6 +124,7 @@ func verificar_encabezado(ruta, archivo, nombre, codigo_tipo):
 			contenido[2].substr(3,contenido[2].length()-3) in codigos_objeto
 		):
 			return HUB.error(encabezado_invalido_objeto(archivo), modulo)
+	return ""
 
 func verificar_funciones(archivo, script, codigo_tipo):
 	var nodo = Node.new()
@@ -148,7 +149,7 @@ func verificar_funciones(archivo, script, codigo_tipo):
 			HUB.errores.verificar_implementa_funcion(nodo,"comando",1)
 		if HUB.errores.fallo(verificacion_comando):
 			return HUB.error(funciones_no_implementadas(archivo, codigo_tipo, verificacion_comando), modulo)
-	return null
+	return ""
 
 class FileSystem:
 	var file = File.new()

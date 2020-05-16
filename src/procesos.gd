@@ -73,9 +73,9 @@ func finalizar(pid=null):
 	if pid_solicitado == null:
 		pid_solicitado = proceso_actual
 	if not pid_solicitado in procesos_activos.keys():
-		return HUB.error(pid_inexistente(pid_solicitado))
+		return HUB.error(pid_inexistente(pid_solicitado), modulo)
 	if pid_solicitado == "HUB":
-		return HUB.error(pid_invalido(pid_solicitado))
+		return HUB.error(pid_invalido(pid_solicitado), modulo)
 	var proceso_solicitado = procesos_activos[pid_solicitado]
 	procesos_activos.erase(pid_solicitado)
 	proceso_solicitado.nodo.finalizar()

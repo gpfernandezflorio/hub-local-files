@@ -59,6 +59,11 @@ func inicializacion_fallo(nodo, stack_error=null):
 	nodo.get_name() + '" con el script "' + \
 	nodo.get_script().get_name() + '".', stack_error)
 
+# Argumento inválido
+func argumento_invalido(argumento, stack_error=null):
+	return error('Argumento "' + \
+	argumento + '" inválido.', stack_error)
+
 class Error:
 	var mensaje = ""
 	var stack_error = null

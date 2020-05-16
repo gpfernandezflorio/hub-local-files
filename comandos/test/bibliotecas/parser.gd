@@ -10,11 +10,13 @@ extends Node
 var HUB
 var parser_lib
 
+var modulo = "Test Parser"
+
 func inicializar(hub):
 	HUB = hub
 	parser_lib = HUB.bibliotecas.importar("parser")
 	if HUB.errores.fallo(parser_lib):
-		return HUB.error(HUB.errores.inicializar_fallo(self, parser_lib))
+		return HUB.error(HUB.errores.inicializar_fallo(self, parser_lib), modulo)
 	return null
 
 func comando(argumentos):

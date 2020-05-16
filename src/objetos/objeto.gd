@@ -61,7 +61,7 @@ func quitar_componente(nombre):
 			componente.remove_child(componente)
 			componente.queue_free()
 			return null
-	return HUB.error(componente_inexistente(nombre))
+	return HUB.error(componente_inexistente(nombre), get_name())
 
 # Quita un script de comportamiento
 func quitar_comportamiento(nombre):
@@ -70,7 +70,7 @@ func quitar_comportamiento(nombre):
 			comportamiento.remove_child(comportamiento)
 			comportamiento.queue_free()
 			return null
-	return HUB.error(comportamiento_inexistente(nombre))
+	return HUB.error(comportamiento_inexistente(nombre), get_name())
 
 # Agrega a otro objeto como hijo en la jerarquía de objetos
 func agregar_hijo(objeto):
@@ -82,13 +82,13 @@ func agregar_hijo(objeto):
 # Quita un objeto hijo
 func quitar_hijo(objeto):
 	if not es_hijo(objeto):
-		return HUB.error(hijo_inexistente(objeto.nombre()))
+		return HUB.error(hijo_inexistente(objeto.nombre()), get_name())
 	hijos.remove_child(objeto)
 
 # Quita un objeto hijo
 func quitar_hijo_nombrado(nombre):
 	if not tiene_hijo_nombrado(nombre):
-		return HUB.error(hijo_inexistente(nombre))
+		return HUB.error(hijo_inexistente(nombre), get_name())
 	hijos.remove_child(hijo_nombrado(nombre))
 
 # Devuelve si otro objeto es hijo de este
@@ -105,7 +105,7 @@ func tiene_hijo_nombrado(nombre):
 # Devuelve al hijo con ese nombre
 func hijo_nombrado(nombre):
 	if not tiene_hijo_nombrado(nombre):
-		return HUB.error(hijo_inexistente(nombre))
+		return HUB.error(hijo_inexistente(nombre), get_name())
 	for hijo in hijos():
 		if hijo.nombre() == nombre:
 			return hijo
@@ -118,6 +118,7 @@ func hijos():
 func padre():
 	if get_parent():
 		return get_parent().get_parent()
+	return null
 
 # Devuelve el nombre del objeto
 func nombre():

@@ -12,8 +12,10 @@ var HUB
 var estructuras
 var printer
 
+var modulo = "Parser"
+
 # caracteres a escapear cuando se genera el regex para un token
-var regex_escape = ['+','\\','(',')']
+var regex_escape = ['+','\\','(',')','.','*']
 
 func inicializar(hub):
 	HUB = hub
@@ -40,7 +42,7 @@ func parsear_cadena(parser, cadena):
 	var AST = {"nombre":parser.G.S, "hijos":[]}
 	var tokens = tokenizar_cadena(parser.token_rules, cadena)
 	if HUB.errores.fallo(tokens):
-		return HUB.error(cadena_invalida(cadena, tokens))
+		return HUB.error(cadena_invalida(cadena, tokens), modulo)
 	tokens.append([parser.G.fin,parser.G.fin,0,0])
 	AST["hijos"].append({})
 	var lookahead = 0
@@ -51,7 +53,7 @@ func parsear_cadena(parser, cadena):
 		var estado = pila[0][0]
 		var simbolo = tokens[lookahead][0]
 		if not simbolo in parser.tabla_action_goto[estado].keys():
-			return HUB.error(token_inesperado(tokens[lookahead]))
+			return HUB.error(token_inesperado(tokens[lookahead]), modulo)
 		var accion = parser.tabla_action_goto[estado][simbolo]
 		if accion == "A!": # Aceptar
 			aceptado = true
@@ -80,9 +82,18 @@ func parsear_cadena(parser, cadena):
 				nodo["hijos"].append({"nombre":i,"hijos":[]})
 			else:
 				nodo["hijos"].append({})
-	calcular_tds(parser, AST["hijos"][0], tokens, 0)
+	var resultado = calcular_tds(parser, AST["hijos"][0], tokens, 0)
+	if HUB.errores.fallo(resultado):
+		tokens.pop_back()
+		return HUB.error(error_semantico(str(
+			estructuras.map(F.new(), tokens)
+		), resultado), modulo)
 	AST["valor"] = AST["hijos"][0]["valor"]
 	return AST
+
+class F:
+	func exec(x):
+		return x[0]
 
 func calcular_tds(parser, AST, tokens, i_token):
 	if AST["nombre"] in parser.G.VT:
@@ -92,9 +103,15 @@ func calcular_tds(parser, AST, tokens, i_token):
 		var token_actual = i_token
 		var valores_hijos = []
 		for hijo in AST["hijos"]:
-			token_actual += calcular_tds(parser, hijo, tokens, token_actual)
+			var resultado = calcular_tds(parser, hijo, tokens, token_actual)
+			if HUB.errores.fallo(resultado):
+				return resultado
+			token_actual += resultado
 			valores_hijos.append(hijo["valor"])
-		AST["valor"] = parser.tds.reduce(AST["valor"], valores_hijos)
+		var resultado = parser.tds.reduce(AST["valor"], valores_hijos)
+		if HUB.errores.fallo(resultado):
+			return resultado
+		AST["valor"] = resultado
 		return token_actual - i_token
 
 func crear_gramatica(P):
@@ -110,10 +127,12 @@ func crear_gramatica(P):
 				conjunto_VT.agregar(v)
 	G.VT = conjunto_VT.elementos
 	G.P = P
-	while G.S in G.VN:
+	while G.S in G.VN or G.S in G.VT:
 		G.S += "'"
-	while G.fin in G.VT:
+	while G.fin in G.VN or G.fin in G.VT:
 		G.fin += "'"
+	while G.lambda in G.VN or G.lambda in G.VT:
+		G.lambda += "'"
 	return G
 
 func construir_automata(G):
@@ -198,7 +217,7 @@ func tokenizar_cadena(token_rules, cadena):
 						j = token_encontrado.length()
 						token_candidato = token
 			if token_candidato == null:
-				return HUB.error(token_invalido(reglon, linea, i))
+				return HUB.error(token_invalido(reglon, linea, i), modulo)
 			tokens.append([token_candidato,reglon.substr(i,j),linea,i])
 			i += j
 		linea += 1
@@ -287,15 +306,15 @@ func FIRST(w, G):
 	var resultado = FIRST_1(w[0], G)
 	if n == 1:
 		return resultado
-	resultado.quitar([])
+	resultado.quitar(G.lambda)
 	var i=1
 	while i < n and se_deriva_en_lambda(estructuras.sub_array(w, 0, i), G):
 		var next = FIRST_1(w[i], G)
-		next.quitar([])
+		next.quitar(G.lambda)
 		resultado.union(next)
 		i += 1
 	if se_deriva_en_lambda(w, G):
-		resultado.agregar([])
+		resultado.agregar(G.lambda)
 	return resultado
 
 func FIRST_1(X, G):
@@ -312,7 +331,7 @@ func FIRST_1(X, G):
 					resultado.union(FIRST_1(p[1][i], G))
 					i += 1
 			if se_deriva_en_lambda(p[1], G):
-				resultado.agregar([])
+				resultado.agregar(G.lambda)
 	return resultado
 
 func se_deriva_en_lambda(w, G):
@@ -320,6 +339,8 @@ func se_deriva_en_lambda(w, G):
 		if i in G.VT:
 			return false
 	if w.size() == 1:
+		if w[0] == G.lambda:
+			return true
 		if w[0] == G.fin:
 			return true
 		for p in G.P:
@@ -387,7 +408,12 @@ func token_inesperado(token, stack_error = null):
 # No se pudo parsear
 func cadena_invalida(cadena, stack_error = null):
 	return HUB.errores.error('No se pudo parsear la cadena "' +\
-	cadena + '".', stack_error)
+	cadena + '" debido a un error sintáctico.', stack_error)
+
+# Error semántico (falló TDS)
+func error_semantico(cadena, stack_error = null):
+	return HUB.errores.error('No se pudo calcular el valor de ' +\
+	cadena + ' debido a un error semántico.', stack_error)
 
 class AtributosNodo:
 	var mostrar_valores
@@ -441,6 +467,7 @@ class Gramatica:
 	var P = []
 	var S = "S"
 	var fin = "$"
+	var lambda = "LAMBDA"
 
 class Estado:
 	var kernel
