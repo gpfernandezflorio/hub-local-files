@@ -7,6 +7,8 @@ extends Node
 
 var HUB
 
+var modulo = "Sh"
+
 func inicializar(hub):
 	HUB = hub
 	return null
@@ -22,8 +24,8 @@ func comando(argumentos):
 		elif not argumento.ends_with(".gd"):
 			argumento += ".gd"
 		var contenido = HUB.archivos.leer("shell/", argumento)
-		if contenido == null:
-			HUB.mensaje('Error: No se encuentra el archivo "'+ argumento +'"')
+		if HUB.errores.fallo(contenido):
+			HUB.error(HUB.errores.error('No se pudo ejecutar el script "'+ argumento +'"', contenido), modulo)
 		else:
 			for linea in contenido.split("\n"):
 				if not (linea.empty() or linea.begins_with("#")):

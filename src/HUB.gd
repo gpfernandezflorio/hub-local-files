@@ -32,7 +32,7 @@ var procesos = Node.new()
 # Entorno de testing
 var testing = Node.new()
 
-func inicializar(hub):
+func inicializar(hub, extension):
 	ruta_raiz = get_parent().ruta_raiz
 	for componente in [
 		[archivos,     "archivos",   "Archivos"],
@@ -48,7 +48,7 @@ func inicializar(hub):
 	]:
 		if not inicializar_componente(
 			componente[0],
-			componente[1] + ".gd",
+			componente[1] + extension,
 			componente[2]
 		):
 			return false

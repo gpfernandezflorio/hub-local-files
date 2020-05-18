@@ -57,6 +57,8 @@ func autocompletar():
 	var ultima_diagonal = preludio.find_last("/")
 	var carpeta = preludio.substr(0,ultima_diagonal+1)
 	var archivos = HUB.archivos.listar("comandos/", carpeta)
+	if HUB.errores.fallo(archivos):
+		return archivos
 	if ultima_diagonal != -1:
 		preludio = preludio.substr(ultima_diagonal+1,preludio.length())
 	var archivos_posibles = []
@@ -64,7 +66,7 @@ func autocompletar():
 		if archivo.begins_with(preludio):
 			if archivo.ends_with(".gd"):
 				archivos_posibles.append(archivo.substr(0,archivo.length()-3)+" ")
-			else:
+			elif HUB.archivos.es_directorio("comandos/" + carpeta, archivo):
 				archivos_posibles.append(archivo+"/")
 	if archivos_posibles.size() == 1:
 		var autocompletado = \
