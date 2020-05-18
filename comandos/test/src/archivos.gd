@@ -96,13 +96,13 @@ func comando(argumentos):
 	HUB.mensaje("* Testeando listar una carpeta vacía")
 	HUB.testing.test(
 		tester_listar("", "hola"),
-		HUB.testing.verificador_por_igualdad(["..","."]), []
+		HUB.testing.verificador_por_igualdad([]), []
 	)
 	HUB.mensaje("* Testeando listar una carpeta con un archivo")
 	HUB.archivos.crear("hola/","hola")
 	HUB.testing.test(
 		tester_listar("", "hola"),
-		HUB.testing.verificador_por_igualdad(["hola","..","."]), []
+		HUB.testing.verificador_por_igualdad(["hola"]), []
 	)
 	HUB.mensaje("* Testeando borrar una carpeta")
 	HUB.testing.test(

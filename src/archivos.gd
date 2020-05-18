@@ -32,6 +32,8 @@ func inicializar(hub):
 	compilado = not OS.is_debug_build()
 	userFS_src = Globals.get("userfs")
 	os = OS.get_name()
+	if os == "HTML5":
+		ruta_user = "/userfs/"
 	if userFS_src or not compilado:
 		ruta_user = HUB.ruta_raiz
 	file_system = FileSystem.new(compilado, userFS_src, os, HUB.ruta_raiz)
@@ -107,6 +109,7 @@ func es_directorio(ruta, nombre):
 func crear(ruta, nombre):
 	if existe_user(ruta + nombre):
 		return HUB.error(archivo_ya_existe(ruta, nombre), modulo)
+	crear_carpetas_intermedias(ruta + nombre)
 	file_system.crear(ruta_user + ruta + nombre)
 	return null
 
@@ -114,6 +117,7 @@ func crear(ruta, nombre):
 func crear_carpeta(ruta, nombre):
 	if existe_user(ruta + nombre):
 		return HUB.error(archivo_ya_existe(ruta, nombre), modulo)
+	crear_carpetas_intermedias(ruta + nombre)
 	file_system.crear_carpeta(ruta_user + ruta, nombre)
 	return null
 
@@ -128,13 +132,27 @@ func borrar(ruta, nombre):
 
 # Listar archivos en un directorio
 func listar(ruta, carpeta):
-	if existe(ruta, carpeta):
+	var lista_user = existe_user(ruta + carpeta)
+	var lista_raiz = existe_raiz(ruta + carpeta)
+	if lista_user or lista_raiz:
 		if es_directorio(ruta, carpeta):
-			return file_system.listar(HUB.ruta_raiz + ruta + carpeta)
+			if lista_user:
+				return file_system.listar(ruta_user + ruta + carpeta)
+			if lista_raiz:
+				return file_system.listar(HUB.ruta_raiz + ruta + carpeta)
 		return HUB.error(no_es_un_directorio(ruta, carpeta), modulo)
 	return HUB.error(archivo_inexistente(ruta, carpeta), modulo)
 
 # Funciones auxiliares
+
+func crear_carpetas_intermedias(ruta):
+	var carpetas = (ruta).split("/")
+	carpetas.resize(carpetas.size()-1)
+	var nueva_ruta = ""
+	for carpeta in carpetas:
+		if not existe(nueva_ruta, carpeta):
+			file_system.crear_carpeta(ruta_user + nueva_ruta, carpeta)
+		nueva_ruta += carpeta + "/"
 
 func fs_load(ruta):
 	if existe_user(ruta):
@@ -242,6 +260,7 @@ class FileSystem:
 		if nombres_compilados and ruta_al_archivo.begins_with(ruta_raiz):
 			print("NO SÉ SI ES UNA CARPETA")
 			return false
+		print(dir.dir_exists(ruta_al_archivo))
 		return dir.dir_exists(ruta_al_archivo)
 	func crear(ruta_al_archivo):
 		file.open(ruta_al_archivo, File.WRITE)
