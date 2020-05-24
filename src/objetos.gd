@@ -17,21 +17,19 @@ var modulo = "OBJETOS"
 var carpeta_src = "objetos/"
 # Script genérico de un objeto
 var script_objeto = "objeto.gd"
-# Script de comportamiento de un objeto
-var script_comportamiento = "comportamiento.gd"
 # Ruta a la carpeta de scripts de comportamiento
 var carpeta_comportamientos = "comportamiento/"
 # Codigo de comportamientos
 var codigo = "Comportamiento"
+# Diccionario con los comportamientos cargadas
+var comportamientos_cargados = {} # Dicc(string : GDScript)
 
 func inicializar(hub):
 	HUB = hub
 	HUB.archivos.codigos_script.append(codigo)
 	script_objeto = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_objeto)
-	script_comportamiento = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_comportamiento)
-	if script_objeto != null and script_comportamiento != null:
+	if script_objeto != null:
 		script_objeto.set_name("Objeto")
-		script_comportamiento.set_name("Comportamiendo")
 		return true
 	return false
 
@@ -39,13 +37,8 @@ func inicializar(hub):
 func crear(hijo_de=HUB.nodo_usuario.mundo):
 	var nuevo_objeto = Spatial.new()
 	nuevo_objeto.set_name("objeto sin nombre")
-	var comportamiento = Node.new()
-	comportamiento.set_name("Comportamiento")
-	nuevo_objeto.add_child(comportamiento)
 	nuevo_objeto.set_script(script_objeto)
 	nuevo_objeto.inicializar(HUB)
-	comportamiento.set_script(script_comportamiento)
-	comportamiento.inicializar(HUB)
 	if hijo_de != null:
 		hijo_de.agregar_hijo(nuevo_objeto)
 	return nuevo_objeto
@@ -86,6 +79,21 @@ func es_un_objeto(algo):
 				return script.get_name() == "Objeto"
 	return false
 
+# Carga un script de comportamiento
+func cargar_comortamiento(nombre):
+	var nodo = Node.new()
+	var script = null
+	if nombre in comportamientos_cargados:
+		script = comportamientos_cargados[nombre]
+	else:
+		script = HUB.archivos.abrir(carpeta_comportamientos, nombre + ".gd", codigo)
+		if (HUB.errores.fallo(script)):
+			return HUB.error(comportamiento_inexistente(nombre, nombre), modulo)
+		script.set_name(nombre)
+		comportamientos_cargados[nombre] = script
+	nodo.set_script(script)
+	return nodo
+
 # Errores
 
 # Objeto inexistente
@@ -93,3 +101,8 @@ func objeto_inexistente(nombre_completo, desde, stack_error=null):
 	return HUB.errores.error('No se encontró ningún objeto con nombre "' + \
 		nombre_completo + '" en la jerarquía desde el objeto "' + desde.get_name() + \
 		'".', stack_error)
+
+# Comportamiento inexistente
+func comportamiento_inexistente(nombre, stack_error=null):
+	return HUB.errores.error('No se encontró ningún script de comportamiento con nombre "' + \
+		nombre + '".', stack_error)

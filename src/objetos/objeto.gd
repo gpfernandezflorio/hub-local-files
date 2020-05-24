@@ -27,31 +27,28 @@ func inicializar(hub):
 
 # Cambiar el nombre del objeto
 func nombrar(nombre_base):
-	var nombre_original = false
-	var try = 0
-	var nombre = nombre_base
-	while not nombre_original:
-		if try != 0:
-			nombre = nombre_base + "_" + str(try)
-		try += 1
-		nombre_original = true
-		if get_parent() != null:
-			for hermano in get_parent().get_children():
-				if hermano != self and hermano.get_name() == nombre:
-					nombre_original = false
-	set_name(nombre)
-	return nombre # Devuelve el nuevo nombre
+	# Devuelve el nuevo nombre
+	return nombrar_sin_colision(self, nombre_base, get_parent())
 
 # Agrega un componente al objeto
 func agregar_componente(componente, nombre=null):
-	# TODO
+	var nuevo_nombre = nombre
+	if (nuevo_nombre == null):
+		nuevo_nombre = componente.get_name()
+		if (nuevo_nombre == null):
+			nuevo_nombre = "componente sin nombre"
+	nuevo_nombre = nombrar_sin_colision(componente, nuevo_nombre, componentes)
 	componentes.add_child(componente)
-	return nombre # Devuelve el nuevo nombre
+	return nuevo_nombre # Devuelve el nuevo nombre
 
 # Adjunta un script al objeto
 func agregar_comportamiento(nombre_script):
-	# TODO
+	var comportamiento = HUB.objetos.cargar_comortamiento(nombre_script)
+	if HUB.errores.fallo(comportamiento):
+		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', comportamiento), nombre())
 	var nombre = nombre_script
+	nombre = nombrar_sin_colision(comportamiento, nombre, comportamientos)
+	comportamientos.add_child(comportamiento)
 	return nombre # Devuelve el nuevo nombre
 
 # Quita un componente del objeto
@@ -74,10 +71,10 @@ func quitar_comportamiento(nombre):
 
 # Agrega a otro objeto como hijo en la jerarquía de objetos
 func agregar_hijo(objeto):
-	var nombre_original = objeto.get_name()
+	# TODO: ¿error si el objeto ya tiene padre? ¿o se lo saco al otro?
+	var nombre = nombrar_sin_colision(objeto, objeto.get_name(), hijos)
 	hijos.add_child(objeto)
-	objeto.nombrar(nombre_original)
-	return objeto.get_name() # Devuelve el nuevo nombre
+	return nombre # Devuelve el nuevo nombre
 
 # Quita un objeto hijo
 func quitar_hijo(objeto):
@@ -123,6 +120,24 @@ func padre():
 # Devuelve el nombre del objeto
 func nombre():
 	return get_name()
+
+# Funciones Auxiliares
+
+func nombrar_sin_colision(nodo, nombre_base, padre):
+	var nombre_original = false
+	var try = 0
+	var nombre = nombre_base
+	while not nombre_original:
+		if try != 0:
+			nombre = nombre_base + "_" + str(try)
+		try += 1
+		nombre_original = true
+		if padre != null:
+			for hermano in padre.get_children():
+				if hermano != self and hermano.get_name() == nombre:
+					nombre_original = false
+	nodo.set_name(nombre)
+	return nombre
 
 # Errores
 

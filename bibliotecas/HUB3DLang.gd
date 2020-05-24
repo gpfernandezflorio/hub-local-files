@@ -3,11 +3,13 @@
 
 # Funciones para crear objetos parseando el lenguaje HUB3DLang.
 # Requiere:
+	# Biblioteca tipos
 	# Biblioteca parser
 
 extends Node
 
 var HUB
+var tipos
 var parser_lib
 var parser
 var modulo = "HUB3DLang"
@@ -16,31 +18,66 @@ var pila_entorno = []
 
 func inicializar(hub):
 	HUB = hub
+	tipos = HUB.bibliotecas.importar("tipos")
+	if HUB.errores.fallo(tipos):
+		return HUB.error(HUB.errores.inicializar_fallo(self, tipos), modulo)
 	parser_lib = HUB.bibliotecas.importar("parser")
 	if HUB.errores.fallo(parser_lib):
 		return HUB.error(HUB.errores.inicializar_fallo(self, parser_lib), modulo)
-	var tds = HUB3DLangTDS.new(HUB, self)
+	var tds = HUB3DLangTDS.new(self)
 	parser = parser_lib.crear_parser([
+		# Un Hobjeto se define a partir de una secuencia de líneas
+		# Cada línea puede ser una de estas 3:
 		["I",["START","C"]],							# 0
 		["I",["$","=","START","C"]],					# 1
-		["I",["$","string","=","START","C"]],			# 2
-		["START",["HOME","HOMEMODS"]],					# 3
-		["HOMEMODS",[":","string","HOMEMODS"]],			# 4
-		["HOMEMODS",[]],								# 5
-		["HOME",["BASE"]],								# 6
-		["BASE",["string","ARGS","BASEMODS"]],			# 7
-		["ARGS",[]],									# 8
-		["ARGS",["(","ARGN",")"]],						# 9
-		["ARGN",["EXPR"]],								# 10
-		["ARGN",["EXPR",",","ARGN"]],					# 11
-		["BASEMODS",[]],								# 12
-		["I",["$","string","=","EXPR","C"]],			# 13
-		["C",[]],										# 14
-		["C",["comentario"]],							# 15
-		["EXPR",["0"]]									# 16
+		["I",["$","variable","=","START","C"]],			# 2
+		# C es un comentario opcional, iniciado con '#'
+		# START es una definición. Puede ser un número o un Hobjeto
+		# En los primeros dos casos, un número genera un error ya que definen el Hobjeto principal
+			# Si hay una línea "$=A", A es el Hobjeto principal (sólo puede haber una de estas)
+			# Si hay una única línea "A", A es el Hobjeto principal
+			# Si no, el objeto principal será uno que contenga a todos los que se definen de esa forma
+				# A menos que la haya exactamente un elemento definido de esta forma, los Hobjetos que ya tienen padre se ignoran
+		# En el tercer caso, se define una variable que puede ser accedida por su nombre más adelante
+		# Como los últimos dos casos sólo definen variables, devuelven null
+		["START",["HOME"]],								# 3
+		# HOME es una lista
+		# Si tiene más de un elemento, todos ellos deben ser Hobjetos o componentes
+			# En tal caso, se devuelve un nuevo Hobjeto cuyos hijos son los Hobjetos de la lista y sus componentes, los componentes de la lista
+			# A menos que la lista tenga exactamente un elemento, los Hobjetos que ya tienen padre se ignoran
+		# Sólo si la lista tiene un elemento, dicho elemento puede ser un número
+		["HOME",["HOME","&","OBJ"]],					# 4
+		# En este caso, la lista ya tiene más de un elemento así OBJ debe ser un Hobjeto o un componente
+		["HOME",["OBJ"]],								# 5
+		# En este caso OBJ puede ser un número, un Hobjeto o un componente pero no una variable
+		["OBJ",["EXPR","MODS"]],						# 6
+		# Una expresión puede ser de cualquier tipo pero no puede ser null
+		# Si tiene modificadores, ya no puede ser un número
+		["MODS",["mod","EXPR","MODS"]],					# 7
+		["MODS",[]],									# 8
+		["ARGS",[]],									# 9
+		["ARGS",["(","ARGN",")"]],						# 10
+		["ARGN",["EXPR"]],								# 11
+		["ARGN",["ARGN",",","EXPR"]],					# 12
+		["EXPR",["EXPR","opT","TERM"]],					# 13
+		# Acá me tengo que asegurar que ese TERM sea un número
+		["EXPR",["TERM"]],								# 14
+		["TERM",["TERM","opF","FACT"]],					# 15
+		# Acá me tengo que asegurar que ese FACT sea un número
+		["TERM",["FACT"]],								# 16
+		["FACT",["-","FACT"]],							# 17
+		# Acá me tengo que asegurar que ese FACT sea un número
+		["FACT",["(","START",")"]],						# 18
+		["FACT",["variable","ARGS"]],					# 19
+		# Si tiene argumentos, ya no puede ser un número
+		["C",[]],										# 20
+		["C",["comentario"]]							# 21
 	], {
-		"string":"([a-z]|_)+",
-		"comentario":"#.*"
+		"variable":"([a-z]|_)+",	# Letras y guiones bajos de long > 0
+		"mod":":[a-z]",				# ':' seguido de una letra minúscula
+		"comentario":"#.*",			# Cualquier cosa iniciada con un '#'
+		"opT":"\\+-",				# '+' y '-'
+		"opF":"\\*%"				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
 	}, tds)
 
 func parsear(texto, entorno={}):
@@ -54,7 +91,7 @@ func parsear(texto, entorno={}):
 				pila_entorno.pop_front()
 				return HUB.error(HUB.errores.error('No se pudo generar el objeto "' + linea + '".', nuevo_objeto), modulo)
 			nuevo_objeto = nuevo_objeto["valor"]
-			if not nuevo_objeto == null:
+			if HUB.objetos.es_un_objeto(nuevo_objeto):
 				nuevos_objetos.push_back(nuevo_objeto)
 	if "$" in entorno.keys():
 		raiz = entorno["$"]
@@ -62,124 +99,229 @@ func parsear(texto, entorno={}):
 		if nuevos_objetos.size() == 1:
 			raiz = nuevos_objetos[0]
 		else:
-			raiz = HUB.objetos.crear()
+			var hijos = []
 			for hijo in nuevos_objetos:
-				raiz.agregar_hijo(hijo)
+				if hijo.padre() == null:
+					hijos.append(hijo)
+			if hijos.size() == 1:
+				raiz = nuevos_objetos[0]
+			else:
+				raiz = HUB.objetos.crear()
+				for hijo in hijos:
+					raiz.agregar_hijo(hijo)
 	pila_entorno.pop_front()
 	if raiz.padre() == null:
 		HUB.nodo_usuario.mundo.agregar_hijo(raiz)
 	return raiz
 
 class HUB3DLangTDS:
-	var HUB
 	var modulo
-	func _init(hub, modulo):
-		HUB = hub
+	func _init(modulo):
 		self.modulo = modulo
 	func reduce(produccion, valores):
-		if produccion == 0: # I -> START C
-			if not valores[0] == null:
-				modulo.definir(valores[0].nombre(), valores[0])
-			return valores[0]
-		if produccion == 1: # I -> $ = START C
-			modulo.definir("$", valores[2])
-			return null
-		if produccion == 2: # I -> $ string = START C
-			modulo.definir(valores[1], valores[3])
-			return null
-		if produccion == 3: # START -> HOME HOMEMODS
-			# La lista HOME puede contener Objetos y Componentes
-			var objetos = []
-			var componentes = []
-			for elemento in valores[0]:
-				if HUB.objetos.es_un_objeto(elemento) and not elemento.padre() == null:
-					objetos.append(elemento)
-				else:
-					componentes.append(elemento)
-			var nuevo_objeto = null
-			if objetos.size() == 1:
-				nuevo_objeto = objetos[0]
-				objetos = []
-			else:
-				nuevo_objeto = HUB.objetos.crear(null)
-			for componente in componentes:
-				nuevo_objeto.agregar_componente(componente)
-			for objeto in objetos:
-				nuevo_objeto.agregar_hijo(objeto)
-			var hijo_de = null
-			for modificador in valores[1].keys():
-				if (modificador == "n"):
-					nuevo_objeto.nombrar(valores[1]["n"])
-				if (modificador == "p"):
-					hijo_de = modulo.obtener(valores[1]["p"])
-					if hijo_de == null:
-						hijo_de = HUB.objetos.localizar(valores[1]["p"])
-						if HUB.errores.fallo(hijo_de):
-							return HUB.error(modulo.parent_invalido(valores[1]["p"], hijo_de), modulo.modulo)
-			if hijo_de == null:
-				return nuevo_objeto
-			else:
-				hijo_de.agregar_hijo(nuevo_objeto)
-				return null
-		if produccion == 4: # HOMEMODS -> : string HOMEMODS
-			var i = valores[1][0]
-			if not i in ["n","p"]:
-				return HUB.error(modulo.modificador_invalido(i), modulo.modulo)
-			var dic = valores[2]
-			dic[i] = valores[1].substr(1,valores[1].length()-1)
-			return dic
-		if produccion == 5: # HOMEMODS -> []
-			return {}
-		if produccion == 6: # HOME -> BASE
-			return valores[0]
-		if produccion == 7: # BASE -> string ARGS BASEMODS
-			var resultado = null
-			# Primitivas:
-			if valores[0] in ["_","luz","body","camara"]:
-				resultado = modulo.call("crear_"+valores[0], valores[1], valores[2])
-			else:
-				resultado = modulo.desde_archivo(valores[0], valores[1], valores[2])
-			if resultado == null:
-				return HUB.error(modulo.primitiva_invalida(valores[0]), modulo.modulo)
-			if HUB.errores.fallo(resultado):
-				return resultado
-			return [resultado]
-		if produccion == 8: # ARGS -> []
-			return []
-		if produccion == 9: # ARGS -> ( ARGN )
-			return valores[0]
-		if produccion == 10: # ARGN -> EXPR
-			return [valores[0]]
-		if produccion == 11: # ARGN -> EXPR , ARGN
-			valores[2].append(valores[0])
-			return valores[2]
-		if produccion == 12: # BASEMODS -> []
-			return {}
-		if produccion == 13: # I -> $ string = EXPR C
-			modulo.definir(valores[1], valores[3])
-			return null
-		if produccion == 14: # C -> []
-			return null
-		if produccion == 15: # C -> comentario
-			return null
-		if produccion == 16: # EXPR -> ...
-			return 0
+		return modulo.reduce(produccion, valores)
+
+func reduce(produccion, valores):
+	# I -> START C
+	if produccion == 0:
+		if HUB.objetos.es_un_objeto(valores[0]):
+			definir(valores[0].nombre(), valores[0]) # TODO: Esto hacerlo cuando le doy un nombre con :n
+		else:
+			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
+		return valores[0]
+	# I -> $ = START C
+	if produccion == 1:
+		if not HUB.objetos.es_un_objeto(valores[2]):
+			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
+		modulo.definir("$", valores[2])
 		return null
+	# I -> $ variable = START C
+	if produccion == 2:
+		modulo.definir(valores[1], valores[3])
+		return null
+	# START -> HOME
+	if produccion == 3:
+		if valores[0].size() == 1:
+			var resultado = valores[0][0]
+			if tipos.es_un_componente(resultado):
+				resultado = componente_a_objeto(resultado)
+			return resultado
+		var objetos = []
+		var componentes = []
+		for elemento in valores[0]:
+			if HUB.objetos.es_un_objeto(elemento) and elemento.padre() == null:
+				objetos.append(elemento)
+			elif tipos.es_un_componente(elemento):
+				componentes.append(elemento)
+		var nuevo_objeto = null
+		if objetos.size() == 1:
+			nuevo_objeto = objetos[0]
+			objetos = []
+		else:
+			nuevo_objeto = HUB.objetos.crear(null)
+		for componente in componentes:
+			nuevo_objeto.agregar_componente(componente)
+		for objeto in objetos:
+			nuevo_objeto.agregar_hijo(objeto)
+		return nuevo_objeto
+	# HOME -> HOME & OBJ
+	if produccion == 4:
+		if HUB.objetos.es_un_objeto(valores[2]) or tipos.es_un_componente(valores[2]):
+			valores[0].append(valores[2])
+		else:
+			return HUB.error(HUB.errores.error("no se pueden unir con '&'"), modulo)
+		return valores[0]
+	# HOME -> OBJ
+	if produccion == 5:
+		return [valores[0]]
+	# OBJ -> EXPR MODS
+	if produccion == 6:
+		var resultado = valores[0]
+		if tipos.es_un_string(resultado):
+			resultado = base(resultado, [])
+			if tipos.es_un_string(resultado):
+				if esta_definido(resultado):
+					resultado = obtener(valores[0])
+				else:
+					return HUB.error(identificador_invalido(resultado), modulo)
+		if valores[1].keys().size() == 0:
+			return resultado
+		if tipos.es_un_numero(resultado):
+			return HUB.error(HUB.errores.error("los modificadores no se pueden aplicar a números"), modulo)
+		return aplicar_modificaciones(resultado, valores[1])
+	# MODS -> mod EXPR MODS
+	if produccion == 7: # TODO: ¿chequear repetidos? :p y :n no tiene sentido pero :s podría tener varios
+		var i = valores[0][1]
+		var dic = valores[2]
+		dic[i] = valores[1] # Por ahora, me quedo con el primero
+		return dic
+	# MODS -> []
+	if produccion == 8:
+		return {}
+	# ARGS -> []
+	if produccion == 9:
+		return []
+	# ARGS -> ( ARGN )
+	if produccion == 10:
+		return valores[0]
+	# ARGN -> EXPR
+	if produccion == 11:
+		return [valores[0]]
+	# ARGN -> ARGN , EXPR
+	if produccion == 12:
+		valores[0].append(valores[2])
+		return valores[0]
+	# EXPR -> EXPR op TERM
+	if produccion == 13:
+		if tipos.es_un_numero(valores[0]) and tipos.es_un_numero(valores[2]):
+			if valores[1] == '+':
+				return valores[0] + valores[2]
+			elif valores[1] == '-':
+				return valores[0] - valores[2]
+		return HUB.error(HUB.errores.error("no se pueden sumar si no son números"), modulo)
+	# EXPR -> TERM
+	if produccion == 14:
+		return valores[0]
+	# TERM -> TERM op FACT
+	if produccion == 15:
+		if tipos.es_un_numero(valores[0]) and tipos.es_un_numero(valores[2]):
+			if valores[1] == '*':
+				return valores[0] * valores[2]
+			elif valores[1] == '%':
+				return valores[0] / valores[2]
+		return HUB.error(HUB.errores.error("no se pueden multiplicar si no son números"), modulo)
+	# TERM -> FACT
+	if produccion == 16:
+		return valores[0]
+	# FACT -> -FACT
+	if produccion == 17:
+		if tipos.es_un_numero(valores[1]):
+			return -1*valores[1]
+		return HUB.error(HUB.errores.error("no se puede negar si no es un número"), modulo)
+	# FACT -> ( START )
+	if produccion == 18:
+		return valores[1]
+	# FACT -> variable ARGS
+	if produccion == 19:
+		if valores[1].size() == 0: # Lo devuelvo como texto ya que no sé para qué se va a usar
+			return valores[0]
+		if tipos.es_un_numero(valores[0]):
+			return HUB.error(HUB.errores.error("los números no llevan argumentos"), modulo)
+		return base(valores[0], valores[1])
+	return null
 
 # Auxiliares
+
+func aplicar_modificaciones(algo, mods):
+	var resultado = algo
+	var hijo_de = null
+	for modificador in mods.keys():
+		# NOMBRE
+		if (modificador == "n"):
+			if HUB.objetos.es_un_objeto(resultado):
+				resultado.nombrar(mods["n"])
+			else:
+				resultado.set_name(mods["n"])
+		# PARENT
+		elif (modificador == "p"):
+			if esta_definido(mods["p"]):
+				hijo_de = obtener(mods["p"])
+			else:
+				hijo_de = HUB.objetos.localizar(mods["p"])
+				if HUB.errores.fallo(hijo_de):
+					return HUB.error(parent_invalido(mods["p"], hijo_de), modulo)
+		# SCRIPT
+		elif (modificador == "s"):
+			if tipos.es_un_componente(resultado):
+				resultado = componente_a_objeto(resultado)
+			var c = resultado.agregar_comportamiento(mods["s"])
+			if HUB.errores.fallo(c):
+				return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + mods["s"] + '".', c), modulo)
+		else:
+			return HUB.error(modificador_invalido(modificador), modulo)
+	if hijo_de != null:
+		if tipos.es_un_componente(resultado):
+			resultado = componente_a_objeto(resultado)
+		hijo_de.agregar_hijo(resultado)
+	return resultado
+
+func base(texto, argumentos):
+	var resultado = null
+	# Primitivas:
+	if has_method("crear_"+texto): # Forma elegante de preguntar si es una primitiva
+		resultado = call("crear_"+texto, argumentos)
+	elif esta_definido(texto) and argumentos.size() == 0:
+		resultado = obtener(texto)
+	elif HUB.archivos.existe("objetos/", texto + ".gd"):
+		resultado = desde_archivo(texto, argumentos)
+	elif argumentos.size() == 0:
+		resultado = texto
+	else:
+		return HUB.error(HUB.errores.error("primitiva no definida"), modulo)
+	return resultado
 
 func definir(clave, valor):
 	pila_entorno[0][clave] = valor
 
 func obtener(clave):
-	if pila_entorno[0].has(clave):
+	if clave in pila_entorno[0]:
 		return pila_entorno[0][clave]
 	return null
 
-func desde_archivo(nombre, argumentos, modificadores):
+func esta_definido(clave):
+	return pila_entorno[0].has(clave)
+
+func componente_a_objeto(componente):
+	var nuevo_objeto = HUB.objetos.crear(null)
+	nuevo_objeto.agregar_componente(componente)
+	if not componente.get_name().begins_with("@@"):
+		nuevo_objeto.nombrar(componente.get_name())
+	return nuevo_objeto
+
+func desde_archivo(nombre, argumentos):
 	var contenido_archivo = HUB.archivos.leer("objetos/", nombre + ".gd")
 	if HUB.errores.fallo(contenido_archivo):
-		return HUB.error(primitiva_invalida(nombre, contenido_archivo), modulo)
+		return contenido_archivo
 	var entorno = {}
 	var i=1
 	for argumento in argumentos:
@@ -187,52 +329,57 @@ func desde_archivo(nombre, argumentos, modificadores):
 		i+=1
 	return parsear(contenido_archivo, entorno)
 
-
 var tipos_body = {
 	"static":StaticBody,
 	"kinematic":KinematicBody
 }
 
-func crear_body(argumentos, modificadores):
+func crear_body(argumentos):
 	var resultado = null
 	if argumentos.size() == 1:
 		var tipo = argumentos[0]
 		if tipo in tipos_body.keys():
 			resultado = tipos_body[tipo].new()
+			resultado.set_name("body")
 		else:
 			return HUB.error(HUB.errores.error("Tipo de body inválido: "+tipo), modulo)
 	else:
 		resultado = StaticBody.new()
+		resultado.set_name("body estático")
 	return resultado
 
 var tipos_luz = {
 	"omni":OmniLight
 }
 
-func crear_luz(argumentos, modificadores):
+func crear_luz(argumentos):
 	var resultado = null
 	if argumentos.size() == 1:
 		var tipo = argumentos[0]
 		if tipo in tipos_luz.keys():
 			resultado = tipos_luz[tipo].new()
+			resultado.set_name("luz")
 		else:
 			return HUB.error(HUB.errores.error("Tipo de luz inválido: "+tipo), modulo)
 	else:
 		resultado = OmniLight.new()
+		resultado.set_name("luz omnidireccional")
 	return resultado
 
-func crear_camara(argumentos, modificadores):
-	return Camera.new()
+func crear_camara(argumentos):
+	var resultado = Camera.new()
+	resultado.set_name("cámara")
+	return resultado
 
-func crear__(argumentos, modificadores):
+func crear__(argumentos):
 	return HUB.objetos.crear(null)
 
 # Errores
 
-# primitiva invalida
-func primitiva_invalida(primitiva, stack_error = null):
-	return HUB.errores.error('La primitiva "' +\
-	primitiva + '" no está definida.', stack_error)
+# identificador invalido
+func identificador_invalido(id, stack_error = null):
+	return HUB.errores.error('El identificador "' +\
+	id + '" no está definido.', stack_error)
 
 # modificador invalido
 func modificador_invalido(modificador, stack_error = null):

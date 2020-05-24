@@ -21,7 +21,7 @@ var codigos_script = ["SRC"]
 var compilado
 # ¿Los fuentes están en userFS?
 var userFS_src
-# OS
+# OS: “Android”, “BlackBerry 10”, “Flash”, “Haiku”, “iOS”, “HTML5”, “OSX”, “Server”, “Windows”, “WinRT”, “X11”
 var os
 # La verdadera ubicación de los archivos de usuario
 # Si estoy en el editor o usando el FS del usuario, es igual a la ruta raiz

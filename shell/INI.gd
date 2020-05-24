@@ -1,7 +1,7 @@
 ## INI
 ## SH
 
-window 1200x700
+#window 1200x700
 
 #test/comandos/clear
 #test/bibliotecas/parser
@@ -10,12 +10,14 @@ window 1200x700
 #test/src/procesos
 #test/src/terminal
 
-#window 400x700
+window 800x600
 
 #test/src/objetos
 
 #test
 
 new fps
-
+#htree
+#hide
 tree pos script type
+#fstree
