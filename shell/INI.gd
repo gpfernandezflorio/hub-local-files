@@ -17,7 +17,7 @@ window 800x600
 #test
 
 new fps
-#htree
-#hide
+htree -p
+hide
 tree pos script type
 #fstree

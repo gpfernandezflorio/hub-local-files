@@ -17,16 +17,23 @@ var modulo = "OBJETOS"
 var carpeta_src = "objetos/"
 # Script genérico de un objeto
 var script_objeto = "objeto.gd"
+# Ruta a la carpeta de scripts de objeto
+var carpeta_objetos = "objetos/"
 # Ruta a la carpeta de scripts de comportamiento
 var carpeta_comportamientos = "comportamiento/"
+# Codigo de objetos
+var codigo_objetos = "Objeto"
 # Codigo de comportamientos
-var codigo = "Comportamiento"
-# Diccionario con los comportamientos cargadas
+var codigo_comportamientos = "Comportamiento"
+# Diccionario con los comportamientos cargados
 var comportamientos_cargados = {} # Dicc(string : GDScript)
+# Diccionario con los generadores cargados
+var generadores_cargados = {} # Dicc(string : Node)
 
 func inicializar(hub):
 	HUB = hub
-	HUB.archivos.codigos_script.append(codigo)
+	HUB.archivos.codigos_script.append(codigo_objetos)
+	HUB.archivos.codigos_script.append(codigo_comportamientos)
 	script_objeto = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_objeto)
 	if script_objeto != null:
 		script_objeto.set_name("Objeto")
@@ -86,13 +93,42 @@ func cargar_comortamiento(nombre):
 	if nombre in comportamientos_cargados:
 		script = comportamientos_cargados[nombre]
 	else:
-		script = HUB.archivos.abrir(carpeta_comportamientos, nombre + ".gd", codigo)
+		script = HUB.archivos.abrir(carpeta_comportamientos, nombre + ".gd", codigo_comportamientos)
 		if (HUB.errores.fallo(script)):
-			return HUB.error(comportamiento_inexistente(nombre, nombre), modulo)
+			return HUB.error(comportamiento_inexistente(nombre, script), modulo)
 		script.set_name(nombre)
 		comportamientos_cargados[nombre] = script
 	nodo.set_script(script)
 	return nodo
+
+# Generar un objeto a partir de un generador tipo función
+func generar(nombre, argumentos):
+	if not nombre in generadores_cargados:
+		var script = HUB.archivos.abrir(carpeta_objetos, nombre + ".gd", codigo_objetos)
+		if (HUB.errores.fallo(script)):
+			return HUB.error(generador_inexistente(nombre, script), modulo)
+		var nodo = Node.new()
+		nodo.set_script(script)
+		nodo.inicializar(HUB)
+		generadores_cargados[nombre] = nodo
+	return generadores_cargados[nombre].gen(argumentos)
+
+# Usada para que los scripts de comportamiento accedan a los componentes del objeto
+func componente_candidato(objeto, nombre, tipo):
+	if objeto.tiene_componente_nombrado(nombre):
+		var candidato = objeto.componente_nombrado(nombre)
+		if candidato.get_type() == tipo:
+			return candidato
+	var candidatos = []
+	for componente in objeto.componentes():
+		if componente.get_type() == tipo:
+			candidatos.append(componente)
+	if candidatos.size()==0:
+		return HUB.error(HUB.errores.error("No hay candidato"), modulo)
+	if candidatos.size()==1:
+		return candidatos[0]
+	# ¿Qué hago si hay más de uno?
+	return candidatos[0] # Por ahora, devuelvo el primero
 
 # Errores
 
@@ -101,6 +137,11 @@ func objeto_inexistente(nombre_completo, desde, stack_error=null):
 	return HUB.errores.error('No se encontró ningún objeto con nombre "' + \
 		nombre_completo + '" en la jerarquía desde el objeto "' + desde.get_name() + \
 		'".', stack_error)
+
+# Generador inexistente
+func generador_inexistente(nombre, desde, stack_error=null):
+	return HUB.errores.error('No se encontró ningún generador de objetos con nombre "' + \
+		nombre + '".', stack_error)
 
 # Comportamiento inexistente
 func comportamiento_inexistente(nombre, stack_error=null):

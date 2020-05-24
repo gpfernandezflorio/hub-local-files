@@ -2,9 +2,11 @@
 ## Objeto
 ## HUB3DLang
 
-#_:ncosa:scontrol
+
+
+#_:ncosa:sfps/control
 #luz:nluz:pcosa
 #camara:ncamara:pcosa
 #body:nmario:pcosa
 
-luz&camara:nf
+(luz&camara&body(kinematic):nb):sfps/control(b)

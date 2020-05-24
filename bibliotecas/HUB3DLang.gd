@@ -57,8 +57,8 @@ func inicializar(hub):
 		["MODS",[]],									# 8
 		["ARGS",[]],									# 9
 		["ARGS",["(","ARGN",")"]],						# 10
-		["ARGN",["EXPR"]],								# 11
-		["ARGN",["ARGN",",","EXPR"]],					# 12
+		["ARGN",["ARG"]],								# 11
+		["ARGN",["ARGN",",","ARG"]],					# 12
 		["EXPR",["EXPR","opT","TERM"]],					# 13
 		# Acá me tengo que asegurar que ese TERM sea un número
 		["EXPR",["TERM"]],								# 14
@@ -68,12 +68,17 @@ func inicializar(hub):
 		["FACT",["-","FACT"]],							# 17
 		# Acá me tengo que asegurar que ese FACT sea un número
 		["FACT",["(","START",")"]],						# 18
-		["FACT",["variable","ARGS"]],					# 19
-		# Si tiene argumentos, ya no puede ser un número
-		["C",[]],										# 20
-		["C",["comentario"]]							# 21
+		["FACT",["PRIM","ARGS"]],						# 19
+		# Si tiene argumentos, lo devuelvo como un par
+		["PRIM",["variable"]],							# 20
+		["PRIM",["numero"]],							# 21
+		["ARG",["EXPR"]],								# 22
+		["ARG",["variable",":","EXPR"]],				# 23
+		["C",[]],										# 24
+		["C",["comentario"]]							# 25
 	], {
-		"variable":"([a-z]|_)+",	# Letras y guiones bajos de long > 0
+		"variable":"([a-z]|_|/)+",	# Letras y guiones bajos de long > 0
+		"numero":"[0-9]+|([0-9]*\\.[0-9]+)", # números
 		"mod":":[a-z]",				# ':' seguido de una letra minúscula
 		"comentario":"#.*",			# Cualquier cosa iniciada con un '#'
 		"opT":"\\+-",				# '+' y '-'
@@ -110,7 +115,7 @@ func parsear(texto, entorno={}):
 				for hijo in hijos:
 					raiz.agregar_hijo(hijo)
 	pila_entorno.pop_front()
-	if raiz.padre() == null:
+	if raiz.padre() == null and pila_entorno.size()==0:
 		HUB.nodo_usuario.mundo.agregar_hijo(raiz)
 	return raiz
 
@@ -178,12 +183,14 @@ func reduce(produccion, valores):
 	if produccion == 6:
 		var resultado = valores[0]
 		if tipos.es_un_string(resultado):
-			resultado = base(resultado, [])
+			resultado = base(resultado, [[],{}])
 			if tipos.es_un_string(resultado):
 				if esta_definido(resultado):
 					resultado = obtener(valores[0])
 				else:
 					return HUB.error(identificador_invalido(resultado), modulo)
+		if tipos.es_una_lista(resultado):
+			resultado = base(resultado[0], resultado[1])
 		if valores[1].keys().size() == 0:
 			return resultado
 		if tipos.es_un_numero(resultado):
@@ -200,16 +207,22 @@ func reduce(produccion, valores):
 		return {}
 	# ARGS -> []
 	if produccion == 9:
-		return []
+		return [[],{}]
 	# ARGS -> ( ARGN )
 	if produccion == 10:
-		return valores[0]
-	# ARGN -> EXPR
+		return valores[1]
+	# ARGN -> ARG
 	if produccion == 11:
-		return [valores[0]]
-	# ARGN -> ARGN , EXPR
+		if (valores[0][0].length()==0):
+			return [[valores[0][1]],{}]
+		else:
+			return [[],{valores[0][0]:valores[0][1]}]
+	# ARGN -> ARGN , ARG
 	if produccion == 12:
-		valores[0].append(valores[2])
+		if (valores[2][0].length()==0):
+			valores[0][0].append(valores[2][1])
+		else:
+			valores[0][1][valores[2][0]] = valores[2][1]
 		return valores[0]
 	# EXPR -> EXPR op TERM
 	if produccion == 13:
@@ -241,13 +254,26 @@ func reduce(produccion, valores):
 	# FACT -> ( START )
 	if produccion == 18:
 		return valores[1]
-	# FACT -> variable ARGS
+	# FACT -> PRIM ARGS
 	if produccion == 19:
-		if valores[1].size() == 0: # Lo devuelvo como texto ya que no sé para qué se va a usar
+		if valores[1][0].size() == 0 and valores[1][1].keys().size() == 0:
+			# Lo devuelvo como texto ya que no sé para qué se va a usar
 			return valores[0]
 		if tipos.es_un_numero(valores[0]):
 			return HUB.error(HUB.errores.error("los números no llevan argumentos"), modulo)
-		return base(valores[0], valores[1])
+		return [valores[0], valores[1]]
+	# PRIM -> variable
+	if produccion == 20:
+		return valores[0]
+	# PRIM -> number
+	if produccion == 21:
+		return valores[0]
+	# ARG -> EXPR
+	if produccion == 22:
+		return ["",valores[0]]
+	# ARG -> variable : EXPR
+	if produccion == 23:
+		return [valores[0],valores[2]]
 	return null
 
 # Auxiliares
@@ -274,9 +300,14 @@ func aplicar_modificaciones(algo, mods):
 		elif (modificador == "s"):
 			if tipos.es_un_componente(resultado):
 				resultado = componente_a_objeto(resultado)
-			var c = resultado.agregar_comportamiento(mods["s"])
+			var script = mods["s"]
+			var args = [[],{}]
+			if tipos.es_una_lista(script):
+				args = script[1]
+				script = script[0]
+			var c = resultado.agregar_comportamiento(script, args)
 			if HUB.errores.fallo(c):
-				return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + mods["s"] + '".', c), modulo)
+				return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + script + '".', c), modulo)
 		else:
 			return HUB.error(modificador_invalido(modificador), modulo)
 	if hijo_de != null:
@@ -319,59 +350,87 @@ func componente_a_objeto(componente):
 	return nuevo_objeto
 
 func desde_archivo(nombre, argumentos):
-	var contenido_archivo = HUB.archivos.leer("objetos/", nombre + ".gd")
+	# OJO: "argumentos" es un par lista-diccionario
+	var contenido_archivo = HUB.archivos.leer("objetos/", nombre + ".gd", "Objeto")
 	if HUB.errores.fallo(contenido_archivo):
 		return contenido_archivo
-	var entorno = {}
-	var i=1
-	for argumento in argumentos:
-		entorno[str(i)] = argumento
-		i+=1
-	return parsear(contenido_archivo, entorno)
+	# La función leer retornó ok, así que esto no puede fallar:
+	var tipo_archivo = contenido_archivo.split("\n")[2]
+	tipo_archivo = tipo_archivo.substr(3,tipo_archivo.length()-3)
+	if tipo_archivo == "HUB3DLang":
+		var entorno = {}
+		var i=1
+		for argumento in argumentos[0]:
+			entorno[str(i)] = argumento
+			i+=1
+		for argumento in argumentos[1].keys():
+			entorno[argumento] = argumentos[1][argumento]
+		return parsear(contenido_archivo, entorno)
+	if tipo_archivo == "Funcion":
+		var resultado = HUB.objetos.generar(nombre, argumentos)
+		if tipos.es_un_string(resultado):
+			return parsear(resultado)
+		return resultado
+	# Nunca debería llegar acá...
+	return null
 
 var tipos_body = {
 	"static":StaticBody,
 	"kinematic":KinematicBody
 }
 
+# Argumentos posibles:
+	# tipo: Tipo de cuerpo. Puede ser cualquiera de los definidos en tipos_body.
+		# Valor por defecto: "static"
+
+# Orden por defecto:
+	# | tipo |
+
 func crear_body(argumentos):
-	var resultado = null
-	if argumentos.size() == 1:
-		var tipo = argumentos[0]
-		if tipo in tipos_body.keys():
-			resultado = tipos_body[tipo].new()
-			resultado.set_name("body")
-		else:
-			return HUB.error(HUB.errores.error("Tipo de body inválido: "+tipo), modulo)
-	else:
-		resultado = StaticBody.new()
-		resultado.set_name("body estático")
-	return resultado
+	# OJO: "argumentos" es un par lista-diccionario
+	var tipo = "static"
+	if argumentos[0].size() > 0:
+		tipo = argumentos[0][0]
+	elif "tipo" in argumentos[1].keys():
+		tipo = argumentos[1]["tipo"]
+	if tipo in tipos_body.keys():
+		var resultado = tipos_body[tipo].new()
+		resultado.set_name("body")
+		return resultado
+	return HUB.error(HUB.errores.error("Tipo de body inválido: "+tipo), modulo)
 
 var tipos_luz = {
 	"omni":OmniLight
 }
 
+# Argumentos posibles:
+	# tipo: Tipo de luz. Puede ser cualquiera de los definidos en tipos_luz.
+		# Valor por defecto: "omni"
+
+# Orden por defecto:
+	# | tipo |
+
 func crear_luz(argumentos):
-	var resultado = null
-	if argumentos.size() == 1:
-		var tipo = argumentos[0]
-		if tipo in tipos_luz.keys():
-			resultado = tipos_luz[tipo].new()
-			resultado.set_name("luz")
-		else:
-			return HUB.error(HUB.errores.error("Tipo de luz inválido: "+tipo), modulo)
-	else:
-		resultado = OmniLight.new()
-		resultado.set_name("luz omnidireccional")
-	return resultado
+	# OJO: "argumentos" es un par lista-diccionario
+	var tipo = "omni"
+	if argumentos[0].size() > 0:
+		tipo = argumentos[0][0]
+	elif "tipo" in argumentos[1].keys():
+		tipo = argumentos[1]["tipo"]
+	if tipo in tipos_luz.keys():
+		var resultado = tipos_luz[tipo].new()
+		resultado.set_name("luz")
+		return resultado
+	return HUB.error(HUB.errores.error("Tipo de luz inválido: "+tipo), modulo)
 
 func crear_camara(argumentos):
+	# OJO: "argumentos" es un par lista-diccionario
 	var resultado = Camera.new()
 	resultado.set_name("cámara")
 	return resultado
 
 func crear__(argumentos):
+	# OJO: "argumentos" es un par lista-diccionario
 	return HUB.objetos.crear(null)
 
 # Errores

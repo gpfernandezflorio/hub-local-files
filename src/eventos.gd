@@ -44,6 +44,14 @@ func registrar_ventana_escalada(nodo, funcion):
 	else:
 		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
 
+# Registra una función periódica en el nodo
+func registrar_periodico(nodo, funcion):
+	var accion = "T"
+	if registro_eventos.has(accion):
+		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
+	else:
+		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+
 # Asigna el modo del cursor del mouse
 func set_modo_mouse(modo):
 	modo_mouse = modo
@@ -65,7 +73,7 @@ func _input(ev):
 			tecla_soltada(ev)
 
 func _fixed_process(delta):
-	pass
+	periodico(delta)
 
 func ventana_escalada():
 	if registro_eventos.has("WS"):
@@ -93,6 +101,11 @@ func tecla_soltada(ev):
 				corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
 			if corresponde:
 				nodo.call(registro["funcion"])
+
+func periodico(delta):
+	if registro_eventos.has("T"):
+		for registro in registro_eventos["T"]:
+			registro["nodo"].call(registro["funcion"], delta)
 
 # Constantes del teclado:
 #	KEY_ESCAPE,KEY_F1,KEY_F2,KEY_F3,KEY_F4,KEY_F5,KEY_F6,KEY_F7,KEY_F8,KEY_F9,KEY_F10,KEY_F11,KEY_F12,

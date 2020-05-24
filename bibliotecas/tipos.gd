@@ -10,6 +10,9 @@ var HUB
 func inicializar(hub):
 	HUB = hub
 
+func es_una_lista(algo):
+	return typeof(algo) == TYPE_ARRAY
+
 func es_un_string(algo):
 	return typeof(algo) == TYPE_STRING
 

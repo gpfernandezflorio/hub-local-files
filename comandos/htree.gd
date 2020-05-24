@@ -21,7 +21,7 @@ func inicializar(hub):
 
 func comando(argumentos):
 	var atributos = parsear_argumentos(argumentos)
-	HUB.mensaje(printer.imprimir_arbol(HUB, AtributosNodo.new(atributos)))
+	HUB.mensaje(printer.imprimir_arbol(HUB, AtributosNodo.new(printer, atributos)))
 
 func parsear_argumentos(argumentos):
 	var atributos = []
@@ -30,18 +30,24 @@ func parsear_argumentos(argumentos):
 			atributos.append("TODOS")
 		elif argumento == "-t":
 			atributos.append("TIPO")
+		elif argumento == "-p":
+			atributos.append("POS")
 		else:
 			pass # argumento inválido
 	return atributos
 
 class AtributosNodo:
+	var printer
 	var atributos
-	func _init(atributos = []):
+	func _init(printer, atributos = []):
+		self.printer = printer
 		self.atributos = atributos
 	func nombre_de_nodo(nodo):
 		var nombre = nodo.get_name()
 		if "TIPO" in atributos:
 			nombre += " [" + nodo.get_type() + "]"
+		if "POS" in atributos and nodo.has_method("get_translation"):
+			nombre += " - " + printer.imprimir(nodo.get_translation())
 		return nombre
 	func hijos_de_nodo(nodo):
 		var hijos = nodo.get_children()

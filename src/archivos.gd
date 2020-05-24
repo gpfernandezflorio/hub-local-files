@@ -45,27 +45,35 @@ func abrir(ruta, nombre, tipo=null):
 		return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 	var data_archivo = fs_load(ruta + nombre)
 	if tipo != null: # Verificaciones adicionales
-		var verificacion_encabezado = verificar_encabezado(
+		var verificacion_encabezado = verificar_encabezado_script(
 			ruta, nombre, nombre.replace(".gd",""), tipo)
 		if HUB.errores.fallo(verificacion_encabezado):
 			return HUB.error(archivo_invalido(nombre, tipo, verificacion_encabezado), modulo)
 		if tipo in codigos_script:
 			var verificacion_funciones = verificar_funciones(
-				nombre, data_archivo, tipo)
+				nombre, data_archivo, tipo, verificacion_encabezado)
 			if HUB.errores.fallo(verificacion_funciones):
 				return HUB.error(archivo_invalido(nombre, tipo, verificacion_funciones), modulo)
 	return data_archivo
 
 # Carga el contenido de un archivo como texto
-func leer(ruta, nombre):
+func leer(ruta, nombre, tipo=null):
+	var contenido = ""
 	if existe_user(ruta + nombre):
-		return file_system.leer(ruta_user + ruta + nombre)
-	if existe_raiz(ruta + nombre):
+		contenido = file_system.leer(ruta_user + ruta + nombre)
+	elif existe_raiz(ruta + nombre):
 		# Sólo lo puedo abrir si no es un script
 		if file_system.nombre_real(nombre).ends_with(".gdc"):
 			return HUB.error(archivo_binario(ruta, nombre), modulo)
-		return file_system.leer(HUB.ruta_raiz + ruta + nombre)
-	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
+		contenido = file_system.leer(HUB.ruta_raiz + ruta + nombre)
+	else:
+		return HUB.error(archivo_inexistente(ruta, nombre), modulo)
+	if tipo != null: # Verificaciones adicionales
+		var verificacion_encabezado = verificar_encabezado(contenido.split("\n"),
+			ruta, nombre, nombre.replace(".gd",""), tipo)
+		if HUB.errores.fallo(verificacion_encabezado):
+			return HUB.error(archivo_invalido(nombre, tipo, verificacion_encabezado), modulo)
+	return contenido
 
 # Escribe texto al final de un archivo existente
 func escribir(ruta, nombre, contenido, en_nueva_linea=true):
@@ -166,12 +174,16 @@ func existe_user(ruta):
 func existe_raiz(ruta):
 	return file_system.existe(HUB.ruta_raiz + ruta)
 
-func verificar_encabezado(ruta, archivo, nombre, codigo_tipo):
+func verificar_encabezado_script(ruta, archivo, nombre, codigo_tipo):
 	# Asume que el archivo existe y por lo tanto, leer no falla
 	if not existe_user(ruta + archivo):
 		# El encabezado fue eliminado, no se puede hacer nada
 		return ""
 	var contenido = leer(ruta, archivo).split("\n")
+	return verificar_encabezado(contenido, ruta, archivo, nombre, codigo_tipo)
+
+func verificar_encabezado(contenido, ruta, archivo, nombre, codigo_tipo):
+	var subtipo = null # En caso de éxito, devuelvo el subtipo, si hay uno
 	if contenido.size() < 2:
 		return HUB.error(encabezado_faltante(archivo), modulo)
 	if not (contenido[0].begins_with("## ") and contenido[1].begins_with("## ")):
@@ -187,9 +199,10 @@ func verificar_encabezado(ruta, archivo, nombre, codigo_tipo):
 			contenido[2].substr(3,contenido[2].length()-3) in codigos_objeto
 		):
 			return HUB.error(encabezado_invalido_objeto(archivo), modulo)
-	return ""
+		subtipo = contenido[2].substr(3,contenido[2].length()-3)
+	return subtipo
 
-func verificar_funciones(archivo, script, codigo_tipo):
+func verificar_funciones(archivo, script, codigo_tipo, codigo_subtipo=null):
 	var nodo = Node.new()
 	nodo.set_name(archivo)
 	nodo.set_script(script)
@@ -202,6 +215,11 @@ func verificar_funciones(archivo, script, codigo_tipo):
 			HUB.errores.verificar_implementa_funcion(nodo,"finalizar",0)
 		if HUB.errores.fallo(verificacion_finalizar):
 			return HUB.error(funciones_no_implementadas(archivo, codigo_tipo, verificacion_finalizar), modulo)
+	if codigo_tipo == "Comportamiento":
+		var verificacion_inicializar = \
+			HUB.errores.verificar_implementa_funcion(nodo,"inicializar",3)
+		if HUB.errores.fallo(verificacion_inicializar):
+			return HUB.error(funciones_no_implementadas(archivo, codigo_tipo, verificacion_inicializar), modulo)
 	else:
 		var verificacion_inicializar = \
 			HUB.errores.verificar_implementa_funcion(nodo,"inicializar",1)
@@ -212,6 +230,11 @@ func verificar_funciones(archivo, script, codigo_tipo):
 			HUB.errores.verificar_implementa_funcion(nodo,"comando",1)
 		if HUB.errores.fallo(verificacion_comando):
 			return HUB.error(funciones_no_implementadas(archivo, codigo_tipo, verificacion_comando), modulo)
+	if codigo_tipo == "Objeto":
+		if codigo_subtipo == "Funcion":
+			var verificacion_gen = HUB.errores.verificar_implementa_funcion(nodo,"gen",1)
+			if HUB.errores.fallo(verificacion_gen):
+				return HUB.error(funciones_no_implementadas(archivo, codigo_subtipo, verificacion_gen), modulo)
 	return ""
 
 class FileSystem:
@@ -368,7 +391,7 @@ func encabezado_invalido_tipo(archivo, tipo, stack_error=null):
 	stack_error)
 
 # Encabezado inválido objeto
-func encabezado_invalido_objeto(archivo, tipo, stack_error=null):
+func encabezado_invalido_objeto(archivo, stack_error=null):
 	return HUB.errores.error('El encabezado del archivo "' + archivo + \
 	'" es inválido. La tercera línea debería ser "## ", seguido del tipo de objeto.',
 	stack_error)
