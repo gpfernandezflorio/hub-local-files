@@ -29,8 +29,14 @@ var campo_mensajes = TextEdit.new()
 # Nodo para ejecutar comandos
 var nodo_comandos = Node.new()
 
-# Indica si la terminal está activa, es decir si está visible
-var activa = true
+# Indica el modo de visibilidad de la terminal
+var modo_visible = 1
+	# 0 invisible
+	# 1 visible
+	# 2 sólo el campo de entrada
+	# 3 sólo el campo de entrada pero abre todo si salta un error
+	# 4 visible pero se oculta tras lanzar un comando
+	# 5 invisible pero se abre si salta un error
 # Log de mensajes
 var log_mensajes = ""
 
@@ -51,19 +57,36 @@ func inicializar(hub):
 	return true
 
 # Abre la terminal
-func abrir():
-	Input.set_mouse_mode(0)
-	activa = true
-	campo_entrada.set_hidden(false)
-	campo_mensajes.set_hidden(false)
-	campo_entrada.grab_focus()
+func abrir(modo=1):
+	set_modo_visible(modo)
 
 # Cierra la terminal
-func cerrar():
-	Input.set_mouse_mode(HUB.eventos.modo_mouse)
-	activa = false
-	campo_entrada.set_hidden(true)
-	campo_mensajes.set_hidden(true)
+func cerrar(modo=0):
+	set_modo_visible(modo)
+
+func set_modo_visible(modo):
+	if modo==0 or modo==5:
+		Input.set_mouse_mode(HUB.eventos.modo_mouse)
+	else:
+		Input.set_mouse_mode(0)
+	modo_visible = modo
+	if modo==0 or modo==5:
+		campo_entrada.set_hidden(true)
+	else:
+		campo_entrada.set_hidden(false)
+		campo_entrada.grab_focus()
+	if modo==1 or modo==4:
+		campo_mensajes.set_hidden(false)
+	else:
+		campo_mensajes.set_hidden(true)
+
+# Retorna si la terminal está visible y, por lo tanto, debe capturar el input del usuario
+func activa():
+	return modo_visible != 0 and modo_visible != 5
+
+# Retorna si la terminal debe abrirse ante un error
+func abrir_en_error():
+	return modo_visible==3 or modo_visible==5
 
 # Ejecuta un comando
 func ejecutar(comando_con_argumentos, mostrar_mensaje=false):
@@ -72,7 +95,11 @@ func ejecutar(comando_con_argumentos, mostrar_mensaje=false):
 	var argumentos = parsear_argumentos(comando_con_argumentos)
 	var comando = argumentos[0]
 	argumentos.remove(0)
-	return nodo_comandos.ejecutar(comando, argumentos)
+	var tmp = modo_visible
+	var resultado = nodo_comandos.ejecutar(comando, argumentos)
+	if tmp==4 and not HUB.errores.fallo(resultado):
+		cerrar()
+	return resultado
 
 # Limpia el campo de mensajes
 func borrar_mensajes():
@@ -116,10 +143,10 @@ func inicializar_input():
 	HUB.eventos.registrar_press(KEY_RETURN, campo_entrada, "ingresar")
 
 func autocompletar_o_abrir():
-	if activa:
-		campo_entrada.autocompletar()
-	else:
+	if modo_visible == 0:
 		abrir()
+	else: # TODO: ¿abro si estoy en otro modo que no sea "1"?
+		campo_entrada.autocompletar()
 
 func parsear_argumentos(argumentos):
 	var tokens = argumentos.split(" ")

@@ -55,7 +55,7 @@ func registrar_periodico(nodo, funcion):
 # Asigna el modo del cursor del mouse
 func set_modo_mouse(modo):
 	modo_mouse = modo
-	if not HUB.terminal.activa:
+	if not HUB.terminal.activa():
 		Input.set_mouse_mode(modo_mouse)
 
 # Funciones auxiliares
@@ -86,7 +86,7 @@ func tecla_presionada(ev):
 		for registro in registro_eventos[accion]:
 			var nodo = registro["nodo"]
 			var corresponde = nodo != HUB.terminal.campo_entrada
-			if HUB.terminal.activa:
+			if HUB.terminal.activa():
 				corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
 			if corresponde:
 				nodo.call(registro["funcion"])
@@ -97,7 +97,7 @@ func tecla_soltada(ev):
 		for registro in registro_eventos[accion]:
 			var nodo = registro["nodo"]
 			var corresponde = nodo != HUB.terminal.campo_entrada
-			if HUB.terminal.activa:
+			if HUB.terminal.activa():
 				corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
 			if corresponde:
 				nodo.call(registro["funcion"])

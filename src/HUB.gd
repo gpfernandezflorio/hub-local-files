@@ -73,6 +73,8 @@ func error(error, emisor=""):
 	if not testing.testeando:
 		mensaje(("" if emisor.empty() else \
 		"[" + emisor + "] ") + 'Error: ' + error.mensaje)
+	if terminal.abrir_en_error():
+		terminal.abrir()
 	return error
 
 # Finaliza la ejecución
