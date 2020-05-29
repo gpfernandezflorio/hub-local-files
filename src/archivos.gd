@@ -43,7 +43,6 @@ func inicializar(hub):
 func abrir(ruta, nombre, tipo=null):
 	if not existe(ruta, nombre):
 		return HUB.error(archivo_inexistente(ruta, nombre), modulo)
-	var data_archivo = fs_load(ruta + nombre)
 	if tipo != null: # Verificaciones adicionales
 		var verificacion_encabezado = verificar_encabezado_script(
 			ruta, nombre, nombre.replace(".gd",""), tipo)
@@ -51,10 +50,10 @@ func abrir(ruta, nombre, tipo=null):
 			return HUB.error(archivo_invalido(nombre, tipo, verificacion_encabezado), modulo)
 		if tipo in codigos_script:
 			var verificacion_funciones = verificar_funciones(
-				nombre, data_archivo, tipo, verificacion_encabezado)
+				nombre, fs_load(ruta + nombre), tipo, verificacion_encabezado)
 			if HUB.errores.fallo(verificacion_funciones):
 				return HUB.error(archivo_invalido(nombre, tipo, verificacion_funciones), modulo)
-	return data_archivo
+	return fs_load(ruta + nombre)
 
 # Carga el contenido de un archivo como texto
 func leer(ruta, nombre, tipo=null):

@@ -131,6 +131,9 @@ class VerificadorIgualdad:
 		HUB = hub
 		resultado_esperado = resultado
 	func verificar(resultado):
+		if typeof(resultado) != typeof(resultado_esperado):
+			return 'El tipo del resultado obtenido (' + str(resultado) + \
+			') es diferente al del resultado esperado (' + str(resultado_esperado) + ').'
 		if resultado == resultado_esperado:
 			return ""
 		return 'Se esperaba que el resultado sea "' + str(resultado_esperado) + \
@@ -172,7 +175,7 @@ func test_fallido_salida(stack_error=null):
 func test_fallido_error(stack_error=null):
 	var txt = 'El resultado generó un error inesperado'
 	if stack_error:
-		txt += ': ' + stack_error.mensaje()
+		txt += ': ' + stack_error.trace()
 	else:
 		txt += '.'
 	return HUB.errores.error(txt, stack_error)

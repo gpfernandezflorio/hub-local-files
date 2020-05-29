@@ -70,5 +70,10 @@ class Error:
 	func _init(mensaje, stack_error = null):
 		self.mensaje = mensaje
 		self.stack_error = stack_error
+	func trace():
+		var txt = mensaje
+		if stack_error:
+			txt += "\n  " + stack_error.trace()
+		return txt
 	func get_type():
 		return "Error"
