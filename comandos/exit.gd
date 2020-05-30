@@ -24,5 +24,4 @@ func descripcion():
 func man():
 	var r = "[ EXIT ] - " + descripcion()
 	r += "\nUso: exit"
-	r += "\n Ignora cualquier argumento."
 	return r

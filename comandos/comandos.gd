@@ -31,5 +31,4 @@ func descripcion():
 func man():
 	var r = "[ COMANDOS ] - " + descripcion()
 	r += "\nUso: comandos"
-	r += "\n Ignora cualquier argumento."
 	return r

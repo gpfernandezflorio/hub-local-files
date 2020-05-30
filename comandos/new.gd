@@ -8,8 +8,10 @@
 extends Node
 
 var HUB
-var HUB3DLang
 
+var lib_map = [
+	"HUB3DLang"
+]
 var arg_map = {
 	"lista":[
 		{"nombre":"que", "codigo":"i", "default":""}
@@ -17,12 +19,11 @@ var arg_map = {
 }
 
 var modulo = "New"
+var HUB3DLang
 
 func inicializar(hub):
 	HUB = hub
-	HUB3DLang = HUB.bibliotecas.importar("HUB3DLang")
-	if HUB.errores.fallo(HUB3DLang):
-		return HUB.error(HUB.errores.inicializar_fallo(self, HUB3DLang), modulo)
+	HUB3DLang = lib_map["HUB3DLang"]
 	return null
 
 func comando(argumentos):

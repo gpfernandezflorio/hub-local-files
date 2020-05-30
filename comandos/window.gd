@@ -7,31 +7,37 @@ extends Node
 
 var HUB
 
+var arg_map = {
+	"lista":[
+		{"nombre":"tamaño", "codigo":"s"}
+	]
+}
+
+var modulo = "Window"
+
 func inicializar(hub):
 	HUB = hub
 	return null
 
 func comando(argumentos):
-	if argumentos.size() == 0:
+	var argumento = argumentos["s"]
+	if argumento:
+		var posicion_x = argumento.find('x')
+		if posicion_x == -1:
+			return HUB.error(HUB.errores.error('Argumento "'+argumento+'" inválido.'), modulo)
+		var ancho_str = argumento.substr(0, posicion_x)
+		posicion_x += 1
+		var alto_str = argumento.substr(posicion_x, argumento.length() - posicion_x)
+		if not ancho_str.is_valid_integer():
+			return HUB.error(HUB.errores.error('Valor de ancho de pantalla "'+ancho_str+'" inválido.'), modulo)
+		if not alto_str.is_valid_integer():
+			return HUB.error(HUB.errores.error('Error: Valor de alto de pantalla "'+alto_str+'" inválido.'), modulo)
+		var ancho = int(ancho_str)
+		var alto = int(alto_str)
+		HUB.pantalla.completa(false)
+		HUB.pantalla.tamanio(Vector2(ancho,alto))
+	else:
 		HUB.pantalla.completa()
-		return
-	var posicion_x = argumentos[0].find('x')
-	if posicion_x == -1:
-		HUB.mensaje('Error: Argumento "'+argumentos[0]+'" inválido.')
-		return
-	var ancho_str = argumentos[0].substr(0, posicion_x)
-	posicion_x += 1
-	var alto_str = argumentos[0].substr(posicion_x, argumentos[0].length() - posicion_x)
-	var ancho = int(ancho_str)
-	if str(ancho) != ancho_str:
-		HUB.mensaje('Error: Valor de ancho de pantalla "'+ancho_str+'" inválido.')
-		return
-	var alto = int(alto_str)
-	if str(alto) != alto_str:
-		HUB.mensaje('Error: Valor de alto de pantalla "'+alto_str+'" inválido.')
-		return
-	HUB.pantalla.completa(false)
-	HUB.pantalla.tamanio(Vector2(ancho,alto))
 
 func descripcion():
 	return "Modifica la ventana del HUB"

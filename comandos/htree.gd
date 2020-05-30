@@ -8,7 +8,10 @@
 extends Node
 
 var HUB
-var printer
+
+var lib_map = [
+	"printer"
+]
 
 var arg_map = {
 	"lista":[
@@ -20,12 +23,11 @@ var arg_map = {
 }
 
 var modulo = "HTree"
+var printer
 
 func inicializar(hub):
 	HUB = hub
-	printer = HUB.bibliotecas.importar("printer")
-	if HUB.errores.fallo(printer):
-		return HUB.error(HUB.errores.inicializar_fallo(self, printer), modulo)
+	printer = lib_map["printer"]
 	return null
 
 func comando(argumentos):

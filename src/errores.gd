@@ -55,7 +55,7 @@ func try_fallo(nodo, funcion, stack_error=null):
 
 # Inicialización fallida
 func inicializacion_fallo(nodo, stack_error=null):
-	return error('Falló al inicializar en nodo "' + \
+	return error('Falló al inicializar el nodo "' + \
 	nodo.get_name() + '" con el script "' + \
 	nodo.get_script().get_name() + '".', stack_error)
 

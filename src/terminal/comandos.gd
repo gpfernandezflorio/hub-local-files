@@ -39,10 +39,21 @@ func cargar(comando):
 	var script_comando = HUB.archivos.abrir(carpeta_comandos, comando + ".gd", codigo)
 	if HUB.errores.fallo(script_comando):
 		return HUB.error(HUB.terminal.comando_inexistente(comando, script_comando), modulo)
+	script_comando.set_name(comando)
 	var nodo = Node.new()
 	add_child(nodo)
 	nodo.set_name(comando)
 	nodo.set_script(script_comando)
+	if "lib_map" in nodo:
+		var new_lib_map = {}
+		for lib in nodo.lib_map:
+			var new_lib = HUB.bibliotecas.importar(lib)
+			if HUB.errores.fallo(new_lib):
+				remove_child(nodo)
+				nodo.queue_free()
+				return HUB.error(HUB.errores.inicializacion_fallo(nodo, new_lib), modulo)
+			new_lib_map[lib] = new_lib
+		nodo.lib_map = new_lib_map
 	var resultado_inicializar = nodo.inicializar(HUB)
 	if HUB.errores.fallo(resultado_inicializar):
 		remove_child(nodo)

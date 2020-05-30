@@ -8,7 +8,10 @@
 extends Node
 
 var HUB
-var printer
+
+var lib_map = [
+	"printer"
+]
 
 var arg_map = {
 	"lista":[
@@ -17,12 +20,11 @@ var arg_map = {
 }
 
 var modulo = "FSTree"
+var printer
 
 func inicializar(hub):
 	HUB = hub
-	printer = HUB.bibliotecas.importar("printer")
-	if HUB.errores.fallo(printer):
-		return HUB.error(HUB.errores.inicializar_fallo(self, printer), modulo)
+	printer = lib_map["printer"]
 	return null
 
 func comando(argumentos):
@@ -38,7 +40,9 @@ class AtributosNodo:
 		self.printer = printer
 		self.fs = fs
 	func nombre_de_nodo(nodo):
-		return nodo[1]
+		if (nodo[1]):
+			return nodo[1]
+		return "RAÍZ"
 	func hijos_de_nodo(nodo):
 		var hijos = []
 		if fs.es_archivo(nodo[0], nodo[1]):

@@ -13,6 +13,8 @@ var arg_map = {
 	]
 }
 
+var modulo = "Man"
+
 func inicializar(hub):
 	HUB = hub
 	return null
@@ -24,12 +26,12 @@ func comando(argumentos):
 		return
 	var nodo_comandos = HUB.terminal.nodo_comandos
 	var comando = nodo_comandos.cargar(nombre)
-	if comando == null:
-		HUB.mensaje('Error: Comando "' + nombre + '" desconocido.')
+	if HUB.errores.fallo(comando):
+		return HUB.error(HUB.errores.error('No se puede mostrar el manual de "' + nombre + '".', comando), modulo)
 	elif comando.has_method("man"):
 		HUB.mensaje(comando.man())
 	else:
-		HUB.mensaje('Error: El comando "' + nombre + '" no tiene manual.')
+		return HUB.error(HUB.errores.error('El comando "' + nombre + '" no tiene manual.', comando), modulo)
 
 func descripcion():
 	return "Muestra el manual de un comando"
