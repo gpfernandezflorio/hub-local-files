@@ -7,6 +7,12 @@ extends Node
 
 var HUB
 
+var arg_map = {
+	"lista":[
+		{"nombre":"carpeta", "codigo":"i", "default":""}
+	]
+}
+
 var modulo = "Ls"
 
 func inicializar(hub):
@@ -14,18 +20,13 @@ func inicializar(hub):
 	return null
 
 func comando(argumentos):
-	if argumentos.size() == 0:
-		argumentos = [""]
-	for argumento in argumentos:
-		if argumento.begins_with("-"):
-			pass
-		var lista = HUB.archivos.listar("", argumento)
-		if HUB.errores.fallo(lista):
-			return HUB.error(HUB.errores.error(
-				'No se pudo listar el contenido de "' + argumento + '".',
-				lista), modulo)
-		for archivo in lista:
-			HUB.mensaje(archivo)
+	var lista = HUB.archivos.listar("", argumentos["i"])
+	if HUB.errores.fallo(lista):
+		return HUB.error(HUB.errores.error(
+			'No se pudo listar el contenido de "' + argumentos["i"] + '".',
+			lista), modulo)
+	for archivo in lista:
+		HUB.mensaje(archivo)
 
 func descripcion():
 	return "Lista el contenido de una carpeta"

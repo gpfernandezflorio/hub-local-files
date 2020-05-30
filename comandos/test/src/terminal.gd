@@ -172,10 +172,7 @@ func comando(argumentos):
 	HUB.testing.test(tester_comando("d -bW -aQ E R"), HUB.testing.verificador_por_igualdad("QWCD|ER"), [])
 	HUB.testing.test(tester_comando("d -bW -aQ E -cR"), HUB.testing.verificador_por_igualdad("QWRD|E"), [])
 	HUB.mensaje("* Testeando que los argumentos extras no reemplazan a los modificadores")
-	HUB.testing.test_genera_error(
-		tester_comando("d A B C D"),
-		HUB.terminal.nodo_comandos.faltan_argumentos_obligatorios("a"), []
-	)
+	HUB.testing.test(tester_comando("d Q W E R"), HUB.testing.verificador_por_igualdad("QWCD|ER"), [])
 	HUB.archivos.borrar(carpeta, "d.gd")
 	HUB.mensaje("* Testeando ejecutar un comando pasándole un argumento de tipo incorrecto")
 	HUB.archivos.crear(carpeta, "e.gd")

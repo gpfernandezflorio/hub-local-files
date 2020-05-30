@@ -25,6 +25,10 @@ func inicializar(hub):
 	add_child(comportamientos)
 	return true
 
+# Recibe un mensaje
+func mensaje(nombre, colaboradores=[]):
+	return HUB.error(HUB.objetos.mensaje_desconocido(nombre), nombre())
+
 # Cambiar el nombre del objeto
 func nombrar(nombre_base):
 	# Devuelve el nuevo nombre

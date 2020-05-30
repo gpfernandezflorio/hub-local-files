@@ -7,6 +7,10 @@ extends Node
 
 var HUB
 
+var arg_map = {
+	"lista":[]
+}
+
 func inicializar(hub):
 	HUB = hub
 	return null
@@ -27,5 +31,5 @@ func descripcion():
 func man():
 	var r = "[ COMANDOS ] - " + descripcion()
 	r += "\nUso: comandos"
-	r += "\nIgnora cualquier argumento."
+	r += "\n Ignora cualquier argumento."
 	return r

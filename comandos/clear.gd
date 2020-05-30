@@ -7,13 +7,19 @@ extends Node
 
 var HUB
 
+var arg_map = {
+	"lista":[
+		{"nombre":"modo silencioso", "codigo":"s", "validar":"BOOL", "default":false}
+	]
+}
+
 func inicializar(hub):
 	HUB = hub
 	return null
 
 func comando(argumentos):
 	HUB.terminal.borrar_mensajes()
-	if (argumentos.size() != 1 || argumentos[0] != "s"):
+	if not argumentos["s"]:
 		HUB.mensaje("Historial borrado")
 
 func descripcion():
@@ -21,6 +27,6 @@ func descripcion():
 
 func man():
 	var r = "[ CLEAR ] - " + descripcion()
-	r += "\nUso: clear [s]"
+	r += "\nUso: clear [-s]"
 	r += "\n s : Modo silencioso."
 	return r

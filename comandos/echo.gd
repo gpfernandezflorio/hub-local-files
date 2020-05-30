@@ -7,6 +7,14 @@ extends Node
 
 var HUB
 
+var arg_map = {
+	"obligatorios":1,
+	"lista":[
+		{"nombre":"texto", "codigo":"t"},
+		{"nombre":"archivo", "codigo":"o"}
+	]
+}
+
 var modulo = "Echo"
 
 func inicializar(hub):
@@ -14,16 +22,14 @@ func inicializar(hub):
 	return null
 
 func comando(argumentos):
-	if argumentos.size() == 1:
-		HUB.mensaje(argumentos[0])
-	elif argumentos.size() == 2:
-		var resultado = HUB.archivos.escribir("", argumentos[1], argumentos[0])
+	if argumentos["o"]:
+		var resultado = HUB.archivos.escribir("", argumentos["o"], argumentos["t"])
 		if HUB.errores.fallo(resultado):
 			return HUB.error(HUB.errores.error(
 				'No se pudo escribir en el archivo "' +
-				argumentos[0] + '".', resultado), modulo)
+				argumentos["o"] + '".', resultado), modulo)
 	else:
-		return HUB.error(HUB.errores.error("Espera al menos un argumento."), modulo)
+		HUB.mensaje(argumentos["t"])
 
 func descripcion():
 	return "Escribe un mensaje"

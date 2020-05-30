@@ -55,7 +55,7 @@ func inicializar(hub, extension):
 	eventos.iniciar()
 	if archivos.existe("comandos/", "sh.gd") and \
 		archivos.existe("shell/", "INI.gd"):
-		terminal.ejecutar("sh INI.gd")
+		terminal.ejecutar("sh INI.gd -s")
 	return true
 
 # Manda un mensaje a la terminal del HUB

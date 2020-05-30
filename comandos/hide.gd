@@ -9,7 +9,7 @@ var HUB
 
 var arg_map = {
 	"lista":[
-		{"nombre":"modo", "codigo":"m", "validar":"INT;>=0;<=5", "default":"0"}
+		{"nombre":"modo", "codigo":"m", "validar":"INT;>=0;<=5", "default":0}
 	]
 }
 

@@ -147,3 +147,8 @@ func generador_inexistente(nombre, desde, stack_error=null):
 func comportamiento_inexistente(nombre, stack_error=null):
 	return HUB.errores.error('No se encontró ningún script de comportamiento con nombre "' + \
 		nombre + '".', stack_error)
+
+# Mensaje desconocido
+func mensaje_desconocido(nombre, stack_error=null):
+	return HUB.errores.error('No entiendo el mensaje "' + \
+		nombre + '".', stack_error)

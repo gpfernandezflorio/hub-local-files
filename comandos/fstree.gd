@@ -10,6 +10,12 @@ extends Node
 var HUB
 var printer
 
+var arg_map = {
+	"lista":[
+		{"nombre":"raíz", "codigo":"r", "default":""}
+	]
+}
+
 var modulo = "FSTree"
 
 func inicializar(hub):
@@ -20,14 +26,8 @@ func inicializar(hub):
 	return null
 
 func comando(argumentos):
-	var args = []
-	if argumentos.size() == 0:
-		argumentos = [""]
-	for argumento in argumentos:
-		if argumento.begins_with("-"):
-			pass
-		var root = ["",argumento]
-		HUB.mensaje(printer.imprimir_arbol(root, AtributosNodo.new(args, printer, HUB.archivos)))
+	var root = ["",argumentos["r"]]
+	HUB.mensaje(printer.imprimir_arbol(root, AtributosNodo.new(argumentos, printer, HUB.archivos)))
 
 class AtributosNodo:
 	var args

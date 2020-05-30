@@ -84,6 +84,17 @@ func parsear_mapa_argumentos(nodo, lista_de_argumentos):
 			codigos_vistos.append(codigo)
 		else:
 			argumentos_libres.append(arg)
+	# Verificar que se pasaron todos los argumentos obligatorios
+	for i in range(obligatorios):
+		var codigo = arg_map.lista[i].codigo
+		if (not codigo in resultado) or resultado[codigo] == null:
+			# No se pasó como modificador pero podría estar entre los libres
+			if argumentos_libres.size()>0:
+				resultado[codigo] = argumentos_libres[0]
+				codigos_vistos.append(codigo)
+				argumentos_libres.pop_front()
+			else:
+				return HUB.error(faltan_argumentos_obligatorios(arg_map.lista[i].nombre), modulo)
 	if acepta_argumentos_extra:
 		resultado.extra = argumentos_libres
 	else:
@@ -96,14 +107,9 @@ func parsear_mapa_argumentos(nodo, lista_de_argumentos):
 				return HUB.error(mas_argumentos_que_los_esperados(cantidad_de_argumentos), modulo)
 			resultado[arg_map.lista[i_arg].codigo] = arg
 			i_arg+=1
-	# Verificar que se pasaron todos los argumentos obligatorios
-	for i in range(obligatorios):
-		var codigo = arg_map.lista[i].codigo
-		if (not codigo in resultado) or resultado[codigo] == null:
-			return HUB.error(faltan_argumentos_obligatorios(arg_map.lista[i].nombre), modulo)
 	# Validar valores ingresados
 	for arg in arg_map.lista:
-		if "validar" in arg:
+		if "validar" in arg and typeof(resultado[arg.codigo])==TYPE_STRING:
 			var validacion = validar_argumento(arg, resultado[arg.codigo])
 			if HUB.errores.fallo(validacion):
 				return validacion
@@ -120,7 +126,12 @@ func num(s):
 func validar_argumento(arg, valor):
 	var resultado = valor
 	for validador in arg.validar.split(";"):
-		if validador == "NUM":
+		if validador == "BOOL":
+			if valor.empty():
+				resultado = true
+			else:
+				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
+		elif validador == "NUM":
 			if valor.is_valid_integer():
 				resultado = int(resultado)
 			elif valor.is_valid_float():
@@ -160,13 +171,16 @@ func faltan_argumentos_obligatorios(nombre, stack_error=null):
 # Más argumentos de los esperados
 func mas_argumentos_que_los_esperados(cantidad, stack_error=null):
 	var txt = 'No se permite'
-	if cantidad > 1:
+	if cantidad != 1:
 		txt += 'n'
-	txt += ' más de '
-	if cantidad == 1:
-		txt += 'un argumento.'
+	if cantidad == 0:
+		txt += ' argumentos.'
 	else:
-		txt += str(cantidad) + ' argumentos.'
+		txt += ' más de '
+		if cantidad == 1:
+			txt += 'un argumento.'
+		else:
+			txt += str(cantidad) + ' argumentos.'
 	return HUB.errores.error(txt, stack_error)
 
 # Modificador inválido
@@ -178,7 +192,9 @@ func modificador_repetido(modificador, stack_error=null):
 	return HUB.errores.error('El modificador "' + modificador + '" se asigna más de una vez.', stack_error)
 
 func restriccion(validador):
-	if validador == "NUM":
+	if validador == "BOOL":
+		return "un flag"
+	elif validador == "NUM":
 		return "un número"
 	elif validador == "INT":
 		return "un entero"

@@ -7,6 +7,13 @@ extends Node
 
 var HUB
 
+var arg_map = {
+	"obligatorios":1,
+	"lista":[
+		{"nombre":"nombre", "codigo":"n"}
+	]
+}
+
 var modulo = "Dir"
 
 func inicializar(hub):
@@ -14,23 +21,18 @@ func inicializar(hub):
 	return null
 
 func comando(argumentos):
-	if argumentos.size() == 0:
-		return HUB.error(HUB.errores.error("Espera al menos un argumento."), modulo)
-	for argumento in argumentos:
-		if argumento.begins_with("-"):
-			pass
-		var resultado = HUB.archivos.crear_carpeta("", argumento)
-		if HUB.errores.fallo(resultado):
-			return HUB.error(HUB.errores.error(
-				'No se pudo crear la carpeta "' +
-				argumento + '".', resultado), modulo)
+	var resultado = HUB.archivos.crear_carpeta("", argumentos["n"])
+	if HUB.errores.fallo(resultado):
+		return HUB.error(HUB.errores.error(
+			'No se pudo crear la carpeta "' +
+			argumentos["n"] + '".', resultado), modulo)
 
 
 func descripcion():
-	return "Crea una careta"
+	return "Crea una carpeta"
 
 func man():
 	var r = "[ DIR ] - " + descripcion()
-	r += "\nUso: file ARCHIVO1 [ARCHIVO2 ... ARCHIVOn]"
-	r += "\n ARCHIVOi : ruta a la i-ésima carpeta que se quiere crear."
+	r += "\nUso: dir CARPETA"
+	r += "\n CARPETA : nombre (ruta completa) de la carpeta que se quiere crear."
 	return r
