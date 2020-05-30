@@ -62,7 +62,7 @@ func entorno(pid=null):
 	if pid_solicitado != "HUB":
 		resultado = "[" + pid_solicitado + "]" + resultado
 	for comando in pila_comandos(pid_solicitado):
-		resultado = " . "+comando + resultado
+		resultado = " > " + comando + resultado
 	if resultado.length() > 0:
 		resultado += "\n"
 	return resultado

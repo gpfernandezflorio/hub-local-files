@@ -91,7 +91,8 @@ func abrir_en_error():
 # Ejecuta un comando
 func ejecutar(comando_con_argumentos, mostrar_mensaje=false):
 	if mostrar_mensaje:
-		campo_mensajes.mensaje("> " + comando_con_argumentos)
+		campo_mensajes.mensaje(campo_mensajes.pre_usuario + comando_con_argumentos)
+		campo_mensajes.ultimo_entorno_impreso = ""
 	var argumentos = parsear_argumentos(comando_con_argumentos)
 	var comando = argumentos[0]
 	argumentos.remove(0)
@@ -162,9 +163,9 @@ func parsear_argumentos(argumentos):
 			tmp += " " + token.substr(0,token.length()-1)
 			resultado.append(tmp)
 			tmp = ""
-		elif tmp.length() > 0:
+		elif not tmp.empty():
 			tmp += " " + token
-		else:
+		elif not token.empty():
 			resultado.append(token)
 	return resultado
 
