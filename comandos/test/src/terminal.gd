@@ -142,7 +142,7 @@ func comando(argumentos):
 	)
 	HUB.mensaje("* Testeando ejecutar un comando con la cantidad correcta de argumentos")
 	HUB.testing.test(tester_comando("b A"), HUB.testing.verificador_por_igualdad("A"), [])
-	HUB.testing.test(tester_comando("b -mB"), HUB.testing.verificador_por_igualdad("B"), [])
+	HUB.testing.test(tester_comando("b -modo=B"), HUB.testing.verificador_por_igualdad("B"), [])
 	HUB.mensaje("* Testeando ejecutar un comando con un modificador no admitido")
 	HUB.testing.test_genera_error(
 		tester_comando("b -cC"),

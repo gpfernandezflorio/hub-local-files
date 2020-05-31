@@ -31,9 +31,14 @@ func parsear_argumentos_comandos(nodo, lista_de_argumentos, modulo):
 		for arg in lista_de_argumentos:
 			if arg.begins_with("-") and not arg.is_valid_float():
 				var codigo = arg[1]
+				var valor = arg.substr(2,arg.length()-2)
+				var d = arg.find("=")
+				if d != -1:
+					codigo = arg.substr(1,d-1)
+					valor = arg.substr(d+1,arg.length()-(d+1))
 				if codigo in codigos_vistos:
 					return HUB.error(modificador_repetido(codigo), modulo)
-				args[codigo] = arg.substr(2,arg.length()-2)
+				args[codigo] = valor
 				codigos_vistos.append(codigo)
 			else:
 				argumentos_libres.append(arg)
@@ -49,10 +54,13 @@ func parsear_argumentos_general(arg_map, args, modulo):
 		codigos_validos.append(arg.codigo)
 		if arg.codigo in resultado:
 			codigos_vistos.append(arg.codigo)
+			if (arg.nombre != arg.codigo) and (arg.nombre in resultado):
+				return HUB.error(modificador_repetido_por_nombre(arg.codigo, arg.nombre), modulo)
 		else:
 			if arg.nombre in resultado:
 				resultado[arg.codigo] = resultado[arg.nombre]
 				resultado.erase(arg.nombre)
+				codigos_vistos.append(arg.codigo)
 			elif "default" in arg:
 				resultado[arg.codigo] = arg.default
 			else:
@@ -68,7 +76,7 @@ func parsear_argumentos_general(arg_map, args, modulo):
 	# Verificar que se pasaron todos los argumentos obligatorios
 	for i in range(obligatorios):
 		var codigo = arg_map.lista[i].codigo
-		if (not codigo in resultado) or resultado[codigo] == null:
+		if not codigo in codigos_vistos:
 			# No se pasó como modificador pero podría estar entre los libres
 			if argumentos_libres.size()>0:
 				resultado[codigo] = argumentos_libres[0]
@@ -186,6 +194,10 @@ func modificador_invalido(modificador, valor, stack_error=null):
 # Modificador repetido
 func modificador_repetido(modificador, stack_error=null):
 	return HUB.errores.error('El modificador "' + modificador + '" se asigna más de una vez.', stack_error)
+
+# Modificador repetido (por nombre)
+func modificador_repetido_por_nombre(codigo, nombre, stack_error=null):
+	return HUB.errores.error('El modificador con nombre "' + nombre + '" se asigna también con "' + codigo + '".', stack_error)
 
 func restriccion(validador):
 	if validador == "BOOL":
