@@ -112,7 +112,7 @@ func agregar_comportamiento_a_objeto(objeto, nombre_script, args=[[],{}]):
 	var nombre = nombre_script.replace("/","-")
 	nombre = objeto.nombrar_sin_colision(comportamiento, nombre, objeto.comportamientos)
 	objeto.comportamientos.add_child(comportamiento)
-	args = HUB.varios.parsear_argumentos_comportamientos(comportamiento, args)
+	args = HUB.varios.parsear_argumentos_comportamientos(comportamiento, args, modulo)
 	if HUB.errores.fallo(args):
 		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', comportamiento), modulo)
 	var resultado = comportamiento.inicializar(HUB, objeto, args)

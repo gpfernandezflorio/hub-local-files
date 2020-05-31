@@ -130,7 +130,7 @@ func comando(argumentos):
 	HUB.mensaje("* Testeando ejecutar sin argumentos un comando que requiere un argumento")
 	HUB.archivos.crear(carpeta, "b.gd")
 	HUB.archivos.escribir(carpeta, "b.gd", '## b\n## Comando\nfunc inicializar(a):\n\tpass\nfunc comando(args):\n\treturn args["m"]')
-	HUB.archivos.escribir(carpeta, "b.gd", 'var arg_map = {"obligatorios":1,"lista":[{"nombre":"modo","codigo":"m","default":"0"}]}')
+	HUB.archivos.escribir(carpeta, "b.gd", 'var arg_map = {"obligatorios":1,"lista":[{"nombre":"modo","codigo":"m"}]}')
 	HUB.testing.test_genera_error(
 		tester_comando("b"),
 		HUB.varios.faltan_argumentos_obligatorios("modo"), []
@@ -146,7 +146,7 @@ func comando(argumentos):
 	HUB.mensaje("* Testeando ejecutar un comando con un modificador no admitido")
 	HUB.testing.test_genera_error(
 		tester_comando("b -cC"),
-		HUB.varios.modificador_invalido("c", "-cC"), []
+		HUB.varios.modificador_invalido("c", "C"), []
 	)
 	HUB.mensaje("* Testeando ejecutar un comando con un modificador repetido")
 	HUB.testing.test_genera_error(

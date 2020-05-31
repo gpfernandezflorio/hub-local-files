@@ -8,26 +8,43 @@
 extends Node
 
 var HUB
-var modulo = "VARIOS"
 
 func inicializar(hub):
 	HUB = hub
 	return true
 
-func parsear_argumentos_objetos(nodo, args):
+func parsear_argumentos_objetos(nodo, args, modulo):
 	if "arg_map" in nodo:
-		return parsear_argumentos_general(nodo.arg_map, args)
+		return parsear_argumentos_general(nodo.arg_map, args, modulo)
 	return args
 
-func parsear_argumentos_comportamientos(nodo, args):
+func parsear_argumentos_comportamientos(nodo, args, modulo):
 	if "arg_map" in nodo:
-		return parsear_argumentos_general(nodo.arg_map, args)
+		return parsear_argumentos_general(nodo.arg_map, args, modulo)
 	return args
 
-func parsear_argumentos_general(arg_map, args):
+func parsear_argumentos_comandos(nodo, lista_de_argumentos, modulo):
+	if "arg_map" in nodo:
+		var codigos_vistos = []
+		var args = {}
+		var argumentos_libres = []
+		for arg in lista_de_argumentos:
+			if arg.begins_with("-") and not arg.is_valid_float():
+				var codigo = arg[1]
+				if codigo in codigos_vistos:
+					return HUB.error(modificador_repetido(codigo), modulo)
+				args[codigo] = arg.substr(2,arg.length()-2)
+				codigos_vistos.append(codigo)
+			else:
+				argumentos_libres.append(arg)
+		return parsear_argumentos_general(nodo.arg_map, [argumentos_libres, args], modulo)
+	return lista_de_argumentos
+
+func parsear_argumentos_general(arg_map, args, modulo):
 	var resultado = args[1]
 	var codigos_vistos = []
 	var codigos_validos = []
+	# Inicializar los valores default (y unificar código de identificación)
 	for arg in arg_map.lista:
 		codigos_validos.append(arg.codigo)
 		if arg.codigo in resultado:
@@ -40,60 +57,14 @@ func parsear_argumentos_general(arg_map, args):
 				resultado[arg.codigo] = arg.default
 			else:
 				resultado[arg.codigo] = null
+	# Verificar modificadores/nombres válidos
 	for k in resultado:
 		if not k in codigos_validos:
-			return HUB.error(modificador_invalido(k, k+"="+resultado[k]), modulo)
-	var i_arg = 0
-	var cantidad_de_argumentos = arg_map.lista.size()
-	for arg in args[0]:
-		while i_arg < cantidad_de_argumentos and arg_map.lista[i_arg].codigo in codigos_vistos:
-			i_arg+=1
-		if i_arg >= cantidad_de_argumentos:
-			return HUB.error(mas_argumentos_que_los_esperados(cantidad_de_argumentos), modulo)
-		resultado[arg_map.lista[i_arg].codigo] = arg
-		i_arg+=1
-	# Validar valores ingresados
-	for arg in arg_map.lista:
-		if "validar" in arg and typeof(resultado[arg.codigo])==TYPE_STRING:
-			var validacion = validar_argumento(arg, resultado[arg.codigo])
-			if HUB.errores.fallo(validacion):
-				return validacion
-			resultado[arg.codigo] = validacion
-	return resultado
-
-func parsear_argumentos_comandos(nodo, lista_de_argumentos):
-	if not "arg_map" in nodo:
-		return lista_de_argumentos
-	var arg_map = nodo.arg_map
-	var resultado = {}
-	var codigos_validos = []
-	for arg in arg_map.lista:
-		codigos_validos.append(arg.codigo)
-	var acepta_argumentos_extra = "extra" in arg_map
+			return HUB.error(modificador_invalido(k, resultado[k]), modulo)
 	var obligatorios = 0
 	if "obligatorios" in arg_map:
 		obligatorios = arg_map.obligatorios
-	var i = obligatorios
-	while i < arg_map.lista.size(): # Inicializo los opcionales con los valores default
-		var arg = arg_map.lista[i]
-		if "default" in arg:
-			resultado[arg.codigo] = arg.default
-		else:
-			resultado[arg.codigo] = null
-		i+=1
-	var argumentos_libres = []
-	var codigos_vistos = []
-	for arg in lista_de_argumentos:
-		if arg.begins_with("-") and not arg.is_valid_float():
-			var codigo = arg[1]
-			if codigo in codigos_vistos:
-				return HUB.error(modificador_repetido(codigo), modulo)
-			if not codigo in codigos_validos:
-				return HUB.error(modificador_invalido(codigo, arg), modulo)
-			resultado[codigo] = arg.substr(2,arg.length()-2)
-			codigos_vistos.append(codigo)
-		else:
-			argumentos_libres.append(arg)
+	var argumentos_libres = args[0]
 	# Verificar que se pasaron todos los argumentos obligatorios
 	for i in range(obligatorios):
 		var codigo = arg_map.lista[i].codigo
@@ -105,6 +76,8 @@ func parsear_argumentos_comandos(nodo, lista_de_argumentos):
 				argumentos_libres.pop_front()
 			else:
 				return HUB.error(faltan_argumentos_obligatorios(arg_map.lista[i].nombre), modulo)
+	# Mapear los argumentos sin nombre (args[0])
+	var acepta_argumentos_extra = "extra" in arg_map
 	if acepta_argumentos_extra:
 		resultado.extra = argumentos_libres
 	else:
@@ -120,7 +93,7 @@ func parsear_argumentos_comandos(nodo, lista_de_argumentos):
 	# Validar valores ingresados
 	for arg in arg_map.lista:
 		if "validar" in arg and typeof(resultado[arg.codigo])==TYPE_STRING:
-			var validacion = validar_argumento(arg, resultado[arg.codigo])
+			var validacion = validar_argumento(arg, resultado[arg.codigo], modulo)
 			if HUB.errores.fallo(validacion):
 				return validacion
 			resultado[arg.codigo] = validacion
@@ -146,7 +119,7 @@ func num(s):
 		return float(s)
 	return 0
 
-func validar_argumento(arg, valor):
+func validar_argumento(arg, valor, modulo):
 	var resultado = valor
 	for validador in arg.validar.split(";"):
 		if validador == "BOOL":
@@ -207,8 +180,8 @@ func mas_argumentos_que_los_esperados(cantidad, stack_error=null):
 	return HUB.errores.error(txt, stack_error)
 
 # Modificador inválido
-func modificador_invalido(modificador, argumento, stack_error=null):
-	return HUB.errores.error('El modificador "' + modificador + '" en el argumento "' + argumento + '" es inválido.', stack_error)
+func modificador_invalido(modificador, valor, stack_error=null):
+	return HUB.errores.error('El modificador "' + modificador + '" con valor "' + valor + '" es inválido.', stack_error)
 
 # Modificador repetido
 func modificador_repetido(modificador, stack_error=null):

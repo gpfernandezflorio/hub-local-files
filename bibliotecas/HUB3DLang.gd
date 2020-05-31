@@ -321,7 +321,7 @@ func base(texto, argumentos):
 	var resultado = null
 	# Primitivas:
 	if has_method("crear_"+texto): # Forma elegante de preguntar si es una primitiva
-		var args = HUB.varios.parsear_argumentos_general(arg_map[texto], argumentos)
+		var args = HUB.varios.parsear_argumentos_general(arg_map[texto], argumentos, modulo)
 		if HUB.errores.fallo(args):
 			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
 		resultado = call("crear_"+texto, args)

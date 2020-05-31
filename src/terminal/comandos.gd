@@ -23,7 +23,7 @@ func ejecutar(comando, argumentos=[]):
 	var nodo = cargar(comando)
 	if HUB.errores.fallo(nodo):
 		return HUB.error(HUB.terminal.comando_no_cargado(comando, nodo), modulo)
-	argumentos = HUB.varios.parsear_argumentos_comandos(nodo, argumentos)
+	argumentos = HUB.varios.parsear_argumentos_comandos(nodo, argumentos, modulo)
 	if HUB.errores.fallo(argumentos):
 		return HUB.error(HUB.terminal.comando_fallido(comando, argumentos), modulo)
 	HUB.procesos.apilar_comando(comando)

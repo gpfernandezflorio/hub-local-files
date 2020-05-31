@@ -278,11 +278,11 @@ class FileSystem:
 				return true
 		return false
 	func es_directorio(ruta_al_archivo):
-		print(ruta_al_archivo)
+#		print(ruta_al_archivo)
 		if nombres_compilados and ruta_al_archivo.begins_with(ruta_raiz):
-			print("NO SÉ SI ES UNA CARPETA")
+#			print("NO SÉ SI ES UNA CARPETA")
 			return false
-		print(dir.dir_exists(ruta_al_archivo))
+#		print(dir.dir_exists(ruta_al_archivo))
 		return dir.dir_exists(ruta_al_archivo)
 	func crear(ruta_al_archivo):
 		file.open(ruta_al_archivo, File.WRITE)
@@ -299,9 +299,9 @@ class FileSystem:
 				borrar(ruta_al_archivo+"/"+archivo)
 			dir.remove(ruta_al_archivo)
 	func listar(ruta):
-		print("LISTAR "+ruta)
+#		print("LISTAR "+ruta)
 		if nombres_compilados and ruta.begins_with(ruta_raiz):
-			print("NO PUEDO LISTAR")
+#			print("NO PUEDO LISTAR")
 			return []
 		var archivos = []
 		dir.open(ruta)
