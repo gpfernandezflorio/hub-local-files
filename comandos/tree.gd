@@ -13,10 +13,19 @@ var lib_map = [
 	"printer"
 ]
 
+var arg_map = {
+	"lista":[
+		{"nombre":"raíz", "codigo":"r", "default":""},
+		{"nombre":"posición", "codigo":"p", "validar":"BOOL","default":false},
+		{"nombre":"tipo", "codigo":"t", "validar":"BOOL", "default":false},
+		{"nombre":"script", "codigo":"s", "validar":"BOOL", "default":false}
+	]
+}
+
 var argumentos_validos = {
-	"pos":"get_translation",
-	"type":"get_type",
-	"script":"get_script"
+	"p":"get_translation",
+	"t":"get_type",
+	"s":"get_script"
 }
 
 var modulo = "Tree"
@@ -30,16 +39,13 @@ func inicializar(hub):
 func comando(argumentos):
 	var args = []
 	var root = HUB.nodo_usuario.mundo
-	for argumento in argumentos:
-		if argumento.begins_with("-r"):
-			var nombre_root = argumento.substr(2,argumento.length()-2)
-			root = HUB.objetos.localizar(nombre_root)
-			if HUB.errores.fallo(root):
-				return HUB.error(HUB.errores.error('No se puede imprimir el árbol de "' + nombre_root + '".', root), modulo)
-		elif argumento in argumentos_validos.keys():
-			args.append(argumentos_validos[argumento])
-		else:
-			return HUB.error(HUB.errores.argumento_invalido(argumento), modulo)
+	for c in argumentos_validos.keys():
+		if argumentos[c]:
+			args.append(argumentos_validos[c])
+	if not argumentos["r"].empty():
+		root = HUB.objetos.localizar(argumentos["r"])
+		if HUB.errores.fallo(root):
+			return HUB.error(HUB.errores.error('No se puede imprimir el árbol de "' + argumentos["r"] + '".', root), modulo)
 	HUB.mensaje(printer.imprimir_arbol(root, AtributosNodo.new(args, printer)))
 
 class AtributosNodo:
@@ -66,10 +72,10 @@ func descripcion():
 
 func man():
 	var r = "[ TREE ] - " + descripcion()
-	r += "\nUso: tree [-rROOT] [INFO1 INFO2 ... INFOn]"
-	r += "\n ROOT : Nombre completo del objeto a partir de la cual imprimir. Por defecto, es el objeto Mundo."
-	r += "\n INFOi : i-ésimo atributo a mostrar de cada objeto en el árbol. Posibles valores:"
-	r += "\n  * pos : Posición del objeto."
-	r += "\n  * type : Tipo del objeto."
-	r += "\n  * script : Nombre del script del objeto."
+	r += "\nUso: tree [-rROOT] [-p] [-t] [-s]"
+	r += "\n ROOT : Nombre completo del objeto a partir de la cual imprimir."
+	r += "\n   Por defecto, es el objeto Mundo."
+	r += "\n -p : Muestra la posición del objeto."
+	r += "\n -t : Muestra el tipo del objeto."
+	r += "\n -s : Muestra el nombre del script del objeto."
 	return r

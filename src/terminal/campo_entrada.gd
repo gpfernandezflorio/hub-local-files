@@ -51,7 +51,7 @@ func autocompletar():
 	var todo_el_texto = get_text()
 	var ultimo_espacio = todo_el_texto.find_last(" ")
 	var inicio = todo_el_texto.substr(0,ultimo_espacio)
-	if (inicio.length() > 0):
+	if not inicio.empty():
 		inicio += " "
 	var preludio = todo_el_texto.substr(ultimo_espacio+1,get_cursor_pos())
 	var ultima_diagonal = preludio.find_last("/")

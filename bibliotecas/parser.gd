@@ -58,18 +58,18 @@ func parsear_cadena(parser, cadena):
 		if accion == "A!": # Aceptar
 			aceptado = true
 		elif accion.begins_with("S"): # Shift
-			var shift_a = accion.substr(1,accion.length()-1)
+			var shift_a = str_desde(accion,1)
 			pila.push_front([int(shift_a),simbolo])
 			lookahead += 1
 		elif accion.begins_with("R"): # Reduce
-			var p = int(accion.substr(1,accion.length()-1))
+			var p = int(str_desde(accion,1))
 			acciones.push_front(p)
 			p = parser.G.P[p]
 			for i in range(p[1].size()):
 				pila.pop_front()
 			estado = pila[0][0]
 			accion = parser.tabla_action_goto[estado][p[0]]
-			var shift_a = accion.substr(1,accion.length()-1)
+			var shift_a = str_desde(accion,1)
 			pila.push_front([int(shift_a),p[1]])
 	for accion in acciones:
 		var reduccion = parser.G.P[accion]
@@ -242,7 +242,7 @@ func clausura(kernel, G):
 		var item = items_pendientes[0]
 		items_pendientes.pop_front()
 		items_clausurados.agregar(item)
-		if item[2].size() > 0 and item[2][0] in G.VN:
+		if not item[2].empty() and item[2][0] in G.VN:
 			var vn = item[2][0]
 			for lookahead in item[3].elementos:
 				var next = estructuras.copiar_array(item[2])
@@ -354,7 +354,7 @@ func se_deriva_en_lambda(w, G):
 func shift(items, simbolo):
 	var nuevo_estado = Estado.new(estructuras.conjunto_vacio())
 	for item in items:
-		if item[2].size() > 0 and item[2][0] == simbolo:
+		if not item[2].empty() and item[2][0] == simbolo:
 			var nuevo_item = [item[0],
 				estructuras.copiar_array(item[1]),
 				estructuras.copiar_array(item[2]),
@@ -396,7 +396,7 @@ func imprimir_arbol(AST, mostrar_valores=true):
 
 # No se pudo tokenizar
 func token_invalido(reglon, linea, i, stack_error = null):
-	return HUB.errores.error('Cadena "'+reglon.substr(i,reglon.length()-i) + \
+	return HUB.errores.error('Cadena "'+str_desde(reglon,i) + \
 	'" inesperada en la línea ' + str(linea+1) + ' columna ' + str(i+1) + '.', stack_error)
 
 # Se encontró un token inesperado
@@ -477,3 +477,6 @@ class Estado:
 		self.transiciones = {}
 	func agregar_transicion(simbolo, indice):
 		transiciones[simbolo] = indice
+
+func str_desde(s, i):
+	return HUB.varios.str_desde(s, i)

@@ -58,7 +58,7 @@ func localizar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 			if nodo.length() == nombre_completo.length():
 				return hijo
 			var offset_nombre = nodo.length()+1
-			var siguientes = nombre_completo.substr(offset_nombre, nombre_completo.length() - offset_nombre)
+			var siguientes = HUB.varios.str_desde(nombre_completo,offset_nombre)
 			return localizar(siguientes, hijo)
 	return HUB.error(objeto_inexistente(nombre_completo, desde), modulo)
 
@@ -133,7 +133,7 @@ func componente_candidato(objeto, nombre, tipo):
 	for componente in objeto.componentes():
 		if componente.get_type() == tipo:
 			candidatos.append(componente)
-	if candidatos.size()==0:
+	if candidatos.empty():
 		return HUB.error(HUB.errores.error("No hay candidato"), modulo)
 	if candidatos.size()==1:
 		return candidatos[0]

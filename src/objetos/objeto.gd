@@ -37,9 +37,9 @@ func nombrar(nombre_base):
 # Agrega un componente al objeto
 func agregar_componente(componente, nombre=null):
 	var nuevo_nombre = nombre
-	if (nuevo_nombre == null or nuevo_nombre.length() == 0):
+	if (nuevo_nombre == null or nuevo_nombre.empty()):
 		nuevo_nombre = componente.get_name()
-		if (nuevo_nombre == null or nuevo_nombre.length() == 0):
+		if (nuevo_nombre == null or nuevo_nombre.empty()):
 			nuevo_nombre = "componente sin nombre"
 	nuevo_nombre = nombrar_sin_colision(componente, nuevo_nombre, componentes)
 	componentes.add_child(componente)

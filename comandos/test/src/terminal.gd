@@ -123,7 +123,7 @@ func comando(argumentos):
 	HUB.mensaje("Testeando el parser de argumentos")
 	HUB.mensaje("* Testeando ejecutar un comando con un argumento")
 	HUB.archivos.crear(carpeta, "a.gd")
-	HUB.archivos.escribir(carpeta, "a.gd", "## a\n## Comando\nfunc inicializar(a):\n\tpass\nfunc comando(args):\n\tif args.size()==0:\n\t\treturn 2\n\telse:\n\t\treturn args[0]")
+	HUB.archivos.escribir(carpeta, "a.gd", "## a\n## Comando\nfunc inicializar(a):\n\tpass\nfunc comando(args):\n\tif args.empty():\n\t\treturn 2\n\telse:\n\t\treturn args[0]")
 	HUB.testing.test(tester_comando("a"), HUB.testing.verificador_por_igualdad(2), [])
 	HUB.testing.test(tester_comando("a 5"), HUB.testing.verificador_por_igualdad("5"), [])
 	HUB.archivos.borrar(carpeta, "a.gd")

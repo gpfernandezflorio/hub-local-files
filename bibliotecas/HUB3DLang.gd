@@ -115,7 +115,7 @@ func parsear(texto, entorno={}):
 				for hijo in hijos:
 					raiz.agregar_hijo(hijo)
 	pila_entorno.pop_front()
-	if raiz.padre() == null and pila_entorno.size()==0:
+	if raiz.padre() == null and pila_entorno.empty():
 		HUB.nodo_usuario.mundo.agregar_hijo(raiz)
 	return raiz
 
@@ -191,7 +191,7 @@ func reduce(produccion, valores):
 					return HUB.error(identificador_invalido(resultado), modulo)
 		if tipos.es_una_lista(resultado):
 			resultado = base(resultado[0], resultado[1])
-		if valores[1].keys().size() == 0:
+		if valores[1].keys().empty():
 			return resultado
 		if tipos.es_un_numero(resultado):
 			return HUB.error(HUB.errores.error("los modificadores no se pueden aplicar a números"), modulo)
@@ -213,13 +213,13 @@ func reduce(produccion, valores):
 		return valores[1]
 	# ARGN -> ARG
 	if produccion == 11:
-		if (valores[0][0].length()==0):
+		if (valores[0][0].empty()):
 			return [[valores[0][1]],{}]
 		else:
 			return [[],{valores[0][0]:valores[0][1]}]
 	# ARGN -> ARGN , ARG
 	if produccion == 12:
-		if (valores[2][0].length()==0):
+		if (valores[2][0].empty()):
 			valores[0][0].append(valores[2][1])
 		else:
 			valores[0][1][valores[2][0]] = valores[2][1]
@@ -256,7 +256,7 @@ func reduce(produccion, valores):
 		return valores[1]
 	# FACT -> PRIM ARGS
 	if produccion == 19:
-		if valores[1][0].size() == 0 and valores[1][1].keys().size() == 0:
+		if valores[1][0].empty() and valores[1][1].keys().empty():
 			# Lo devuelvo como texto ya que no sé para qué se va a usar
 			return valores[0]
 		if tipos.es_un_numero(valores[0]):
@@ -325,11 +325,11 @@ func base(texto, argumentos):
 		if HUB.errores.fallo(args):
 			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
 		resultado = call("crear_"+texto, args)
-	elif esta_definido(texto) and argumentos.size() == 0:
+	elif esta_definido(texto) and argumentos.empty():
 		resultado = obtener(texto)
 	elif HUB.archivos.existe("objetos/", texto + ".gd"):
 		resultado = desde_archivo(texto, argumentos)
-	elif argumentos.size() == 0:
+	elif argumentos.empty():
 		resultado = texto
 	else:
 		return HUB.error(HUB.errores.error("primitiva no definida"), modulo)
@@ -360,7 +360,7 @@ func desde_archivo(nombre, argumentos):
 		return contenido_archivo
 	# La función leer retornó ok, así que esto no puede fallar:
 	var tipo_archivo = contenido_archivo.split("\n")[2]
-	tipo_archivo = tipo_archivo.substr(3,tipo_archivo.length()-3)
+	tipo_archivo = HUB.varios.str_desde(tipo_archivo,3)
 	if tipo_archivo == "HUB3DLang":
 		var entorno = {}
 		var i=1

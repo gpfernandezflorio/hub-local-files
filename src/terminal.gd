@@ -158,7 +158,7 @@ func parsear_argumentos(argumentos):
 			if token.ends_with('"'):
 				resultado.append(token.substr(1,token.length()-2))
 			else:
-				tmp = token.substr(1,token.length()-1)
+				tmp = HUB.varios.str_desde(token,1)
 		elif token.ends_with('"'):
 			tmp += " " + token.substr(0,token.length()-1)
 			resultado.append(tmp)

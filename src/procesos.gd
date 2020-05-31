@@ -63,7 +63,7 @@ func entorno(pid=null):
 		resultado = "[" + pid_solicitado + "]" + resultado
 	for comando in pila_comandos(pid_solicitado):
 		resultado = " > " + comando + resultado
-	if resultado.length() > 0:
+	if not resultado.empty():
 		resultado += "\n"
 	return resultado
 

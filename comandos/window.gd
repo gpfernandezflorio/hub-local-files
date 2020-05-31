@@ -27,7 +27,7 @@ func comando(argumentos):
 			return HUB.error(HUB.errores.error('Argumento "'+argumento+'" inválido.'), modulo)
 		var ancho_str = argumento.substr(0, posicion_x)
 		posicion_x += 1
-		var alto_str = argumento.substr(posicion_x, argumento.length() - posicion_x)
+		var alto_str = HUB.varios.str_desde(argumento,posicion_x)
 		if not ancho_str.is_valid_integer():
 			return HUB.error(HUB.errores.error('Valor de ancho de pantalla "'+ancho_str+'" inválido.'), modulo)
 		if not alto_str.is_valid_integer():

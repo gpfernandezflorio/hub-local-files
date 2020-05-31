@@ -60,7 +60,7 @@ func descripcion():
 
 func man():
 	var r = "[ HTREE ] - " + descripcion()
-	r += "\nUso: htree [ROOT] [-a] [-t] [-p]"
+	r += "\nUso: htree [-rROOT] [-a] [-t] [-p]"
 	r += "\n ROOT : Ruta al nodo a partir del cual imprimir."
 	r += "\n   Por defecto, es el nodo HUB."
 	r += "\n -a : Muestra todos los nodos, incluso los ocultos."

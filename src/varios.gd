@@ -31,11 +31,11 @@ func parsear_argumentos_comandos(nodo, lista_de_argumentos, modulo):
 		for arg in lista_de_argumentos:
 			if arg.begins_with("-") and not arg.is_valid_float():
 				var codigo = arg[1]
-				var valor = arg.substr(2,arg.length()-2)
+				var valor = str_desde(arg,2)
 				var d = arg.find("=")
 				if d != -1:
 					codigo = arg.substr(1,d-1)
-					valor = arg.substr(d+1,arg.length()-(d+1))
+					valor = str_desde(arg,d+1)
 				if codigo in codigos_vistos:
 					return HUB.error(modificador_repetido(codigo), modulo)
 				args[codigo] = valor
@@ -78,7 +78,7 @@ func parsear_argumentos_general(arg_map, args, modulo):
 		var codigo = arg_map.lista[i].codigo
 		if not codigo in codigos_vistos:
 			# No se pasó como modificador pero podría estar entre los libres
-			if argumentos_libres.size()>0:
+			if not argumentos_libres.empty():
 				resultado[codigo] = argumentos_libres[0]
 				codigos_vistos.append(codigo)
 				argumentos_libres.pop_front()
@@ -153,18 +153,21 @@ func validar_argumento(arg, valor, modulo):
 			else:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador.begins_with(">="):
-			if resultado < num(validador.substr(2,validador.length()-2)):
+			if resultado < num(str_desde(validador,2)):
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador.begins_with("<="):
-			if resultado > num(validador.substr(2,validador.length()-2)):
+			if resultado > num(str_desde(validador,2)):
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador.begins_with(">"):
-			if resultado <= num(validador.substr(1,validador.length()-1)):
+			if resultado <= num(str_desde(validador,1)):
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador.begins_with("<"):
-			if resultado >= num(validador.substr(1,validador.length()-1)):
+			if resultado >= num(str_desde(validador,1)):
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 	return resultado
+
+func str_desde(s, i):
+	return s.substr(i, s.length()-i)
 
 # Errores
 
@@ -209,13 +212,13 @@ func restriccion(validador):
 	elif validador == "DEC":
 		return "una fracción"
 	elif validador.begins_with(">="):
-		return "mayor o igual a " + validador.substr(2, validador.length()-2)
+		return "mayor o igual a " + str_desde(validador,2)
 	elif validador.begins_with("<="):
-		return "menor o igual a " + validador.substr(2, validador.length()-2)
+		return "menor o igual a " + str_desde(validador,2)
 	elif validador.begins_with(">"):
-		return "mayor a " + validador.substr(1, validador.length()-1)
+		return "mayor a " + str_desde(validador,1)
 	elif validador.begins_with("<"):
-		return "menor a " + validador.substr(1, validador.length()-1)
+		return "menor a " + str_desde(validador,1)
 
 # Argumento de tipo incorrecto
 func argumento_tipo_incorrecto(argumento, valor, validador, stack_error=null):
