@@ -73,7 +73,7 @@ func inicializar(hub):
 		["PRIM",["variable"]],							# 20
 		["PRIM",["numero"]],							# 21
 		["ARG",["EXPR"]],								# 22
-		["ARG",["variable",":","EXPR"]],				# 23
+		["ARG",["variable","=","EXPR"]],				# 23
 		["C",[]],										# 24
 		["C",["comentario"]]							# 25
 	], {
@@ -317,10 +317,14 @@ func aplicar_modificaciones(algo, mods):
 	return resultado
 
 func base(texto, argumentos):
+	# OJO: "argumentos" es un par lista-diccionario
 	var resultado = null
 	# Primitivas:
 	if has_method("crear_"+texto): # Forma elegante de preguntar si es una primitiva
-		resultado = call("crear_"+texto, argumentos)
+		var args = HUB.varios.parsear_argumentos_general(arg_map[texto], argumentos)
+		if HUB.errores.fallo(args):
+			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
+		resultado = call("crear_"+texto, args)
 	elif esta_definido(texto) and argumentos.size() == 0:
 		resultado = obtener(texto)
 	elif HUB.archivos.existe("objetos/", texto + ".gd"):
@@ -374,25 +378,34 @@ func desde_archivo(nombre, argumentos):
 	# Nunca debería llegar acá...
 	return null
 
+var arg_map = {
+	"body":{
+		"lista":[
+			{"nombre":"tipo", "codigo":"t", "default":"static"}
+		]
+	},
+	"luz":{
+		"lista":[
+			{"nombre":"tipo", "codigo":"t", "default":"omni"}
+		]
+	},
+	"camara":{
+		"lista":[
+		]
+	},
+	"_":{
+		"lista":[
+		]
+	}
+}
+
 var tipos_body = {
 	"static":StaticBody,
 	"kinematic":KinematicBody
 }
 
-# Argumentos posibles:
-	# tipo: Tipo de cuerpo. Puede ser cualquiera de los definidos en tipos_body.
-		# Valor por defecto: "static"
-
-# Orden por defecto:
-	# | tipo |
-
 func crear_body(argumentos):
-	# OJO: "argumentos" es un par lista-diccionario
-	var tipo = "static"
-	if argumentos[0].size() > 0:
-		tipo = argumentos[0][0]
-	elif "tipo" in argumentos[1].keys():
-		tipo = argumentos[1]["tipo"]
+	var tipo = argumentos["t"]
 	if tipo in tipos_body.keys():
 		var resultado = tipos_body[tipo].new()
 		resultado.set_name("body")
@@ -403,20 +416,8 @@ var tipos_luz = {
 	"omni":OmniLight
 }
 
-# Argumentos posibles:
-	# tipo: Tipo de luz. Puede ser cualquiera de los definidos en tipos_luz.
-		# Valor por defecto: "omni"
-
-# Orden por defecto:
-	# | tipo |
-
 func crear_luz(argumentos):
-	# OJO: "argumentos" es un par lista-diccionario
-	var tipo = "omni"
-	if argumentos[0].size() > 0:
-		tipo = argumentos[0][0]
-	elif "tipo" in argumentos[1].keys():
-		tipo = argumentos[1]["tipo"]
+	var tipo = argumentos["t"]
 	if tipo in tipos_luz.keys():
 		var resultado = tipos_luz[tipo].new()
 		resultado.set_name("luz")
@@ -424,13 +425,11 @@ func crear_luz(argumentos):
 	return HUB.error(HUB.errores.error("Tipo de luz inválido: "+tipo), modulo)
 
 func crear_camara(argumentos):
-	# OJO: "argumentos" es un par lista-diccionario
 	var resultado = Camera.new()
 	resultado.set_name("cámara")
 	return resultado
 
 func crear__(argumentos):
-	# OJO: "argumentos" es un par lista-diccionario
 	return HUB.objetos.crear(null)
 
 # Errores

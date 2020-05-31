@@ -133,12 +133,12 @@ func comando(argumentos):
 	HUB.archivos.escribir(carpeta, "b.gd", 'var arg_map = {"obligatorios":1,"lista":[{"nombre":"modo","codigo":"m","default":"0"}]}')
 	HUB.testing.test_genera_error(
 		tester_comando("b"),
-		HUB.terminal.nodo_comandos.faltan_argumentos_obligatorios("modo"), []
+		HUB.varios.faltan_argumentos_obligatorios("modo"), []
 	)
 	HUB.mensaje("* Testeando ejecutar con dos argumentos un comando que sólo admite un argumento")
 	HUB.testing.test_genera_error(
 		tester_comando("b 1 2"),
-		HUB.terminal.nodo_comandos.mas_argumentos_que_los_esperados(1), []
+		HUB.varios.mas_argumentos_que_los_esperados(1), []
 	)
 	HUB.mensaje("* Testeando ejecutar un comando con la cantidad correcta de argumentos")
 	HUB.testing.test(tester_comando("b A"), HUB.testing.verificador_por_igualdad("A"), [])
@@ -146,12 +146,12 @@ func comando(argumentos):
 	HUB.mensaje("* Testeando ejecutar un comando con un modificador no admitido")
 	HUB.testing.test_genera_error(
 		tester_comando("b -cC"),
-		HUB.terminal.nodo_comandos.modificador_invalido("c", "-cC"), []
+		HUB.varios.modificador_invalido("c", "-cC"), []
 	)
 	HUB.mensaje("* Testeando ejecutar un comando con un modificador repetido")
 	HUB.testing.test_genera_error(
 		tester_comando("b -mD -mE"),
-		HUB.terminal.nodo_comandos.modificador_repetido("m"), []
+		HUB.varios.modificador_repetido("m"), []
 	)
 	HUB.archivos.borrar(carpeta, "b.gd")
 	HUB.mensaje("* Testeando que los argumentos por defecto se cargan correctamente")
@@ -180,23 +180,23 @@ func comando(argumentos):
 	HUB.archivos.escribir(carpeta, "e.gd", 'var arg_map = {"obligatorios":0,"lista":[{"nombre":"a","codigo":"a","validar":"NUM;>=2;<10","default":"5"},{"nombre":"b","codigo":"b","validar":"INT;>=5","default":"5"},{"nombre":"c","codigo":"c","validar":"DEC;<2","default":"0.5"}]}')
 	HUB.testing.test_genera_error(
 		tester_comando("e hola"),
-		HUB.terminal.nodo_comandos.argumento_tipo_incorrecto("a", "hola", "NUM"), []
+		HUB.varios.argumento_tipo_incorrecto("a", "hola", "NUM"), []
 	)
 	HUB.testing.test_genera_error(
 		tester_comando("e 1"),
-		HUB.terminal.nodo_comandos.argumento_tipo_incorrecto("a", "1", ">=2"), []
+		HUB.varios.argumento_tipo_incorrecto("a", "1", ">=2"), []
 	)
 	HUB.testing.test_genera_error(
 		tester_comando("e 12"),
-		HUB.terminal.nodo_comandos.argumento_tipo_incorrecto("a", "12", "<10"), []
+		HUB.varios.argumento_tipo_incorrecto("a", "12", "<10"), []
 	)
 	HUB.testing.test_genera_error(
 		tester_comando("e 3 6.5"),
-		HUB.terminal.nodo_comandos.argumento_tipo_incorrecto("b", "6.5", "INT"), []
+		HUB.varios.argumento_tipo_incorrecto("b", "6.5", "INT"), []
 	)
 	HUB.testing.test_genera_error(
 		tester_comando("e 3 6 j"),
-		HUB.terminal.nodo_comandos.argumento_tipo_incorrecto("c", "j", "DEC"), []
+		HUB.varios.argumento_tipo_incorrecto("c", "j", "DEC"), []
 	)
 	HUB.mensaje("* Testeando que los argumentos se validan y convierten correctamente")
 	HUB.testing.test(tester_comando("e"), HUB.testing.verificador_por_igualdad(5), [])

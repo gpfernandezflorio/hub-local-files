@@ -23,7 +23,7 @@ func comando(argumentos):
 	HUB.terminal.log_completo(true)
 	HUB.mensaje("Testeando el comando clear en modo silencioso")
 	HUB.testing.resultado_comando(
-		"clear s",
+		"clear -s",
 		VerificadorMensajesBorrados.new(HUB),
 		[]
 	)

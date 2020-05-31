@@ -31,6 +31,8 @@ var errores = Node.new()
 var procesos = Node.new()
 # Entorno de testing
 var testing = Node.new()
+# Varios
+var varios = Node.new()
 
 func inicializar(hub, extension):
 	ruta_raiz = get_parent().ruta_raiz
@@ -44,7 +46,8 @@ func inicializar(hub, extension):
 		[nodo_usuario, "usuario",    "Nodo Usuario"],
 		[errores,      "errores",    "Errores"],
 		[procesos,     "procesos",   "Procesos"],
-		[testing,      "testing",    "Testing"]
+		[testing,      "testing",    "Testing"],
+		[varios,       "varios",     "Varios"]
 	]:
 		if not inicializar_componente(
 			componente[0],

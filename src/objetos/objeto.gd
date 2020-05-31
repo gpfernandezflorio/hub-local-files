@@ -47,16 +47,7 @@ func agregar_componente(componente, nombre=null):
 
 # Adjunta un script al objeto
 func agregar_comportamiento(nombre_script, args=[[],{}]):
-	var comportamiento = HUB.objetos.cargar_comortamiento(nombre_script)
-	if HUB.errores.fallo(comportamiento):
-		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', comportamiento), nombre())
-	var nombre = nombre_script.replace("/","-")
-	nombre = nombrar_sin_colision(comportamiento, nombre, comportamientos)
-	comportamientos.add_child(comportamiento)
-	var resultado = comportamiento.inicializar(HUB, self, args)
-	if HUB.errores.fallo(resultado):
-		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', resultado), nombre())
-	return nombre # Devuelve el nuevo nombre
+	return HUB.objetos.agregar_comportamiento_a_objeto(self, nombre_script, args)
 
 # Quita un componente del objeto
 func quitar_componente(nombre):

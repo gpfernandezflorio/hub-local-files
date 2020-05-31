@@ -214,7 +214,7 @@ func verificar_funciones(archivo, script, codigo_tipo, codigo_subtipo=null):
 			HUB.errores.verificar_implementa_funcion(nodo,"finalizar",0)
 		if HUB.errores.fallo(verificacion_finalizar):
 			return HUB.error(funciones_no_implementadas(archivo, codigo_tipo, verificacion_finalizar), modulo)
-	if codigo_tipo == "Comportamiento":
+	elif codigo_tipo == "Comportamiento":
 		var verificacion_inicializar = \
 			HUB.errores.verificar_implementa_funcion(nodo,"inicializar",3)
 		if HUB.errores.fallo(verificacion_inicializar):

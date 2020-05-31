@@ -5,36 +5,34 @@
 # Requiere para inicializar:
 	# Que el objeto tenga un componente de tipo KinematicBody
 
-# Argumentos posibles:
-	# cuerpo: Nombre del componente de tipo KinematicBody usado para mover al personaje
-
-# Orden por defecto:
-	# | cuerpo |
-
 extends Node
 
 var HUB
-var modulo
+
+var arg_map = {
+	"lista":[
+		{"nombre":"cuerpo", "codigo":"c"},
+		{"nombre":"velocidad", "codigo":"v", "validar":"DEC;>0", "default":1}
+	]
+}
+
+var modulo = "FPS/Control"
 var yo
 var cuerpo
 var velocidad_entrada
 
 func inicializar(hub, yo, args):
-	# OJO: "args" es un par lista-diccionario
 	HUB = hub
-	modulo = "FPS/Control"
 	self.yo = yo
-	var nombre_cuerpo = null
-	if args[0].size() > 0:
-		nombre_cuerpo = args[0][0]
-	elif "cuerpo" in args[1].keys():
-		nombre_cuerpo = args[1]["cuerpo"]
+	var nombre_cuerpo = args["c"]
 	if nombre_cuerpo == null:
 		cuerpo = HUB.objetos.componente_candidato(yo, "body", "KinematicBody")
 	else:
 		cuerpo = yo.componente_nombrado(nombre_cuerpo)
 	if HUB.errores.fallo(cuerpo):
 		return HUB.error(HUB.errores.error("X", cuerpo), modulo)
+	if cuerpo.get_type() != "KinematicBody":
+		return HUB.error(HUB.errores.error("X"), modulo)
 	velocidad_entrada = Vector3(0.0,0.0,0.1)
 	HUB.eventos.registrar_periodico(self, "periodico")
 	return null

@@ -9,4 +9,4 @@
 #camara:ncamara:pcosa
 #body:nmario:pcosa
 
-(luz&camara&body(kinematic):nb):sfps/control(b)
+(luz(tipo=omni)&camara&body(kinematic):nb):sfps/control(c=b)

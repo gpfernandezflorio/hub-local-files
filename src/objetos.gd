@@ -99,19 +99,47 @@ func cargar_comortamiento(nombre):
 		script.set_name(nombre)
 		comportamientos_cargados[nombre] = script
 	nodo.set_script(script)
+	var resultado = HUB.varios.cargar_bibliotecas(nodo, modulo)
+	if HUB.errores.fallo(resultado):
+		return HUB.error(HUB.errores.error('X', resultado), modulo)
 	return nodo
+
+# Adjunta un script a un objeto
+func agregar_comportamiento_a_objeto(objeto, nombre_script, args=[[],{}]):
+	var comportamiento = cargar_comortamiento(nombre_script)
+	if HUB.errores.fallo(comportamiento):
+		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', comportamiento), modulo)
+	var nombre = nombre_script.replace("/","-")
+	nombre = objeto.nombrar_sin_colision(comportamiento, nombre, objeto.comportamientos)
+	objeto.comportamientos.add_child(comportamiento)
+	args = HUB.varios.parsear_argumentos_comportamientos(comportamiento, args)
+	if HUB.errores.fallo(args):
+		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', comportamiento), modulo)
+	var resultado = comportamiento.inicializar(HUB, objeto, args)
+	if HUB.errores.fallo(resultado):
+		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', resultado), modulo)
+	return nombre # Devuelve el nuevo nombre
 
 # Generar un objeto a partir de un generador tipo función
 func generar(nombre, argumentos):
 	if not nombre in generadores_cargados:
 		var script = HUB.archivos.abrir(carpeta_objetos, nombre + ".gd", codigo_objetos)
-		if (HUB.errores.fallo(script)):
+		if HUB.errores.fallo(script):
 			return HUB.error(generador_inexistente(nombre, script), modulo)
 		var nodo = Node.new()
 		nodo.set_script(script)
-		nodo.inicializar(HUB)
+		var resultado = HUB.varios.cargar_bibliotecas(nodo, modulo)
+		if HUB.errores.fallo(resultado):
+			return HUB.error(HUB.errores.error("X", resultado), modulo)
+		resultado = nodo.inicializar(HUB)
+		if HUB.errores.fallo(resultado):
+			return HUB.error(HUB.errores.error("X", resultado), modulo)
 		generadores_cargados[nombre] = nodo
-	return generadores_cargados[nombre].gen(argumentos)
+	var generador = generadores_cargados[nombre]
+	argumentos = HUB.varios.parsear_argumentos_objetos(generador, argumentos)
+	if HUB.errores.fallo(argumentos):
+		return HUB.error(HUB.errores.error("X", argumentos), modulo)
+	return generador.gen(argumentos)
 
 # Usada para que los scripts de comportamiento accedan a los componentes del objeto
 func componente_candidato(objeto, nombre, tipo):
