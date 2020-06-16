@@ -65,7 +65,7 @@ func inicializar(hub):
 		["TERM",["TERM","opF","FACT"]],					# 15
 		# Acá me tengo que asegurar que ese FACT sea un número
 		["TERM",["FACT"]],								# 16
-		["FACT",["-","FACT"]],							# 17
+		["FACT",["opT","FACT"]],							# 17
 		# Acá me tengo que asegurar que ese FACT sea un número
 		["FACT",["(","START",")"]],						# 18
 		["FACT",["PRIM","ARGS"]],						# 19
@@ -78,11 +78,11 @@ func inicializar(hub):
 		["C",["comentario"]]							# 25
 	], {
 		"variable":"([a-z]|_|/)+",	# Letras y guiones bajos de long > 0
-		"numero":"[0-9]+|([0-9]*\\.[0-9]+)", # números
-		"mod":":[a-z]",				# ':' seguido de una letra minúscula
+		"numero":"([0-9]*\\.[0-9]+)|[0-9]+", # números
+		"mod":":(n|p|s|ox|oy|oz|rx|ry|rz)",
 		"comentario":"#.*",			# Cualquier cosa iniciada con un '#'
-		"opT":"\\+-",				# '+' y '-'
-		"opF":"\\*%"				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
+		"opT":"\\+|-",				# '+' y '-'
+		"opF":"\\*|%"				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
 	}, tds)
 
 func parsear(texto, entorno={}):
@@ -142,7 +142,7 @@ func reduce(produccion, valores):
 		return null
 	# I -> $ variable = START C
 	if produccion == 2:
-		modulo.definir(valores[1], valores[3])
+		definir(valores[1], valores[3])
 		return null
 	# START -> HOME
 	if produccion == 3:
@@ -198,9 +198,15 @@ func reduce(produccion, valores):
 		return aplicar_modificaciones(resultado, valores[1])
 	# MODS -> mod EXPR MODS
 	if produccion == 7: # TODO: ¿chequear repetidos? :p y :n no tiene sentido pero :s podría tener varios
-		var i = valores[0][1]
 		var dic = valores[2]
-		dic[i] = valores[1] # Por ahora, me quedo con el primero
+		var i = HUB.varios.str_desde(valores[0], 1)
+		if modificador_admite_varios(i):
+			if i in dic:
+				dic[i].push_front(valores[1])
+			else:
+				dic[i] = [valores[1]]
+		else:
+			dic[i] = valores[1] # Por ahora, me quedo con el primero
 		return dic
 	# MODS -> []
 	if produccion == 8:
@@ -267,7 +273,7 @@ func reduce(produccion, valores):
 		return valores[0]
 	# PRIM -> number
 	if produccion == 21:
-		return valores[0]
+		return HUB.varios.num(valores[0])
 	# ARG -> EXPR
 	if produccion == 22:
 		return ["",valores[0]]
@@ -300,14 +306,37 @@ func aplicar_modificaciones(algo, mods):
 		elif (modificador == "s"):
 			if tipos.es_un_componente(resultado):
 				resultado = componente_a_objeto(resultado)
-			var script = mods["s"]
-			var args = [[],{}]
-			if tipos.es_una_lista(script):
-				args = script[1]
-				script = script[0]
-			var c = resultado.agregar_comportamiento(script, args)
-			if HUB.errores.fallo(c):
-				return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + script + '".', c), modulo)
+			var scripts = mods["s"]
+			for script in scripts:
+				var args = [[],{}]
+				if tipos.es_una_lista(script):
+					args = script[1]
+					script = script[0]
+				var c = resultado.agregar_comportamiento(script, args)
+				if HUB.errores.fallo(c):
+					return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + script + '".', c), modulo)
+		# OFFSET
+		elif (modificador.begins_with("o")):
+			var eje = modificador[1]
+			var movimiento = Vector3(0,0,0)
+			var valor = mods[modificador]
+			if tipos.es_un_string(valor):
+				if esta_definido(valor):
+					valor = obtener(valor)
+				else:
+					return HUB.error(HUB.errores.error('La variable "' + valor + '" no está definida.'), modulo)
+			if not tipos.es_un_numero(valor):
+				return HUB.error(HUB.errores.error('Tipo inválido para el modificador "' + modificador + '".'), modulo)
+			if eje == "x":
+				movimiento.x = valor
+			elif eje == "y":
+				movimiento.y = valor
+			elif eje == "z":
+				movimiento.z = valor
+			if HUB.objetos.es_un_objeto(resultado):
+				resultado.mover(movimiento)
+			else:
+				resultado.translate(movimiento)
 		else:
 			return HUB.error(modificador_invalido(modificador), modulo)
 	if hijo_de != null:
@@ -431,6 +460,9 @@ func crear_camara(argumentos):
 
 func crear__(argumentos):
 	return HUB.objetos.crear(null)
+
+func modificador_admite_varios(mod):
+	return mod in ["s"]
 
 # Errores
 
