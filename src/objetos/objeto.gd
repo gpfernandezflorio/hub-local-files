@@ -14,6 +14,8 @@ var hijos = Node.new()
 var componentes = Node.new()
 # Nodo vacío que tiene como hijos a los nodos que representan los comportamientos de este objeto
 var comportamientos = Node.new()
+# Diccionario de propiedades para que los comporamientos interactúen entre sí
+var propiedades = {}
 
 func inicializar(hub):
 	HUB = hub
@@ -146,6 +148,16 @@ func mover(cuanto):
 	for componente in componentes():
 		if componente.has_method("translate"):
 			componente.translate(cuanto)
+
+# Diccionario de propiedades para que los comporamientos interactúen entre sí
+func dame(clave, default=null):
+	var resultado = default
+	if clave in propiedades:
+		resultado = propiedades[clave]
+	return resultado
+
+func pone(clave, valor):
+	propiedades[clave] = valor
 
 # Funciones Auxiliares
 
