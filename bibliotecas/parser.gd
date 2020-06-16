@@ -209,7 +209,10 @@ func tokenizar_cadena(token_rules, cadena):
 			var j = 0
 			for token in token_rules.keys():
 				var regex = RegEx.new()
-				regex.compile(token_rules[token])
+				var rule = token_rules[token]
+				if rule=="$":
+					rule = "\\$"
+				regex.compile(rule)
 				var token_encontrado = regex.find(reglon, i)
 				if token_encontrado == i:
 					token_encontrado = regex.get_capture(0)
