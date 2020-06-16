@@ -19,7 +19,6 @@ var arg_map = {
 var modulo = "FPS/Control"
 var yo
 var cuerpo
-var velocidad_entrada
 
 func inicializar(hub, yo, args):
 	HUB = hub
@@ -33,7 +32,6 @@ func inicializar(hub, yo, args):
 		return HUB.error(HUB.errores.error("X", cuerpo), modulo)
 	if cuerpo.get_type() != "KinematicBody":
 		return HUB.error(HUB.errores.error("X"), modulo)
-	velocidad_entrada = Vector3(0.0,0.0,0.1)
 	HUB.eventos.registrar_periodico(self, "periodico")
 	return null
 
@@ -45,6 +43,7 @@ func periodico(delta):
 	yo.mover(movimiento)
 
 func calcular_velocidad(delta):
+	var velocidad_entrada = yo.dame("input_mov", Vector3(0,0,0))
 	return velocidad_entrada
 
 func calcular_angulo():
