@@ -21,8 +21,6 @@ var codigos_script = ["SRC"]
 var compilado
 # ¿Los fuentes están en userFS?
 var userFS_src
-# OS: “Android”, “BlackBerry 10”, “Flash”, “Haiku”, “iOS”, “HTML5”, “OSX”, “Server”, “Windows”, “WinRT”, “X11”
-var os
 # La verdadera ubicación de los archivos de usuario
 # Si estoy en el editor o usando el FS del usuario, es igual a la ruta raiz
 var ruta_user = "user://"
@@ -31,12 +29,11 @@ func inicializar(hub):
 	HUB = hub
 	compilado = not OS.is_debug_build()
 	userFS_src = Globals.get("userfs")
-	os = OS.get_name()
-	if os == "HTML5":
+	if HUB.os == "HTML5":
 		ruta_user = "/userfs/"
 	if userFS_src or not compilado:
 		ruta_user = HUB.ruta_raiz
-	file_system = FileSystem.new(compilado, userFS_src, os, HUB.ruta_raiz)
+	file_system = FileSystem.new(compilado, userFS_src, HUB.os, HUB.ruta_raiz)
 	return true
 
 # Carga el contenido de un archivo

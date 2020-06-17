@@ -9,6 +9,7 @@ extends Node
 
 var HUB
 var modulo = "EVENTOS"
+
 # Diccionario que guarda, para cada accion, una lista de pares nodo-función registrados para esa acción
 var registro_eventos = {} # Dicc(string : [{nodo, función}])
 var modo_mouse = 0
@@ -88,8 +89,11 @@ func _fixed_process(delta):
 
 func mouse_movido(ev):
 	if registro_eventos.has("MM"):
+		var mov = ev.relative_pos
+		if HUB.os == "HTML5":
+			mov = (ev.global_pos - HUB.pantalla.resolucion/2)/60.0
 		for registro in registro_eventos["MM"]:
-			registro["nodo"].call(registro["funcion"], Vector2(ev.speed_x, ev.speed_y))
+			registro["nodo"].call(registro["funcion"], mov)
 
 func ventana_escalada():
 	if registro_eventos.has("WS"):

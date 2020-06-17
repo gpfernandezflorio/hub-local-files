@@ -34,8 +34,12 @@ var testing = Node.new()
 # Varios
 var varios = Node.new()
 
+# OS: “Android”, “BlackBerry 10”, “Flash”, “Haiku”, “iOS”, “HTML5”, “OSX”, “Server”, “Windows”, “WinRT”, “X11”
+var os
+
 func inicializar(hub, extension):
 	ruta_raiz = get_parent().ruta_raiz
+	os = OS.get_name()
 	for componente in [
 		[archivos,     "archivos",   "Archivos"],
 		[eventos,      "eventos",    "Eventos"],

@@ -53,7 +53,8 @@ func inicializar(hub, yo, args):
 func registrar_inputs():
 	if control == "KM":
 		HUB.eventos.registrar_mouse_mov(self, "mouse")
-		yo.pone("input_mouse", true)
+		if HUB.os != "HTML5":
+			yo.pone("input_mouse", true)
 	for k in controles[control]:
 		HUB.eventos.registrar_press(controles[control][k], self, "p_"+k)
 		HUB.eventos.registrar_release(controles[control][k], self, "r_"+k)
@@ -151,4 +152,4 @@ func r_rot_left(): # 7
 	yo.pone("input_rot", rot_input_generado)
 
 func mouse(mov):
-	yo.pone("input_rot", mov/500.0)
+	yo.pone("input_rot", mov/20.0)
