@@ -41,6 +41,11 @@ func nuevo(programa, argumentos=[]):
 	add_child(nodo)
 	nodo.set_name(pid)
 	nodo.set_script(script_programa)
+	var resultado = HUB.varios.cargar_bibliotecas(nodo, modulo)
+	if HUB.errores.fallo(resultado):
+		remove_child(nodo)
+		nodo.queue_free()
+		return HUB.error(programa_no_cargado(programa, resultado), modulo)
 	var resultado_inicializar = nodo.inicializar(HUB, pid, argumentos)
 	if HUB.errores.fallo(resultado_inicializar):
 		remove_child(nodo)

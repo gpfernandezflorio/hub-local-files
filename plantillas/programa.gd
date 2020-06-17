@@ -9,3 +9,6 @@ var HUB
 
 func inicializar(hub, pid, argumentos):
 	HUB = hub
+
+func finalizar():
+	return null
