@@ -9,9 +9,9 @@ extends Spatial
 var HUB
 
 # Nodo vacío que tiene como hijos a los nodos que representan los objetos hijos de este objeto
-var hijos = Node.new()
+var hijos = Spatial.new()
 # Nodo vacío que tiene como hijos a los nodos que representan los componentes de este objeto
-var componentes = Node.new()
+var componentes = Spatial.new()
 # Nodo vacío que tiene como hijos a los nodos que representan los comportamientos de este objeto
 var comportamientos = Node.new()
 # Diccionario de propiedades para que los comporamientos interactúen entre sí
@@ -142,12 +142,7 @@ func nombre():
 
 # Mueve inmediatamente
 func mover(cuanto):
-	translate(cuanto)
-	for hijo in hijos():
-		hijo.mover(cuanto)
-	for componente in componentes():
-		if componente.has_method("translate"):
-			componente.translate(cuanto)
+	set_translation(get_transform().origin + cuanto)
 
 # Diccionario de propiedades para que los comporamientos interactúen entre sí
 func dame(clave, default=null):

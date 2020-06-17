@@ -17,6 +17,15 @@ func inicializar(hub):
 	HUB = hub
 	return true
 
+# Registra la función del nodo cuando se mueve el mouse
+func registrar_mouse_mov(nodo, funcion):
+	# La funcion debe tomar un Vector2 como argumento
+	var accion = "MM"
+	if registro_eventos.has(accion):
+		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
+	else:
+		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+
 # Registra la función del nodo cuando se presiona un botón
 func registrar_press(boton, nodo, funcion):
 	# La funcion no debe tomar parámetros
@@ -53,7 +62,7 @@ func registrar_periodico(nodo, funcion):
 		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
 
 # Asigna el modo del cursor del mouse
-func set_modo_mouse(modo):
+func set_modo_mouse(modo=0):
 	modo_mouse = modo
 	if not HUB.terminal.activa():
 		Input.set_mouse_mode(modo_mouse)
@@ -66,7 +75,9 @@ func iniciar():
 	get_tree().get_root().connect("size_changed", self, "ventana_escalada")
 
 func _input(ev):
-	if (ev.type == InputEvent.KEY):
+	if ev.type == InputEvent.MOUSE_MOTION:
+		mouse_movido(ev)
+	if ev.type == InputEvent.KEY:
 		if ev.pressed:
 			tecla_presionada(ev)
 		else:
@@ -74,6 +85,11 @@ func _input(ev):
 
 func _fixed_process(delta):
 	periodico(delta)
+
+func mouse_movido(ev):
+	if registro_eventos.has("MM"):
+		for registro in registro_eventos["MM"]:
+			registro["nodo"].call(registro["funcion"], Vector2(ev.speed_x, ev.speed_y))
 
 func ventana_escalada():
 	if registro_eventos.has("WS"):
@@ -122,3 +138,4 @@ func periodico(delta):
 	# P + str(scancode) : Se presiona una tecla o un botón del mouse
 	# R + str(scancode) : Se suelta una tecla o un botón del mouse
 	# WS : Cambió el tamaño de la pantalla
+	# MM : Se movió el mouse

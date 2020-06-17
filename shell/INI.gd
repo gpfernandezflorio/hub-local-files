@@ -10,14 +10,18 @@
 #test/src/procesos
 #test/src/terminal
 
-window 800x600
+#window 800x600
 
 #test/src/objetos
 
 #test
 
-new fps
-htree -p
-hide
-tree pos script type
+#mouse 2
+#new fps
+#htree -p
+#hide
+#tree pos script type
 #fstree
+
+#new _:npedro
+#tree

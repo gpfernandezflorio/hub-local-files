@@ -2,11 +2,6 @@
 ## Objeto
 ## HUB3DLang
 
-
-
-#_:ncosa:sfps/control
-#luz:nluz:pcosa
-#camara:ncamara:pcosa
-#body:nmario:pcosa
-
-(luz(tipo=omni)&camara&body(kinematic):nb):sfps/control(c=b)
+$altura=1.3
+$cabeza=(luz(tipo=omni,r=10)&camara:nc):oyaltura
+(cabeza&body(kinematic):nb):sfps/control(m=c,c=b,v=2.5):nh:sfps/input(c=KM)

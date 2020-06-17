@@ -77,7 +77,7 @@ func inicializar(hub):
 		["C",[]],										# 24
 		["C",["comentario"]]							# 25
 	], {
-		"variable":"([a-z]|_|/)+",	# Letras y guiones bajos de long > 0
+		"variable":"([a-zA-Z]|_|/)+",	# Letras y guiones bajos de long > 0
 		"numero":"([0-9]*\\.[0-9]+)|[0-9]+", # números
 		"mod":":(n|p|s|ox|oy|oz|rx|ry|rz)",
 		"comentario":"#.*",			# Cualquier cosa iniciada con un '#'
@@ -85,7 +85,7 @@ func inicializar(hub):
 		"opF":"\\*|%"				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
 	}, tds)
 
-func parsear(texto, entorno={}):
+func crear(texto, entorno={}):
 	var nuevos_objetos = [] # El texto podría contener varias líneas
 	var raiz = null
 	pila_entorno.push_front(entorno)
@@ -354,7 +354,7 @@ func base(texto, argumentos):
 		if HUB.errores.fallo(args):
 			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
 		resultado = call("crear_"+texto, args)
-	elif esta_definido(texto) and argumentos.empty():
+	elif esta_definido(texto) and argumentos[0].empty() and argumentos[1].keys().empty():
 		resultado = obtener(texto)
 	elif HUB.archivos.existe("objetos/", texto + ".gd"):
 		resultado = desde_archivo(texto, argumentos)
@@ -398,11 +398,11 @@ func desde_archivo(nombre, argumentos):
 			i+=1
 		for argumento in argumentos[1].keys():
 			entorno[argumento] = argumentos[1][argumento]
-		return parsear(contenido_archivo, entorno)
+		return crear(contenido_archivo, entorno)
 	if tipo_archivo == "Funcion":
 		var resultado = HUB.objetos.generar(nombre, argumentos)
 		if tipos.es_un_string(resultado):
-			return parsear(resultado)
+			return crear(resultado)
 		return resultado
 	# Nunca debería llegar acá...
 	return null
@@ -415,7 +415,8 @@ var arg_map = {
 	},
 	"luz":{
 		"lista":[
-			{"nombre":"tipo", "codigo":"t", "default":"omni"}
+			{"nombre":"tipo", "codigo":"t", "default":"omni"},
+			{"nombre":"radio", "codigo":"r", "default":"2", "validar":"NUM;>0"} # Sólo para omni y spot
 		]
 	},
 	"camara":{
@@ -423,6 +424,10 @@ var arg_map = {
 		]
 	},
 	"_":{
+		"lista":[
+		]
+	},
+	"testcube":{
 		"lista":[
 		]
 	}
@@ -442,7 +447,9 @@ func crear_body(argumentos):
 	return HUB.error(HUB.errores.error("Tipo de body inválido: "+tipo), modulo)
 
 var tipos_luz = {
-	"omni":OmniLight
+	"omni":OmniLight,
+	"spot":SpotLight,
+	"dir":DirectionalLight
 }
 
 func crear_luz(argumentos):
@@ -450,6 +457,7 @@ func crear_luz(argumentos):
 	if tipo in tipos_luz.keys():
 		var resultado = tipos_luz[tipo].new()
 		resultado.set_name("luz")
+		resultado.set("params/radius", argumentos["r"])
 		return resultado
 	return HUB.error(HUB.errores.error("Tipo de luz inválido: "+tipo), modulo)
 
@@ -460,6 +468,11 @@ func crear_camara(argumentos):
 
 func crear__(argumentos):
 	return HUB.objetos.crear(null)
+
+func crear_testcube(argumentos):
+	var resultado = TestCube.new()
+	resultado.set_name("cubo de prueba")
+	return resultado
 
 func modificador_admite_varios(mod):
 	return mod in ["s"]

@@ -63,11 +63,18 @@ func localizar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 	return HUB.error(objeto_inexistente(nombre_completo, desde), modulo)
 
 # Ubica un objeto y lo elimina del mundo
-func borrar(nombre_completo, desde=HUB.nodo_usuario.mundo):
-	var objeto = localizar(nombre_completo, desde)
-	if HUB.errores.fallo(objeto):
-		return HUB.error(HUB.errores.error('No se pudo eliminar el objeto "' + \
-			nombre_completo + '".', objeto), modulo)
+func borrar(objeto_o_nombre, desde=HUB.nodo_usuario.mundo):
+	var nombre = objeto_o_nombre
+	var objeto = objeto_o_nombre
+	if es_un_objeto(objeto_o_nombre):
+		nombre = objeto.nombre()
+	elif typeof(objeto_o_nombre) == TYPE_STRING:
+		objeto = localizar(nombre, desde)
+		if HUB.errores.fallo(objeto):
+			return HUB.error(HUB.errores.error('No se pudo eliminar el objeto "' + \
+				nombre + '".', objeto), modulo)
+	else:
+		return HUB.error(HUB.errores.error('Argumento inválido para borrar :' + HUB.varios.str(objeto_o_nombre)), modulo)
 	var padre = objeto.padre()
 	padre.quitar_hijo(objeto)
 	if objeto.is_inside_tree():

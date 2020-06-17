@@ -30,7 +30,7 @@ func comando(argumentos):
 	var que = argumentos["i"]
 	if que.empty():
 		return HUB.objetos.crear()
-	return HUB3DLang.parsear(que)
+	return HUB3DLang.crear(que)
 
 func descripcion():
 	return "Crea un nuevo objeto"
