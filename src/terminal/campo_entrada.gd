@@ -12,8 +12,11 @@ var historial = []
 # Índice en el historial cuando se explora
 var indice_historial = -1
 
+var autocompletar_no_disponible
+
 func inicializar(hub):
 	HUB = hub
+	autocompletar_no_disponible = (not OS.is_debug_build()) and (not Globals.get("userfs"))
 	for hijo in get_children():
 		hijo.set_name("__hidden__"+hijo.get_name())
 	ventana_escalada(HUB.pantalla.resolucion)
@@ -48,6 +51,8 @@ func ingresar():
 		get_parent().ejecutar(texto_ingresado, true)
 
 func autocompletar():
+	if autocompletar_no_disponible:
+		return
 	var todo_el_texto = get_text()
 	var ultimo_espacio = todo_el_texto.find_last(" ")
 	var inicio = todo_el_texto.substr(0,ultimo_espacio)

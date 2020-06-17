@@ -64,6 +64,8 @@ func registrar_periodico(nodo, funcion):
 
 # Asigna el modo del cursor del mouse
 func set_modo_mouse(modo=0):
+	if HUB.os == "HTML5":
+		modo = 0
 	modo_mouse = modo
 	if not HUB.terminal.activa():
 		Input.set_mouse_mode(modo_mouse)
@@ -91,7 +93,8 @@ func mouse_movido(ev):
 	if registro_eventos.has("MM"):
 		var mov = ev.relative_pos
 		if HUB.os == "HTML5":
-			mov = (ev.global_pos - HUB.pantalla.resolucion/2)/60.0
+			mov = 2.2*ev.global_pos/HUB.pantalla.resolucion - Vector2(1.1,1.1)
+			mov = 10*Vector2(pow(mov.x,9),pow(mov.y,9))
 		for registro in registro_eventos["MM"]:
 			registro["nodo"].call(registro["funcion"], mov)
 
