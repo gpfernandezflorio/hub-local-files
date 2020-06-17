@@ -12,34 +12,9 @@ import os
 def main():
   renombrar_gd_a_h("shell")
   renombrar_gd_a_h("objetos", objeto_HUB3DLang)
-#  os.chdir("shell")
-#  for f in os.listdir("."):
-#    if f.endswith(".gd"):
-#      os.rename(f, f.replace(".gd",".h"))
-#  os.chdir("..")
-
-#  os.chdir("objetos")
-#  for f in os.listdir("."):
-    # TODO: sólo si es tipo HUB3DLang
-#    if f.endswith(".gd"):
-#      os.rename(f, f.replace(".gd",".h"))
-    # TODO: recursivo
-#  os.chdir("..")
 
   raw_input('\nConversión completa. Presione ENTER para revertir\n')
 
-#  os.chdir("shell")
-#  for f in os.listdir("."):
-#    if f.endswith(".h"):
-#      os.rename(f, f.replace(".h",".gd"))
-#  os.chdir("..")
-
-#  os.chdir("objetos")
-#  for f in os.listdir("."):
-#    if f.endswith(".h"):
-#      os.rename(f, f.replace(".h",".gd"))
-#    # TODO: recursivo
-#  os.chdir("..")
   renombrar_h_a_gd("shell")
   renombrar_h_a_gd("objetos")
 
