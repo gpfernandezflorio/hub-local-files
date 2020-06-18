@@ -125,7 +125,7 @@ func generar(nombre, args=[[],{}]):
 			return HUB.error(HUB.errores.error("X", resultado), modulo)
 		generadores_cargados[nombre] = nodo
 	var generador = generadores_cargados[nombre]
-	var argumentos = HUB.varios.parsear_argumentos_objetos(generador, args)
+	var argumentos = HUB.varios.parsear_argumentos_objetos(generador, args, modulo)
 	if HUB.errores.fallo(argumentos):
 		return HUB.error(HUB.errores.error("X", argumentos), modulo)
 	return generador.gen(argumentos)

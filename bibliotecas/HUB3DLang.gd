@@ -77,11 +77,11 @@ func inicializar(hub):
 		["C",[]],										# 24
 		["C",["comentario"]]							# 25
 	], {
-		"variable":"([a-zA-Z]|_|/)+",	# Letras y guiones bajos de long > 0
+		"variable":"([a-zA-Z]|_)([a-zA-Z]|_|/|[0-9])*",
 		"numero":"([0-9]*\\.[0-9]+)|[0-9]+", # números
 		"mod":":(n|p|s|ox|oy|oz|rx|ry|rz)",
 		"comentario":"#.*",			# Cualquier cosa iniciada con un '#'
-		"opT":"\\+|-",				# '+' y '-'
+		"opT":"\\+|-|!",			# '+', '-' y '!'
 		"opF":"\\*|%"				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
 	}, tds)
 
@@ -148,16 +148,23 @@ func reduce(produccion, valores):
 	if produccion == 3:
 		if valores[0].size() == 1:
 			var resultado = valores[0][0]
+			if tipos.es_un_mesh_rep(resultado):
+				resultado = resultado.make()
 			if tipos.es_un_componente(resultado):
 				resultado = componente_a_objeto(resultado)
 			return resultado
 		var objetos = []
 		var componentes = []
+		var meshes = []
 		for elemento in valores[0]:
 			if HUB.objetos.es_un_objeto(elemento) and elemento.padre() == null:
 				objetos.append(elemento)
 			elif tipos.es_un_componente(elemento):
 				componentes.append(elemento)
+			elif tipos.es_un_mesh_rep(elemento):
+				meshes.append(elemento)
+		if not meshes.empty():
+			componentes.append(mesh_a_partir_de_reps(meshes))
 		var nuevo_objeto = null
 		if objetos.size() == 1:
 			nuevo_objeto = objetos[0]
@@ -171,7 +178,7 @@ func reduce(produccion, valores):
 		return nuevo_objeto
 	# HOME -> HOME & OBJ
 	if produccion == 4:
-		if HUB.objetos.es_un_objeto(valores[2]) or tipos.es_un_componente(valores[2]):
+		if HUB.objetos.es_un_objeto(valores[2]) or tipos.es_un_componente(valores[2]) or tipos.es_un_mesh_rep(valores[2]):
 			valores[0].append(valores[2])
 		else:
 			return HUB.error(HUB.errores.error("no se pueden unir con '&'"), modulo)
@@ -184,6 +191,8 @@ func reduce(produccion, valores):
 		var resultado = valores[0]
 		if tipos.es_un_string(resultado):
 			resultado = base(resultado, [[],{}])
+			if HUB.errores.fallo(resultado):
+				return resultado
 			if tipos.es_un_string(resultado):
 				if esta_definido(resultado):
 					resultado = obtener(valores[0])
@@ -191,13 +200,15 @@ func reduce(produccion, valores):
 					return HUB.error(identificador_invalido(resultado), modulo)
 		if tipos.es_una_lista(resultado):
 			resultado = base(resultado[0], resultado[1])
+			if HUB.errores.fallo(resultado):
+				return resultado
 		if valores[1].keys().empty():
 			return resultado
 		if tipos.es_un_numero(resultado):
 			return HUB.error(HUB.errores.error("los modificadores no se pueden aplicar a números"), modulo)
 		return aplicar_modificaciones(resultado, valores[1])
 	# MODS -> mod EXPR MODS
-	if produccion == 7: # TODO: ¿chequear repetidos? :p y :n no tiene sentido pero :s podría tener varios
+	if produccion == 7:
 		var dic = valores[2]
 		var i = HUB.varios.str_desde(valores[0], 1)
 		if modificador_admite_varios(i):
@@ -232,31 +243,58 @@ func reduce(produccion, valores):
 		return valores[0]
 	# EXPR -> EXPR op TERM
 	if produccion == 13:
-		if tipos.es_un_numero(valores[0]) and tipos.es_un_numero(valores[2]):
+		var valor1 = valores[0]
+		if tipos.es_un_string(valor1):
+			if esta_definido(valor1):
+				valor1 = obtener(valor1)
+		var valor2 = valores[2]
+		if tipos.es_un_string(valor2):
+			if esta_definido(valor2):
+				valor2 = obtener(valor2)
+		if tipos.es_un_numero(valor1) and tipos.es_un_numero(valor2):
 			if valores[1] == '+':
-				return valores[0] + valores[2]
+				return valor1 + valor2
 			elif valores[1] == '-':
-				return valores[0] - valores[2]
-		return HUB.error(HUB.errores.error("no se pueden sumar si no son números"), modulo)
+				return valor1 - valor2
+			else: # !
+				return HUB.error(HUB.errores.error("no se puede usar '!' como operador entre números"), modulo)
+		return HUB.error(HUB.errores.error("no se puede operar si no son números"), modulo)
 	# EXPR -> TERM
 	if produccion == 14:
 		return valores[0]
 	# TERM -> TERM op FACT
 	if produccion == 15:
-		if tipos.es_un_numero(valores[0]) and tipos.es_un_numero(valores[2]):
+		var valor1 = valores[0]
+		if tipos.es_un_string(valor1):
+			if esta_definido(valor1):
+				valor1 = obtener(valor1)
+		var valor2 = valores[2]
+		if tipos.es_un_string(valor2):
+			if esta_definido(valor2):
+				valor2 = obtener(valor2)
+		if tipos.es_un_numero(valor1) and tipos.es_un_numero(valor2):
 			if valores[1] == '*':
-				return valores[0] * valores[2]
+				return valor1 * valor2
 			elif valores[1] == '%':
-				return valores[0] / valores[2]
-		return HUB.error(HUB.errores.error("no se pueden multiplicar si no son números"), modulo)
+				return valor1 / valor2
+		return HUB.error(HUB.errores.error("no se puede operar si no son números"), modulo)
 	# TERM -> FACT
 	if produccion == 16:
 		return valores[0]
-	# FACT -> -FACT
+	# FACT -> op FACT
 	if produccion == 17:
-		if tipos.es_un_numero(valores[1]):
-			return -1*valores[1]
-		return HUB.error(HUB.errores.error("no se puede negar si no es un número"), modulo)
+		var valor = valores[1]
+		if tipos.es_un_string(valor):
+			if esta_definido(valor):
+				valor = obtener(valor)
+		if tipos.es_un_numero(valor):
+			if valores[0] == '+':
+				return valor
+			elif valores[0] == '-':
+				return -1*valor
+			else: # !
+				return "!" + str(valor)
+		return HUB.error(HUB.errores.error("no se puede operar si no es un número"), modulo)
 	# FACT -> ( START )
 	if produccion == 18:
 		return valores[1]
@@ -288,6 +326,8 @@ func aplicar_modificaciones(algo, mods):
 	var resultado = algo
 	var hijo_de = null
 	for modificador in mods.keys():
+		if tipos.es_un_mesh_rep(resultado) and modificador_invalido_en_mesh_rep(modificador):
+			resultado = resultado.make()
 		# NOMBRE
 		if (modificador == "n"):
 			if HUB.objetos.es_un_objeto(resultado):
@@ -354,6 +394,8 @@ func base(texto, argumentos):
 		if HUB.errores.fallo(args):
 			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
 		resultado = call("crear_"+texto, args)
+		if HUB.errores.fallo(resultado):
+			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
 	elif esta_definido(texto) and argumentos[0].empty() and argumentos[1].keys().empty():
 		resultado = obtener(texto)
 	elif HUB.archivos.existe("objetos/", texto + ".gd"):
@@ -423,14 +465,8 @@ var arg_map = {
 		"lista":[
 		]
 	},
-	"_":{
-		"lista":[
-		]
-	},
-	"testcube":{
-		"lista":[
-		]
-	}
+	"_":{"lista":[]},
+	"testcube":{"lista":[]}
 }
 
 var tipos_body = {
@@ -476,6 +512,104 @@ func crear_testcube(argumentos):
 
 func modificador_admite_varios(mod):
 	return mod in ["s"]
+
+func modificador_invalido_en_mesh_rep(mod):
+	return mod in ["s","n","p"]
+
+func mesh_a_partir_de_reps(meshes):
+	var resultado = meshes[0]
+	meshes.pop_front()
+	while(not meshes.empty()):
+		resultado.merge(meshes[0])
+		meshes.pop_front()
+	return resultado.make()
+
+class MeshRep:
+	var vertexes	# Vector3
+	var uvs			# Vector2
+	var faces		# FaceRep
+	var pi_180 = PI/180.0
+	func _init(vs, fs, uvs):
+		self.vertexes = vs
+		self.faces = fs
+		self.uvs = uvs
+	func merge(otro):
+		for f in otro.faces:
+			f.plus(vertexes.size(),uvs.size())
+			faces.append(f)
+		for v in otro.vertexes:
+			vertexes.append(v)
+		for uv in otro.uvs:
+			uvs.append(uv)
+		# TODO: Eliminar vértices repetidos
+	func rotate_x(a):
+		for i in range(vertexes.size()):
+			vertexes[i] = vertexes[i].rotated(Vector3(1.0,0.0,0.0),a*pi_180)
+	func rotate_y(a):
+		for i in range(vertexes.size()):
+			vertexes[i] = vertexes[i].rotated(Vector3(0.0,1.0,0.0),a*pi_180)
+	func rotate_z(a):
+		for i in range(vertexes.size()):
+			vertexes[i] = vertexes[i].rotated(Vector3(0.0,0.0,1.0),a*pi_180)
+	func translate(a):
+		for i in range(vertexes.size()):
+			vertexes[i] += a
+	func make():
+		var mesh = Mesh.new()
+		var st = SurfaceTool.new()
+		st.begin(VS.PRIMITIVE_TRIANGLES)
+		for f in faces:
+			if (f.size()==3 or f.size()==4):
+				if (f.uvs[2] > -1):
+					st.add_uv(uvs[f.uvs[2]])
+				st.add_vertex(vertexes[f.vertexes[2]])
+				if (f.uvs[1] > -1):
+					st.add_uv(uvs[f.uvs[1]])
+				st.add_vertex(vertexes[f.vertexes[1]])
+				if (f.uvs[0] > -1):
+					st.add_uv(uvs[f.uvs[0]])
+				st.add_vertex(vertexes[f.vertexes[0]])
+			if (f.size()==4):
+				if (f.uvs[0] > -1):
+					st.add_uv(uvs[f.uvs[0]])
+				st.add_vertex(vertexes[f.vertexes[0]])
+				if (f.uvs[3] > -1):
+					st.add_uv(uvs[f.uvs[3]])
+				st.add_vertex(vertexes[f.vertexes[3]])
+				if (f.uvs[2] > -1):
+					st.add_uv(uvs[f.uvs[2]])
+				st.add_vertex(vertexes[f.vertexes[2]])
+		st.generate_normals()
+		st.index()
+		st.commit(mesh)
+		var obj = MeshInstance.new()
+		obj.set_name("malla")
+		obj.set_mesh(mesh)
+		return obj
+
+class FaceRep:
+	var vertexes	# int
+	var uvs			# int
+	#var groups		# ??
+	func _init(vs, uvs):
+		self.vertexes = vs
+		self.uvs = uvs
+		# Me aseguro que los tamaños coincidan:
+		for i in range(vs.size() - uvs.size()):
+			self.uvs.append(-1)
+	func plus(v, u):
+		for i in range(vertexes.size()):
+			vertexes[i] += v
+		for i in range(uvs.size()):
+			uvs[i] += u
+	func size():
+		return vertexes.size()
+
+func nuevo_mesh_rep(vs, fs, uvs=[]):
+	return MeshRep.new(vs, fs, uvs)
+
+func nueva_cara(vs, uvs=[]):
+	return FaceRep.new(vs, uvs)
 
 # Errores
 
