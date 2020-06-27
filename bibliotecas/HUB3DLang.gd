@@ -389,13 +389,8 @@ func base(texto, argumentos):
 	# OJO: "argumentos" es un par lista-diccionario
 	var resultado = null
 	# Primitivas:
-	if has_method("crear_"+texto): # Forma elegante de preguntar si es una primitiva
-		var args = HUB.varios.parsear_argumentos_general(arg_map[texto], argumentos, modulo)
-		if HUB.errores.fallo(args):
-			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
-		resultado = call("crear_"+texto, args)
-		if HUB.errores.fallo(resultado):
-			return HUB.error(HUB.errores.error("No se pudo crear una primitiva de tipo "+texto+".", args), modulo)
+	if texto == "_":
+		resultado = HUB.objetos.crear(null)
 	elif esta_definido(texto) and argumentos[0].empty() and argumentos[1].keys().empty():
 		resultado = obtener(texto)
 	elif HUB.archivos.existe("objetos/", texto + ".gd"):
@@ -448,67 +443,6 @@ func desde_archivo(nombre, argumentos):
 		return resultado
 	# Nunca debería llegar acá...
 	return null
-
-var arg_map = {
-	"body":{
-		"lista":[
-			{"nombre":"tipo", "codigo":"t", "default":"static"}
-		]
-	},
-	"luz":{
-		"lista":[
-			{"nombre":"tipo", "codigo":"t", "default":"omni"},
-			{"nombre":"radio", "codigo":"r", "default":"2", "validar":"NUM;>0"} # Sólo para omni y spot
-		]
-	},
-	"camara":{
-		"lista":[
-		]
-	},
-	"_":{"lista":[]},
-	"testcube":{"lista":[]}
-}
-
-var tipos_body = {
-	"static":StaticBody,
-	"kinematic":KinematicBody
-}
-
-func crear_body(argumentos):
-	var tipo = argumentos["t"]
-	if tipo in tipos_body.keys():
-		var resultado = tipos_body[tipo].new()
-		resultado.set_name("body")
-		return resultado
-	return HUB.error(HUB.errores.error("Tipo de body inválido: "+tipo), modulo)
-
-var tipos_luz = {
-	"omni":OmniLight,
-	"spot":SpotLight,
-	"dir":DirectionalLight
-}
-
-func crear_luz(argumentos):
-	var tipo = argumentos["t"]
-	if tipo in tipos_luz.keys():
-		var resultado = tipos_luz[tipo].new()
-		resultado.set_name("luz")
-		resultado.set("params/radius", argumentos["r"])
-		return resultado
-	return HUB.error(HUB.errores.error("Tipo de luz inválido: "+tipo), modulo)
-
-func crear_camara(argumentos):
-	var resultado = Camera.new()
-	resultado.set_name("cámara")
-	return resultado
-
-func crear__(argumentos):
-	return HUB.objetos.crear(null)
-
-func crear_testcube(argumentos):
-	var resultado = TestCube.new()
-	resultado.set_name("cubo de prueba")
-	return resultado
 
 func modificador_admite_varios(mod):
 	return mod in ["s"]
