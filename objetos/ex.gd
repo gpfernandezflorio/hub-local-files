@@ -200,16 +200,22 @@ func offsets(lista):
 					axis = x[1]
 				if axis == "x":
 					nuevo_offset.x = n
-					if not "x" in nueva_direccion.keys():
-						nueva_direccion["x"] = (n>0)
+					if "x" in nueva_direccion.keys():
+						nueva_direccion["x"] += n
+					else:
+						nueva_direccion["x"] = n
 				elif axis == "y":
 					nuevo_offset.y = n
-					if not "y" in nueva_direccion.keys():
-						nueva_direccion["y"] = (n>0)
+					if "y" in nueva_direccion.keys():
+						nueva_direccion["y"] += n
+					else:
+						nueva_direccion["y"] = n
 				elif axis == "z":
 					nuevo_offset.z = n
-					if not "z" in nueva_direccion.keys():
-						nueva_direccion["z"] = (n>0)
+					if "z" in nueva_direccion.keys():
+						nueva_direccion["z"] += n
+					else:
+						nueva_direccion["z"] = n
 				else:
 					return HUB.error(HUB.errores.error('eX eje inválido en "'+x), h3.modulo)
 				x = HUB.varios.str_desde(x,sep)
@@ -222,9 +228,24 @@ func offsets(lista):
 
 func hay_que_invertir(i):
 	var resultado = false
-	if direcciones.size() == 3:
-		# 3d
-		pass
+	var principales = []
+	for d in direcciones:
+		var m = null
+		for a in "xyz":
+			if a in d.keys():
+				if m == null:
+					m = [a,d[a]]
+				elif abs(m[1]) > abs(d[a]):
+					m = [a,d[a]]
+		if m != null:
+			principales.append(m)
+	if principales.size() == 3:
+		if principales[0][1] > 0 and principales[1][1]*principales[2][1] < 0:
+			resultado = not resultado
+		elif principales[0][1] < 0 and principales[1][1]*principales[2][1] > 0:
+			resultado = not resultado
+		if orden_invertido(principales):
+			resultado = not resultado
 	elif direcciones.size() == 2:
 		# 2d
 		pass
@@ -233,3 +254,6 @@ func hay_que_invertir(i):
 	if i:
 		resultado = not resultado
 	return resultado
+
+func orden_invertido(p):
+	return p[1][0] != {"x":"y","y":"z","z":"x"}[p[0][0]]
