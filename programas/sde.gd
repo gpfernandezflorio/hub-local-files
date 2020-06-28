@@ -26,7 +26,7 @@ func inicializar(hub, pid, argumentos):
 	HUB.eventos.set_modo_mouse(2)	# Ocultar mouse
 	HUB.terminal.cerrar()			# Ocultar terminal
 	jugador = HUB3DLang.crear("fps")# Crear jugador
-	cubo = HUB3DLang.crear("testcube:oz-5")
+	cubo = HUB3DLang.crear("cube:oz-4")
 	return null
 
 func finalizar():

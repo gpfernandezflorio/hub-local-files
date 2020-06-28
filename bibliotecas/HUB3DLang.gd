@@ -25,6 +25,18 @@ func inicializar(hub):
 	if HUB.errores.fallo(parser_lib):
 		return HUB.error(HUB.errores.inicializar_fallo(self, parser_lib), modulo)
 	var tds = HUB3DLangTDS.new(self)
+	var regex_int = "[0-9]+"
+	var regex_float = "[0-9]*\\.[0-9]+"
+	var regex_num = "("+regex_float+")|("+regex_int+")"
+	var regex_letr = "[a-zA-Z]|_"
+	var regex_var = "("+regex_letr+")("+regex_letr+"|/|[0-9])*"
+	var regex_opT = "\\+|-|!"
+	var regex_num_letrs = "("+regex_num+")("+regex_letr+")+"
+	var regex_letrs_float = "("+regex_letr+")+("+regex_float+")"
+	var regex_valid = "("+regex_var+")|("+regex_num+")"
+	var regex_ex1 = "("+regex_opT+")?"+"(("+regex_num_letrs+")|("+regex_letrs_float+"))"
+	var regex_any = "(("+regex_opT+")?("+regex_valid+"))|("+regex_ex1+")"
+	var regex_ex = "("+regex_any+")*"+regex_ex1+"("+regex_any+")*"
 	parser = parser_lib.crear_parser([
 		# Un Hobjeto se define a partir de una secuencia de líneas
 		# Cada línea puede ser una de estas 3:
@@ -65,24 +77,30 @@ func inicializar(hub):
 		["TERM",["TERM","opF","FACT"]],					# 15
 		# Acá me tengo que asegurar que ese FACT sea un número
 		["TERM",["FACT"]],								# 16
-		["FACT",["opT","FACT"]],							# 17
+		["FACT",["opT","FACT"]],						# 17
 		# Acá me tengo que asegurar que ese FACT sea un número
 		["FACT",["(","START",")"]],						# 18
 		["FACT",["PRIM","ARGS"]],						# 19
 		# Si tiene argumentos, lo devuelvo como un par
 		["PRIM",["variable"]],							# 20
 		["PRIM",["numero"]],							# 21
-		["ARG",["EXPR"]],								# 22
-		["ARG",["variable","=","EXPR"]],				# 23
-		["C",[]],										# 24
-		["C",["comentario"]]							# 25
+		["ARG",["LARG"]],								# 22
+		["ARG",["variable","=","LARG"]],				# 23
+		["LARG",["LARG",";","STRING"]],					# 24
+		["LARG",["STRING"]],							# 25
+		["STRING",["EXPR"]],							# 26
+		["STRING",["string"]],							# 27
+		["ARG",["=","variable"]],						# 28 # Bool
+		["C",[]],										# 29
+		["C",["comentario"]]							# 30
 	], {
-		"variable":"([a-zA-Z]|_)([a-zA-Z]|_|/|[0-9])*",
-		"numero":"([0-9]*\\.[0-9]+)|[0-9]+", # números
+		"variable":regex_var,		# variables
+		"numero":regex_num, 		# números
 		"mod":":(n|p|s|ox|oy|oz|rx|ry|rz)",
 		"comentario":"#.*",			# Cualquier cosa iniciada con un '#'
-		"opT":"\\+|-|!",			# '+', '-' y '!'
-		"opF":"\\*|%"				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
+		"opT":regex_opT,			# '+', '-' y '!'
+		"opF":"\\*|%",				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
+		"string":regex_ex
 	}, tds)
 
 func crear(texto, entorno={}):
@@ -258,7 +276,7 @@ func reduce(produccion, valores):
 				return valor1 - valor2
 			else: # !
 				return HUB.error(HUB.errores.error("no se puede usar '!' como operador entre números"), modulo)
-		return HUB.error(HUB.errores.error("no se puede operar si no son números"), modulo)
+		return str(valores[0])+str(valores[1])+str(valores[2])
 	# EXPR -> TERM
 	if produccion == 14:
 		return valores[0]
@@ -294,7 +312,7 @@ func reduce(produccion, valores):
 				return -1*valor
 			else: # !
 				return "!" + str(valor)
-		return HUB.error(HUB.errores.error("no se puede operar si no es un número"), modulo)
+		return str(valores[0])+str(valores[1])
 	# FACT -> ( START )
 	if produccion == 18:
 		return valores[1]
@@ -312,12 +330,35 @@ func reduce(produccion, valores):
 	# PRIM -> number
 	if produccion == 21:
 		return HUB.varios.num(valores[0])
-	# ARG -> EXPR
+	# ARG -> LARG
 	if produccion == 22:
-		return ["",valores[0]]
-	# ARG -> variable : EXPR
+		var resultado = valores[0]
+		if resultado.size() == 1:
+			resultado = resultado[0]
+		return ["",resultado]
+	# ARG -> variable : LARG
 	if produccion == 23:
-		return [valores[0],valores[2]]
+		var resultado = valores[2]
+		if resultado.size() == 1:
+			resultado = resultado[0]
+		return [valores[0],resultado]
+	# LARG -> LARG ; STRING
+	if produccion == 24:
+		var resultado = valores[0]
+		resultado.append(valores[2])
+		return resultado
+	# LARG -> STRING
+	if produccion == 25:
+		return [valores[0]]
+	# STRING -> EXPR
+	if produccion == 26:
+		return valores[0]
+	# STRING -> string
+	if produccion == 27:
+		return valores[0]
+	# ARG -> = variable
+	if produccion == 28:
+		return [valores[1],""]
 	return null
 
 # Auxiliares

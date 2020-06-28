@@ -68,7 +68,7 @@ func gen(argumentos):
 		y0 -= y1
 	var vertexes = null
 	var invert = false
-	if eje.begins_with("_"):
+	if eje.begins_with("-"):
 		invert = true
 		eje = HUB.varios.str_desde(eje, 1)
 	if eje.begins_with("x"):

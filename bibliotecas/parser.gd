@@ -15,7 +15,7 @@ var printer
 var modulo = "Parser"
 
 # caracteres a escapear cuando se genera el regex para un token
-var regex_escape = ['+','\\','(',')','.','*']
+var regex_escape = ['+','\\','(',')','.','*','$']
 
 func inicializar(hub):
 	HUB = hub
@@ -188,15 +188,17 @@ func construir_tabla(G, A):
 func construir_token_rules(G, regexes_para_tokens):
 	var token_rules = {}
 	for vt in G.VT:
+		var rule = ""
 		if vt in regexes_para_tokens.keys():
-			token_rules[vt] = regexes_para_tokens[vt]
+			rule = regexes_para_tokens[vt]
 		else:
-			var regex = ""
 			for c in vt:
 				if c in regex_escape:
-					regex += "\\"
-				regex += c
-			token_rules[vt] = regex
+					rule += "\\"
+				rule += c
+		var regex = RegEx.new()
+		regex.compile(rule)
+		token_rules[vt] = regex
 	return token_rules
 
 func tokenizar_cadena(token_rules, cadena):
@@ -208,11 +210,7 @@ func tokenizar_cadena(token_rules, cadena):
 			var token_candidato = null
 			var j = 0
 			for token in token_rules.keys():
-				var regex = RegEx.new()
-				var rule = token_rules[token]
-				if rule=="$":
-					rule = "\\$"
-				regex.compile(rule)
+				var regex = token_rules[token]
 				var token_encontrado = regex.find(reglon, i)
 				if token_encontrado == i:
 					token_encontrado = regex.get_capture(0)
