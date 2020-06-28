@@ -169,6 +169,69 @@ func validar_argumento(arg, valor, modulo):
 func str_desde(s, i):
 	return s.substr(i, s.length()-i)
 
+func coordenadas_cubo(w,h,p,h3,tipos,for_mesh=false):
+	var center_x = false
+	var center_y = false
+	var center_z = false
+	# ANCHO
+	if tipos.es_un_string(w):
+		if w.begins_with("!"):
+			center_x = true
+			w = HUB.varios.str_desde(w, 1)
+		if w.is_valid_float():
+			w = float(w)
+		elif h3.esta_definido(w):
+			w = h3.obtener(w)
+		else:
+			return HUB.error(h3.identificador_invalido(w), h3.modulo)
+	# ALTO
+	if tipos.es_un_string(h):
+		if h.begins_with("!"):
+			center_y = true
+			h = HUB.varios.str_desde(h, 1)
+		if h.is_valid_float():
+			h = float(h)
+		elif h3.esta_definido(h):
+			h = h3.obtener(h)
+		else:
+			return HUB.error(h3.identificador_invalido(h), h3.modulo)
+	# PROF.
+	if tipos.es_un_string(p):
+		if p.begins_with("!"):
+			center_z = true
+			p = HUB.varios.str_desde(p, 1)
+		if p.is_valid_float():
+			p = float(h)
+		elif h3.esta_definido(p):
+			p = h3.obtener(p)
+		else:
+			return HUB.error(h3.identificador_invalido(p), h3.modulo)
+	# Posiciones sobre el plano
+	var x0 = 0.0
+	var x1 = w
+	var y0 = 0.0
+	var y1 = h
+	var z0 = 0.0
+	var z1 = p
+	if for_mesh:
+		if center_x:
+			x1 *= 0.5
+			x0 -= x1
+		if center_y:
+			y1 *= 0.5
+			y0 -= y1
+		if center_z:
+			z1 *= 0.5
+			z0 -= z1
+	else:
+		if not center_x:
+			x0 += 0.5*x1
+		if not center_y:
+			y0 += 0.5*y1
+		if not center_z:
+			z0 += 0.5*z1
+	return [x0,x1,y0,y1,z0,z1]
+
 # Errores
 
 # Faltan argumentos obligatorios

@@ -421,7 +421,6 @@ func aplicar_modificaciones(algo, mods):
 				resultado.translate(movimiento)
 		# COLLIDER
 		elif (modificador == "c"):
-			#print(RigidBody.new().get_type())
 			var body = null
 			if tipos.es_un_componente(resultado):
 				if resultado.has_method("add_shape"):
@@ -507,22 +506,57 @@ func modificador_admite_varios(mod):
 func modificador_invalido_en_mesh_rep(mod):
 	return mod in ["s","n","p"]
 
+var valid_colls = {
+	"plane":{"arg_map":
+		{"lista":[
+		]},
+		"clase":PlaneShape, "nombre":"Plane Collider",
+	},
+	"box":{"arg_map":
+		{"lista":[
+			{"nombre":"ancho", "codigo":"w", "default":"!1"},
+			{"nombre":"alto", "codigo":"h", "default":"1"},
+			{"nombre":"profundidad", "codigo":"p", "default":"!1"}
+		]},
+		"clase":BoxShape, "nombre":"Box Collider"
+	}
+}
+
 func agregar_colisionador(body, cs):
 	for c in cs:
-		var collider = CollisionShape.new()
-		var shape = null
-		if c == "plane":
-			shape = PlaneShape.new()
-			collider.set_name("Plane Collider")
-		elif c == "box":
-			shape = BoxShape.new()
-			collider.set_name("Box Collider")
+		var id = c
+		var args = [[],{}]
+		if tipos.es_una_lista(c):
+			id = c[0]
+			args = c[1]
+		if id in valid_colls.keys():
+			args = HUB.varios.parsear_argumentos_general(valid_colls[id]["arg_map"], args, modulo)
+			if HUB.errores.fallo(args):
+				return args
+			var collider = CollisionShape.new()
+			var shape = valid_colls[id]["clase"].new()
+			var pos = Vector3(0,0,0)
+			if id == "box":
+				var coordenadas = HUB.varios.coordenadas_cubo(args["w"],args["h"],args["p"], self, tipos, false)
+				if HUB.errores.fallo(coordenadas):
+					return coordenadas
+				pos.x = coordenadas[0]
+				var w = coordenadas[1]
+				pos.y = coordenadas[2]
+				var h = coordenadas[3]
+				pos.z = coordenadas[4]
+				var p = coordenadas[5]
+				shape.set_extents(Vector3(w/2.0,h/2.0,p/2.0))
+			collider.set_name(valid_colls[id]["nombre"])
+			collider.set_shape(shape)
+			body.add_shape(shape)
+			#body.add_child(collider)		# DEBUG
+			#collider.set_translation(pos)	# DEBUG
+			var t = Transform()
+			t = t.translated(pos)
+			body.set("shapes/" + str(body.get_shape_count()-1) + "/transform",t)
 		else:
-			return HUB.error(HUB.errores.error('Identificador de colisionador inválido: '+c), modulo)
-		collider.set_shape(shape)
-		body.add_shape(shape)
-		body.add_child(collider)
-		#body.set("shapes/" + str(body.get_shape_count()-1) + "/transform",c[0].get_transform())
+			return HUB.error(HUB.errores.error('Identificador de colisionador inválido: '+id), modulo)
 
 func mesh_a_partir_de_reps(meshes):
 	var resultado = meshes[0]
