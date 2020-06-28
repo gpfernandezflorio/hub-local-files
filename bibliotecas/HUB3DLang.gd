@@ -37,6 +37,7 @@ func inicializar(hub):
 	var regex_ex1 = "("+regex_opT+")?"+"(("+regex_num_letrs+")|("+regex_letrs_float+"))"
 	var regex_any = "(("+regex_opT+")?("+regex_valid+"))|("+regex_ex1+")"
 	var regex_ex = "("+regex_any+")*"+regex_ex1+"("+regex_any+")*"
+	var valid_mods = "n|p|s|ox|oy|oz|rx|ry|rz|c"
 	parser = parser_lib.crear_parser([
 		# Un Hobjeto se define a partir de una secuencia de líneas
 		# Cada línea puede ser una de estas 3:
@@ -96,7 +97,7 @@ func inicializar(hub):
 	], {
 		"variable":regex_var,		# variables
 		"numero":regex_num, 		# números
-		"mod":":(n|p|s|ox|oy|oz|rx|ry|rz)",
+		"mod":":("+valid_mods+")",	# ':' seguido de un identificador de modificador
 		"comentario":"#.*",			# Cualquier cosa iniciada con un '#'
 		"opT":regex_opT,			# '+', '-' y '!'
 		"opF":"\\*|%",				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
@@ -418,6 +419,21 @@ func aplicar_modificaciones(algo, mods):
 				resultado.mover(movimiento)
 			else:
 				resultado.translate(movimiento)
+		# COLLIDER
+		elif (modificador == "c"):
+			#print(RigidBody.new().get_type())
+			var body = null
+			if tipos.es_un_componente(resultado):
+				if resultado.has_method("add_shape"):
+					body = resultado
+				else:
+					return HUB.error(HUB.errores.error('No se puede agregar el colisionador si el componente no es un body'), modulo)
+			else:
+				# revisar si algún componente es de tipo body y si no:
+				return HUB.error(HUB.errores.error('No se puede agregar el colisionador si el objeto no tiene un componente body'), modulo)
+			var resultado_colision = agregar_colisionador(body, mods["c"])
+			if HUB.errores.fallo(resultado_colision):
+				return resultado_colision
 		else:
 			return HUB.error(modificador_invalido(modificador), modulo)
 	if hijo_de != null:
@@ -486,10 +502,27 @@ func desde_archivo(nombre, argumentos):
 	return null
 
 func modificador_admite_varios(mod):
-	return mod in ["s"]
+	return mod in ["s","c"]
 
 func modificador_invalido_en_mesh_rep(mod):
 	return mod in ["s","n","p"]
+
+func agregar_colisionador(body, cs):
+	for c in cs:
+		var collider = CollisionShape.new()
+		var shape = null
+		if c == "plane":
+			shape = PlaneShape.new()
+			collider.set_name("Plane Collider")
+		elif c == "box":
+			shape = BoxShape.new()
+			collider.set_name("Box Collider")
+		else:
+			return HUB.error(HUB.errores.error('Identificador de colisionador inválido: '+c), modulo)
+		collider.set_shape(shape)
+		body.add_shape(shape)
+		body.add_child(collider)
+		#body.set("shapes/" + str(body.get_shape_count()-1) + "/transform",c[0].get_transform())
 
 func mesh_a_partir_de_reps(meshes):
 	var resultado = meshes[0]

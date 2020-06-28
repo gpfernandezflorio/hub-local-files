@@ -45,6 +45,8 @@ func agregar_componente(componente, nombre=null):
 			nuevo_nombre = "componente sin nombre"
 	nuevo_nombre = nombrar_sin_colision(componente, nuevo_nombre, componentes)
 	componentes.add_child(componente)
+	if componente.has_method("inicializar"):
+		componente.inicializar(HUB, self)
 	return nuevo_nombre # Devuelve el nuevo nombre
 
 # Adjunta un script al objeto

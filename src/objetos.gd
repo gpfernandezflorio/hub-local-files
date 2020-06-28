@@ -15,6 +15,8 @@ var HUB
 var modulo = "OBJETOS"
 # Ruta a la carpeta de archivos fuente de este módulo
 var carpeta_src = "objetos/"
+# Ruta a la carpeta de scripts de componentes
+var carpeta_componentes = "componentes/"
 # Script genérico de un objeto
 var script_objeto = "objeto.gd"
 # Ruta a la carpeta de scripts de objeto
@@ -29,6 +31,17 @@ var codigo_comportamientos = "Comportamiento"
 var comportamientos_cargados = {} # Dicc(string : GDScript)
 # Diccionario con los generadores cargados
 var generadores_cargados = {} # Dicc(string : Node)
+
+var componentes_validos = {
+	# body
+	"static":StaticBody,
+	"rigid":RigidBody,
+	"kinematic":KinematicBody,
+	# luz
+	"omni":OmniLight,
+	"spot":SpotLight,
+	"dir":DirectionalLight
+}
 
 func inicializar(hub):
 	HUB = hub
@@ -92,6 +105,15 @@ func es_un_objeto(algo):
 			if not script == null:
 				return script.get_name() == "Objeto"
 	return false
+
+# Crea un nuevo componente
+func crear_componente(id):
+	if id in componentes_validos.keys():
+		var resultado = componentes_validos[id].new()
+		if HUB.archivos.existe(HUB.hub_src + carpeta_componentes, id+".gd"):
+			resultado.set_script(HUB.archivos.abrir(HUB.hub_src + carpeta_componentes, id+".gd"))
+		return resultado
+	return HUB.error(HUB.errores.error('Componente desconocido: '+id), modulo)
 
 # Adjunta un script a un objeto
 func agregar_comportamiento_a_objeto(objeto, nombre_script, args=[[],{}]):
