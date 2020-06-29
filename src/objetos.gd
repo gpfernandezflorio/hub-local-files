@@ -35,7 +35,7 @@ var generadores_cargados = {} # Dicc(string : Node)
 var componentes_validos = {
 	# body
 	"static":StaticBody,
-	"rigid":RigidBody,
+	"rigid":Spatial, # Caso especial. Lo maneja el script 'rigid.gd'
 	"kinematic":KinematicBody,
 	# luz
 	"omni":OmniLight,
@@ -153,14 +153,17 @@ func generar(nombre, args=[[],{}]):
 	return generador.gen(argumentos)
 
 # Usada para que los scripts de comportamiento accedan a los componentes del objeto
-func componente_candidato(objeto, nombre, tipo):
+func componente_candidato(objeto, nombre, tipo_o_requisitos):
+	var condicion = "es_de_tipo"
+	if typeof(tipo_o_requisitos) == TYPE_ARRAY:
+		condicion = "implementa_metodos"
 	if objeto.tiene_componente_nombrado(nombre):
 		var candidato = objeto.componente_nombrado(nombre)
-		if candidato.get_type() == tipo:
+		if cumple_condicion(candidato, condicion, tipo_o_requisitos):
 			return candidato
 	var candidatos = []
 	for componente in objeto.componentes():
-		if componente.get_type() == tipo:
+		if cumple_condicion(componente, condicion, tipo_o_requisitos):
 			candidatos.append(componente)
 	if candidatos.empty():
 		return HUB.error(HUB.errores.error("No hay candidato"), modulo)
@@ -187,6 +190,16 @@ func cargar_comportamiento(nombre):
 	if HUB.errores.fallo(resultado):
 		return HUB.error(HUB.errores.error('X', resultado), modulo)
 	return nodo
+
+func cumple_condicion(candidato, condicion, tipo_o_requisitos):
+	return call(condicion, candidato, tipo_o_requisitos)
+func es_de_tipo(candidato, tipo):
+	return candidato.get_type() == tipo
+func implementa_metodos(candidato, metodos):
+	for m in metodos:
+		if not candidato.has_method(m):
+			return false
+	return true
 
 # Errores
 

@@ -157,7 +157,7 @@ func reduce(produccion, valores):
 	if produccion == 1:
 		if not HUB.objetos.es_un_objeto(valores[2]):
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
-		modulo.definir("$", valores[2])
+		definir("$", valores[2])
 		return null
 	# I -> $ variable = START C
 	if produccion == 2:
@@ -519,6 +519,20 @@ var valid_colls = {
 			{"nombre":"profundidad", "codigo":"p", "default":"!1"}
 		]},
 		"clase":BoxShape, "nombre":"Box Collider"
+	},
+	"ball":{"arg_map":
+		{"lista":[
+			{"nombre":"radio", "codigo":"r", "default":"!1"}
+		]},
+		"clase":SphereShape, "nombre":"Ball Collider"
+	},
+	"capsule":{"arg_map":
+		{"lista":[
+			{"nombre":"radio", "codigo":"r", "default":"!1"},
+			{"nombre":"alto", "codigo":"h", "default":"1"},
+			{"nombre":"vertical", "codigo":"v", "validar":"BOOL","default":false}
+		]},
+		"clase":CapsuleShape, "nombre":"Capsule Collider"
 	}
 }
 
@@ -535,6 +549,7 @@ func agregar_colisionador(body, cs):
 				return args
 			var collider = CollisionShape.new()
 			var shape = valid_colls[id]["clase"].new()
+			var t = Transform()
 			var pos = Vector3(0,0,0)
 			if id == "box":
 				var coordenadas = HUB.varios.coordenadas_cubo(args["w"],args["h"],args["p"], self, tipos, false)
@@ -547,14 +562,52 @@ func agregar_colisionador(body, cs):
 				pos.z = coordenadas[4]
 				var p = coordenadas[5]
 				shape.set_extents(Vector3(w/2.0,h/2.0,p/2.0))
+			elif id in ["ball","capsule"]:
+				var r = args["r"]
+				var center_r = false
+				if tipos.es_un_string(r):
+					if r[0] == "!":
+						center_r = true
+						r = HUB.varios.str_desde(r,1)
+					if r.is_valid_float():
+						r = float(r)
+					if esta_definido(r):
+						r = obtener(r)
+				if tipos.es_un_numero(r):
+					shape.set_radius(r)
+				else:
+					return HUB.error(HUB.errores.error('Argumento inválido: '+r), modulo)
+				if not center_r:
+					pos.y = r/2
+				if id == "capsule":
+					var rotated = args["v"]
+					var h = args["h"]
+					var center_h = false
+					if tipos.es_un_string(h):
+						if h[0] == "!":
+							center_h = true
+							h = HUB.varios.str_desde(h,1)
+						if h.is_valid_float():
+							h = float(h)
+						elif esta_definido(h):
+							h = obtener(h)
+					if tipos.es_un_numero(h):
+						shape.set_height(h-2*r)
+						if not center_h:
+							if rotated:
+								pos.z = h/2
+							else:
+								pos.x = h/2
+					else:
+						return HUB.error(HUB.errores.error('Argumento inválido: '+h), modulo)
+					if rotated:
+						t = t.rotated(Vector3(1,0,0),PI/2)
 			collider.set_name(valid_colls[id]["nombre"])
 			collider.set_shape(shape)
-			body.add_shape(shape)
-			#body.add_child(collider)		# DEBUG
-			#collider.set_translation(pos)	# DEBUG
-			var t = Transform()
 			t = t.translated(pos)
-			body.set("shapes/" + str(body.get_shape_count()-1) + "/transform",t)
+			body.add_shape(shape, t)
+			body.add_child(collider)		# DEBUG
+			collider.set_transform(t)		# DEBUG
 		else:
 			return HUB.error(HUB.errores.error('Identificador de colisionador inválido: '+id), modulo)
 

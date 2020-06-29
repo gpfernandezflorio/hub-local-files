@@ -21,6 +21,7 @@ var arg_map = {
 var modulo = "FPS/Control"
 var yo
 var cuerpo
+var requisitos_cuerpo = ["is_colliding","get_collision_normal"]
 var mirada = null
 var velocidad_base
 
@@ -30,20 +31,21 @@ func inicializar(hub, yo, args):
 	velocidad_base = args["v"]
 	var nombre_cuerpo = args["c"]
 	if nombre_cuerpo == null:
-		cuerpo = HUB.objetos.componente_candidato(yo, "body", "KinematicBody")
+		cuerpo = HUB.objetos.componente_candidato(yo, "body", requisitos_cuerpo)
 	else:
 		cuerpo = yo.componente_nombrado(nombre_cuerpo)
 	if HUB.errores.fallo(cuerpo):
-		return HUB.error(HUB.errores.error("X", cuerpo), modulo)
-	if cuerpo.get_type() != "KinematicBody":
-		return HUB.error(HUB.errores.error("X"), modulo)
+		return HUB.error(HUB.errores.error("X1", cuerpo), modulo)
+	for req in requisitos_cuerpo:
+		if not cuerpo.has_method(req):
+			return HUB.error(HUB.errores.error('El cuerpo seleccionado no implementa el método "'+req+'"'), modulo)
 	var nombre_mirada = args["m"]
 	if  nombre_mirada != null:
 		mirada = yo.componente_nombrado(nombre_mirada)
 		if HUB.errores.fallo(mirada):
-			return HUB.error(HUB.errores.error("X", mirada), modulo)
+			return HUB.error(HUB.errores.error("X3", mirada), modulo)
 		if not mirada.has_method("rotate"):
-			return HUB.error(HUB.errores.error("X"), modulo)
+			return HUB.error(HUB.errores.error("X4"), modulo)
 	HUB.eventos.registrar_periodico(self, "periodico")
 	return null
 

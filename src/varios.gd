@@ -201,7 +201,7 @@ func coordenadas_cubo(w,h,p,h3,tipos,for_mesh=false):
 			center_z = true
 			p = HUB.varios.str_desde(p, 1)
 		if p.is_valid_float():
-			p = float(h)
+			p = float(p)
 		elif h3.esta_definido(p):
 			p = h3.obtener(p)
 		else:
