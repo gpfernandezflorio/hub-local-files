@@ -184,12 +184,7 @@ func reduce(produccion, valores):
 				meshes.append(elemento)
 		if not meshes.empty():
 			componentes.append(mesh_a_partir_de_reps(meshes))
-		var nuevo_objeto = null
-		if objetos.size() == 1:
-			nuevo_objeto = objetos[0]
-			objetos = []
-		else:
-			nuevo_objeto = HUB.objetos.crear(null)
+		var nuevo_objeto = HUB.objetos.crear(null)
 		for componente in componentes:
 			nuevo_objeto.agregar_componente(componente)
 		for objeto in objetos:

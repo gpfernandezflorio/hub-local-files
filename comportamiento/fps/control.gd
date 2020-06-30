@@ -41,9 +41,12 @@ func inicializar(hub, yo, args):
 			return HUB.error(HUB.errores.error('El cuerpo seleccionado no implementa el método "'+req+'"'), modulo)
 	var nombre_mirada = args["m"]
 	if  nombre_mirada != null:
-		mirada = yo.componente_nombrado(nombre_mirada)
-		if HUB.errores.fallo(mirada):
-			return HUB.error(HUB.errores.error("X3", mirada), modulo)
+		if yo.tiene_componente_nombrado(nombre_mirada):
+			mirada = yo.componente_nombrado(nombre_mirada)
+		elif yo.tiene_hijo_nombrado(nombre_mirada):
+			mirada = yo.hijo_nombrado(nombre_mirada)
+		else:
+			return HUB.error(HUB.errores.error('No se pudo ubicar un componente ni un hijo con nombre "' + nombre_mirada + '".'), modulo)
 		if not mirada.has_method("rotate"):
 			return HUB.error(HUB.errores.error("X4"), modulo)
 	HUB.eventos.registrar_periodico(self, "periodico")

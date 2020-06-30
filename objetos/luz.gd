@@ -12,9 +12,10 @@ var lib_map = [
 var arg_map = {
 	"lista":[
 		{"nombre":"tipo", "codigo":"t", "default":"omni"},
-		{"nombre":"radio", "codigo":"r", "default":"2", "validar":"NUM;>0"}, # Sólo para omni y spot
+		{"nombre":"radio", "codigo":"r", "default":2, "validar":"NUM;>0"}, # Sólo para omni y spot
 		{"nombre":"color", "codigo":"c", "default":"fff"},
-		{"nombre":"intensidad", "codigo":"i", "default":"1", "validar":"NUM;>0"}
+		{"nombre":"intensidad", "codigo":"i", "default":1, "validar":"NUM;>0"},
+		{"nombre":"atenuación", "codigo":"a", "default":1, "validar":"NUM;>0"}
 	]
 }
 var tipos_validos = ["omni","spot","dir"]
@@ -36,6 +37,7 @@ func gen(argumentos):
 		var resultado = HUB.objetos.crear_componente(tipo)
 		resultado.set_name("luz")
 		resultado.set("params/radius", argumentos["r"])
+		resultado.set("params/attenuation", argumentos["a"])
 		resultado.set("params/energy", argumentos["i"])
 		resultado.set("colors/diffuse", color)
 		return resultado
