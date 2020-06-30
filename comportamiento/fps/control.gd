@@ -24,6 +24,7 @@ var cuerpo
 var requisitos_cuerpo = ["is_colliding","get_collision_normal"]
 var mirada = null
 var velocidad_base
+var rango_y = [-35,40] # grados
 
 func inicializar(hub, yo, args):
 	HUB = hub
@@ -49,6 +50,8 @@ func inicializar(hub, yo, args):
 			return HUB.error(HUB.errores.error('No se pudo ubicar un componente ni un hijo con nombre "' + nombre_mirada + '".'), modulo)
 		if not mirada.has_method("rotate"):
 			return HUB.error(HUB.errores.error("X4"), modulo)
+	rango_y[0] *= PI/180
+	rango_y[1] *= PI/180
 	HUB.eventos.registrar_periodico(self, "periodico")
 	return null
 
@@ -81,4 +84,13 @@ func calcular_rotacion(delta):
 		yo.pone("input_rot", Vector2(0,0))
 	yo.rotate_y(entrada.x/60.0)
 	if mirada:
-		mirada.rotate_x(entrada.y/80.0)
+		mirada.rotate_x(entrada.y/80.0) # entrada: ^ - v + ; valor: v - ^ +
+		var rotacion = mirada.get_rotation()
+		if entrada.y > 0: # mira para abajo
+			if rotacion.x < rango_y[0]:
+				rotacion.x = rango_y[0]
+				mirada.set_rotation(rotacion)
+		elif entrada.y < 0: # mira para arriba
+			if rotacion.x > rango_y[1]:
+				rotacion.x = rango_y[1]
+				mirada.set_rotation(rotacion)
