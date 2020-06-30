@@ -7,6 +7,14 @@ extends Spatial # Este es un proxy al RigidBody real
 
 var HUB
 var yo
+
+var arg_map_empujar = {
+	"lista":[
+		{"nombre":"accion", "codigo":"i", "default":Vector3(0,0,-5)},
+		{"nombre":"accion", "codigo":"p", "default":Vector3(0,0.5,0)}
+	]
+}
+
 var body_real
 var shapes = []
 
@@ -22,8 +30,9 @@ func inicializar(hub, yo):
 	for h in hijos:
 		remove_child(h)
 		body_real.add_child(h)
-	HUB.eventos.registrar_periodico(self, "periodico")
 	yo.moveme(self)
+	yo.interfaz(self, "empujar", arg_map_empujar, true)
+	HUB.eventos.registrar_periodico(self, "periodico")
 	return true
 
 func periodico(delta):
@@ -38,6 +47,9 @@ func periodico(delta):
 func mover(cuanto):
 	body_real.set_mode(1) # Convierto al RigidBody en estático
 	body_real.set_transform(Transform().translated(cuanto))
+
+func empujar(args):
+	body_real.apply_impulse(args["p"],args["i"])
 
 # PROXY
 

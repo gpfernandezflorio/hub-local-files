@@ -34,7 +34,11 @@ func inicializar(hub):
 # Recibe un mensaje
 func mensaje(nombre, colaboradores=[]):
 	if nombre in interfaz:
-		return interfaz[nombre].call(nombre, colaboradores)
+		var metodo = interfaz[nombre]
+		var argumentos = HUB.varios.parsear_argumentos_general(metodo[1], [colaboradores,{}], nombre())
+		if HUB.errores.fallo(argumentos):
+			return HUB.error(HUB.errores.error("X", argumentos), nombre())
+		return metodo[0].call(nombre, argumentos)
 	return HUB.error(HUB.objetos.mensaje_desconocido(nombre), nombre())
 
 # Cambiar el nombre del objeto
@@ -168,8 +172,8 @@ func pone(clave, valor):
 	propiedades[clave] = valor
 
 # Agrega una función a la interfaz del objeto
-func interfaz(nodo, funcion):
-	interfaz[funcion] = nodo
+func interfaz(nodo, funcion, arg_map, es_primitiva=false):
+	interfaz[funcion] = [nodo, arg_map]
 
 func sabe(funcion):
 	return funcion in interfaz

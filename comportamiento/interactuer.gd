@@ -15,6 +15,12 @@ var arg_map = {
 	]
 }
 
+var arg_map_interact = {
+	"lista":[
+		{"nombre":"accion", "codigo":"a", "default":null}
+	]
+}
+
 var modulo = "Interactuer"
 var yo
 var colisionador
@@ -31,7 +37,7 @@ func inicializar(hub, yo, args):
 	colisionador.connect("area_exit_shape", self, "interact_out")
 	add_child(colisionador)
 	posibilidades = []
-	yo.interfaz(self, "interact")
+	yo.interfaz(self, "interact", arg_map_interact)
 	return null
 
 func interact_in(i, objeto, a, s):
@@ -62,6 +68,6 @@ func interact_out(i, objeto, a, s):
 				posibilidades.push_front(candidato)
 				candidato.interact_in()
 
-func interact(accion=null):
+func interact(args):
 	if not posibilidades.empty():
-		posibilidades[0].interact(yo, accion)
+		posibilidades[0].interact(yo, args["a"])
