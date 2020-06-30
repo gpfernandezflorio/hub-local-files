@@ -199,7 +199,7 @@ func verificar_encabezado(contenido, ruta, archivo, nombre, codigo_tipo):
 	return subtipo
 
 func verificar_funciones(archivo, script, codigo_tipo, codigo_subtipo=null):
-	var nodo = Node.new()
+	var nodo = Spatial.new()
 	nodo.set_name(archivo)
 	nodo.set_script(script)
 	if codigo_tipo == "Programa":

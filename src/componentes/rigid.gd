@@ -23,12 +23,21 @@ func inicializar(hub, yo):
 		remove_child(h)
 		body_real.add_child(h)
 	HUB.eventos.registrar_periodico(self, "periodico")
+	yo.moveme(self)
 	return true
 
 func periodico(delta):
-	yo.set_global_transform(body_real.get_global_transform())
-	yo.translate(-get_translation())
-	body_real.set_transform(Transform())
+	if body_real.get_mode() == 0:
+		yo.set_global_transform(body_real.get_global_transform())
+		yo.translate(-get_translation())
+		body_real.set_transform(Transform())
+	else:
+		body_real.set_transform(Transform())
+		body_real.set_mode(0)
+
+func mover(cuanto):
+	body_real.set_mode(1) # Convierto al RigidBody en estático
+	body_real.set_transform(Transform().translated(cuanto))
 
 # PROXY
 

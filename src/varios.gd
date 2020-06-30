@@ -100,7 +100,7 @@ func parsear_argumentos_general(arg_map, args, modulo):
 			i_arg+=1
 	# Validar valores ingresados
 	for arg in arg_map.lista:
-		if "validar" in arg and typeof(resultado[arg.codigo])==TYPE_STRING:
+		if "validar" in arg:
 			var validacion = validar_argumento(arg, resultado[arg.codigo], modulo)
 			if HUB.errores.fallo(validacion):
 				return validacion
@@ -131,27 +131,30 @@ func validar_argumento(arg, valor, modulo):
 	var resultado = valor
 	for validador in arg.validar.split(";"):
 		if validador == "BOOL":
-			if valor.empty():
+			if typeof(valor)==TYPE_STRING and valor.empty():
 				resultado = true
-			else:
+			elif typeof(valor)!=TYPE_BOOL:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador == "NUM":
-			if valor.is_valid_integer():
+			if typeof(valor)==TYPE_STRING and valor.is_valid_integer():
 				resultado = int(resultado)
-			elif valor.is_valid_float():
+			elif typeof(valor)==TYPE_STRING and valor.is_valid_float():
 				resultado = float(resultado)
-			else:
+			elif typeof(valor)!=TYPE_REAL and typeof(valor)!=TYPE_INT:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador == "INT":
-			if valor.is_valid_integer():
+			if typeof(valor)==TYPE_STRING and valor.is_valid_integer():
 				resultado = int(resultado)
-			else:
+			elif typeof(valor)!=TYPE_INT:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador == "DEC":
-			if valor.is_valid_float():
+			if typeof(valor)==TYPE_STRING and valor.is_valid_float():
 				resultado = float(resultado)
-			else:
+			elif typeof(valor)!=TYPE_REAL:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
+		elif validador == "ARR":
+			if typeof(valor) != TYPE_ARRAY:
+				resultado = [resultado]
 		elif validador.begins_with(">="):
 			if resultado < num(str_desde(validador,2)):
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
@@ -286,4 +289,4 @@ func restriccion(validador):
 # Argumento de tipo incorrecto
 func argumento_tipo_incorrecto(argumento, valor, validador, stack_error=null):
 	return HUB.errores.error('Se pasa como argumento "' + argumento + \
-	'" el valor "' + valor + '" pero debe ser ' + restriccion(validador) + '.', stack_error)
+	'" el valor "' + str(valor) + '" pero debe ser ' + restriccion(validador) + '.', stack_error)

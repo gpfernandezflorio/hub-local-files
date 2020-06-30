@@ -13,9 +13,13 @@ var hijos = Spatial.new()
 # Nodo vacío que tiene como hijos a los nodos que representan los componentes de este objeto
 var componentes = Spatial.new()
 # Nodo vacío que tiene como hijos a los nodos que representan los comportamientos de este objeto
-var comportamientos = Node.new()
+var comportamientos = Spatial.new()
 # Diccionario de propiedades para que los comporamientos interactúen entre sí
 var propiedades = {}
+# Diccionario de funciones de los comporamientos
+var interfaz = {}
+# Si tengo componentes de tipo RigidBody tengo que "avisarles" cuando me muevo
+var bodies = []
 
 func inicializar(hub):
 	HUB = hub
@@ -29,6 +33,8 @@ func inicializar(hub):
 
 # Recibe un mensaje
 func mensaje(nombre, colaboradores=[]):
+	if nombre in interfaz:
+		return interfaz[nombre].call(nombre, colaboradores)
 	return HUB.error(HUB.objetos.mensaje_desconocido(nombre), nombre())
 
 # Cambiar el nombre del objeto
@@ -145,6 +151,11 @@ func nombre():
 # Mueve inmediatamente
 func mover(cuanto):
 	set_translation(get_transform().origin + cuanto)
+	for c in bodies:
+		c.mover(cuanto)
+
+func moveme(c):
+	bodies.append(c)
 
 # Diccionario de propiedades para que los comporamientos interactúen entre sí
 func dame(clave, default=null):
@@ -155,6 +166,13 @@ func dame(clave, default=null):
 
 func pone(clave, valor):
 	propiedades[clave] = valor
+
+# Agrega una función a la interfaz del objeto
+func interfaz(nodo, funcion):
+	interfaz[funcion] = nodo
+
+func sabe(funcion):
+	return funcion in interfaz
 
 # Funciones Auxiliares
 

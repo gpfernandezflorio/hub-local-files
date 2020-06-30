@@ -5,7 +5,7 @@
 # Requiere para inicializar:
 	# -
 
-extends Node
+extends Spatial
 
 var HUB
 
@@ -32,13 +32,15 @@ var controles = {
 		"rot_up": KEY_W,
 		"rot_down": KEY_S,
 		"rot_right": KEY_D,
-		"rot_left": KEY_A
+		"rot_left": KEY_A,
+		"action": KEY_ENTER
 	},
 	"KM":{
 		"up": KEY_W,
 		"down": KEY_S,
 		"right": KEY_D,
-		"left": KEY_A
+		"left": KEY_A,
+		"action": KEY_Q
 	},
 	"J":{}
 }
@@ -150,6 +152,12 @@ func r_rot_left(): # 7
 	else:
 		rot_input_generado.x = 0
 	yo.pone("input_rot", rot_input_generado)
+
+func p_action():
+	pass
+func r_action():
+	if yo.sabe("interact"):
+		yo.mensaje("interact")
 
 func mouse(mov):
 	yo.pone("input_rot", mov/20.0)

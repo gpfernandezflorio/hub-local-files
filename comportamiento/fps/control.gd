@@ -6,7 +6,7 @@
 	# Que el objeto tenga un componente (cuerpo) de tipo KinematicBody
 	# Opcional: Que el objeto tenga un componente (mirada) que pueda rotar
 
-extends Node
+extends Spatial
 
 var HUB
 

@@ -410,10 +410,7 @@ func aplicar_modificaciones(algo, mods):
 				movimiento.y = valor
 			elif eje == "z":
 				movimiento.z = valor
-			if HUB.objetos.es_un_objeto(resultado):
-				resultado.mover(movimiento)
-			else:
-				resultado.translate(movimiento)
+			resultado.translate(movimiento)
 		# COLLIDER
 		elif (modificador == "c"):
 			var body = null

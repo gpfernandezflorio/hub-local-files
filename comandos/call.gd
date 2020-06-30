@@ -26,7 +26,7 @@ func comando(argumentos):
 	var objeto = HUB.objetos.localizar(argumentos["o"])
 	if HUB.errores.fallo(objeto):
 		return HUB.error(HUB.errores.error('No se pudo ubicar el objeto "' + argumentos["o"] + '".', objeto), modulo)
-	objeto.mensaje(argumentos["m"], argumentos.extra)
+	HUB.mensaje(str(objeto.mensaje(argumentos["m"], argumentos.extra)))
 
 func descripcion():
 	return "Ejecuta un método de un objeto"

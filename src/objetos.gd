@@ -175,7 +175,7 @@ func componente_candidato(objeto, nombre, tipo_o_requisitos):
 # Funciones auxiliares
 
 func cargar_comportamiento(nombre):
-	var nodo = Node.new()
+	var nodo = Spatial.new()
 	var script = null
 	if nombre in comportamientos_cargados:
 		script = comportamientos_cargados[nombre]
