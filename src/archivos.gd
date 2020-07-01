@@ -59,7 +59,7 @@ func leer(ruta, nombre, tipo=null):
 		contenido = file_system.leer(ruta_user + ruta + nombre)
 	elif existe_raiz(ruta + nombre):
 		# Sólo lo puedo abrir si no es un script
-		if file_system.nombre_real(nombre).ends_with(".gdc"):
+		if file_system.nombre_real(ruta+nombre).ends_with(".gdc"):
 			return HUB.error(archivo_binario(ruta, nombre), modulo)
 		contenido = file_system.leer(HUB.ruta_raiz + ruta + nombre)
 	else:

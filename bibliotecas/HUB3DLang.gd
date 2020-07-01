@@ -410,7 +410,28 @@ func aplicar_modificaciones(algo, mods):
 				movimiento.y = valor
 			elif eje == "z":
 				movimiento.z = valor
-			resultado.translate(movimiento)
+			else:
+				return HUB.error(HUB.errores.error('Eje inválido para el modificador "' + modificador + '".'), modulo)
+			resultado.set_translation(resultado.get_transform().origin + movimiento)
+		# ROTATE
+		elif (modificador.begins_with("r")):
+			var eje = modificador[1]
+			var valor = mods[modificador]
+			if tipos.es_un_string(valor):
+				if esta_definido(valor):
+					valor = obtener(valor)
+				else:
+					return HUB.error(HUB.errores.error('La variable "' + valor + '" no está definida.'), modulo)
+			if not tipos.es_un_numero(valor):
+				return HUB.error(HUB.errores.error('Tipo inválido para el modificador "' + modificador + '".'), modulo)
+			if eje == "x":
+				resultado.rotate_x(valor)
+			elif eje == "y":
+				resultado.rotate_y(valor)
+			elif eje == "z":
+				resultado.rotate_z(valor)
+			else:
+				return HUB.error(HUB.errores.error('Eje inválido para el modificador "' + modificador + '".'), modulo)
 		# COLLIDER
 		elif (modificador == "c"):
 			var body = null
