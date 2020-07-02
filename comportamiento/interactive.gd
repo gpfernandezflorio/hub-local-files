@@ -23,6 +23,7 @@ var colisionador
 var mallas
 var material_on
 var script
+var i = -1
 
 func inicializar(hub, yo, args):
 	HUB = hub
@@ -51,24 +52,36 @@ func inicializar(hub, yo, args):
 	colisionador.add_shape(shape)
 	add_child(colisionador)
 	material_on = FixedMaterial.new()
-	material_on.set("params/diffuse",Color(.7,.7,.2))
+	material_on.set("params/emission",Color(.5,.5,.2))
+	material_on.set("params/specular_exp",1)
+	material_on.set("params/glow",8)
 	return null
 
 func materiales(mesh):
 	var ms = []
-	for i in range(mesh.get_surface_count()):
-		ms.append(mesh.get("surface_" + str(i+1) + "/material"))
+	for j in range(mesh.get_surface_count()):
+		ms.append(mesh.get("surface_" + str(j+1) + "/material"))
 	return ms
 
 func interact_in():
-	for m in mallas:
-		for i in range(m[0].get_surface_count()):
-			m[0].set("surface_" + str(i+1) + "/material",material_on)
+	i = 0
+	HUB.eventos.registrar_periodico(self, "periodico")
 func interact_out():
-	for m in mallas:
-		for i in range(m[0].get_surface_count()):
-			m[0].set("surface_" + str(i+1) + "/material",m[1][i])
+	i = -1
 
 func interact(quien, que):
 	if script != null:
 		script.exec(HUB, [quien, yo, que])
+
+func periodico(delta):
+	if i < 0:
+		HUB.eventos.anular_periodico(self)
+		for m in mallas:
+			for j in range(m[0].get_surface_count()):
+				m[0].set("surface_" + str(j+1) + "/material",m[1][j])
+	else:
+		i+=delta
+		for m in mallas:
+			for j in range(m[0].get_surface_count()):
+				m[0].set("surface_" + str(j+1) + "/material",material_on)
+		material_on.set("params/diffuse",Color(0.6+sin(i)/6,0.6+sin(i)/6,sin(i)/4))

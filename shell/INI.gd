@@ -25,3 +25,5 @@
 
 #new _:npedro
 #tree
+#run sde
+#run demo/domino

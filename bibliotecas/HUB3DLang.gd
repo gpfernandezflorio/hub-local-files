@@ -37,7 +37,7 @@ func inicializar(hub):
 	var regex_ex1 = "("+regex_opT+")?"+"(("+regex_num_letrs+")|("+regex_letrs_float+"))"
 	var regex_any = "(("+regex_opT+")?("+regex_valid+"))|("+regex_ex1+")"
 	var regex_ex = "("+regex_any+")*"+regex_ex1+"("+regex_any+")*"
-	var valid_mods = "n|p|s|ox|oy|oz|rx|ry|rz|c"
+	var valid_mods = "n|p|s|ox|oy|oz|rx|ry|rz|c|m"
 	parser = parser_lib.crear_parser([
 		# Un Hobjeto se define a partir de una secuencia de líneas
 		# Cada línea puede ser una de estas 3:
@@ -314,6 +314,8 @@ func reduce(produccion, valores):
 		return valores[1]
 	# FACT -> PRIM ARGS
 	if produccion == 19:
+		if tipos.es_un_string(valores[0]) and valores[0] == "random":
+			return random(valores[1][0])
 		if valores[1][0].empty() and valores[1][1].keys().empty():
 			# Lo devuelvo como texto ya que no sé para qué se va a usar
 			return valores[0]
@@ -446,6 +448,21 @@ func aplicar_modificaciones(algo, mods):
 			var resultado_colision = agregar_colisionador(body, mods["c"])
 			if HUB.errores.fallo(resultado_colision):
 				return resultado_colision
+		# MATERIAL
+		elif (modificador == "m"):
+			var meshes = []
+			if tipos.es_un_componente(resultado):
+				if resultado.has_method("set_material_override"):
+					meshes.append(resultado)
+				else:
+					return HUB.error(HUB.errores.error('No se puede agregar el material si el componente no es una malla'), modulo)
+			else:
+				# agregar a "meshes" todos los componentes de tipo meshInstance y luego:
+				if meshes.empty():
+					return HUB.error(HUB.errores.error('No se puede agregar el material si el objeto no tiene un componente malla'), modulo)
+			var resultado_material = agregar_material(meshes, mods["m"])
+			if HUB.errores.fallo(resultado_material):
+				return resultado_material
 		else:
 			return HUB.error(modificador_invalido(modificador), modulo)
 	if hijo_de != null:
@@ -464,10 +481,10 @@ func base(texto, argumentos):
 		resultado = obtener(texto)
 	elif HUB.archivos.existe("objetos/", texto + ".gd"):
 		resultado = desde_archivo(texto, argumentos)
-	elif argumentos.empty():
+	elif argumentos[0].empty() and argumentos[1].keys().empty():
 		resultado = texto
 	else:
-		return HUB.error(HUB.errores.error("primitiva no definida"), modulo)
+		return HUB.error(HUB.errores.error('primitiva "'+texto+'" no definida'), modulo)
 	return resultado
 
 func definir(clave, valor):
@@ -517,7 +534,7 @@ func modificador_admite_varios(mod):
 	return mod in ["s","c"]
 
 func modificador_invalido_en_mesh_rep(mod):
-	return mod in ["s","n","p"]
+	return not mod[0] in ["o","r"]
 
 var valid_colls = {
 	"plane":{"arg_map":
@@ -624,6 +641,34 @@ func agregar_colisionador(body, cs):
 		else:
 			return HUB.error(HUB.errores.error('Identificador de colisionador inválido: '+id), modulo)
 
+var material_arg_map = {"lista":[
+	{"nombre":"color", "codigo":"c", "default":Color("ffffff"), "validar":"COLOR"}
+]}
+
+func agregar_material(meshes, mat):
+	var id = mat
+	var args = [[],{}]
+	var material
+	if tipos.es_una_lista(mat):
+		id = mat[0]
+		args = mat[1]
+	if esta_definido(id):
+		material = obtener(id)
+		if typeof(material) != 18 or material.get_type() != "FixedMaterial":
+			return HUB.error(HUB.errores.error('No es un material: '+id), modulo)
+	elif id != "fixed":
+		return HUB.error(HUB.errores.error('Identificador de material inválido: '+id), modulo)
+	args = HUB.varios.parsear_argumentos_general(material_arg_map, args, modulo)
+	if HUB.errores.fallo(args):
+		return HUB.error(HUB.errores.error('No se pudo generar el material', args), modulo)
+	if material == null:
+		material = FixedMaterial.new()
+	material.set("params/diffuse", args["c"])
+	for mi in meshes:
+		var m = mi.get_mesh()
+		for i in range(m.get_surface_count()):
+			m.surface_set_material(i, material)
+
 func mesh_a_partir_de_reps(meshes):
 	var resultado = meshes[0]
 	meshes.pop_front()
@@ -631,6 +676,70 @@ func mesh_a_partir_de_reps(meshes):
 		resultado.merge(meshes[0])
 		meshes.pop_front()
 	return resultado.make()
+
+func random(argumentos):
+	var tipo = "f"
+	var rango = [0,1]
+	if not argumentos.empty():
+		if tipos.es_un_string(argumentos[0]):
+			tipo = argumentos[0]
+			argumentos.pop_front()
+		else:
+			tipo = "i"
+	if tipo == "f":
+		if argumentos.size() == 1:
+			rango[1] = argumentos[0]
+		else:
+			if argumentos.size() > 1:
+				rango[0] = argumentos[0]
+				rango[1] = argumentos[1]
+		return rango[0] + randf()*(rango[1]-rango[0])
+	if tipo == "i":
+		var step = 1
+		if argumentos.size() == 1:
+			rango[0] = 1
+			rango[1] = argumentos[0]
+		else:
+			if argumentos.size() > 1:
+				rango[0] = argumentos[0]
+				rango[1] = argumentos[1]
+			if argumentos.size() > 2:
+				step = argumentos[2]
+		return rango[0] + step*(randi() % ((rango[1]+step-rango[0])/step))
+	if tipo == "h":
+		return random_hex(argumentos)
+	if tipo == "c":
+		var args_r = []
+		var args_g = []
+		var args_b = []
+		if argumentos.size() > 0:
+			args_r = argumentos[0]
+		if argumentos.size() > 1:
+			args_g = argumentos[1]
+		if argumentos.size() > 2:
+			args_b = argumentos[2]
+		var r = random_hex(args_r)
+		var g = random_hex(args_g)
+		var b = random_hex(args_b)
+		return r+g+b
+
+func random_hex(argumentos):
+	var rango = [0,15]
+	if argumentos.size() == 1:
+		rango[1] = argumentos[0]
+	elif argumentos.size() > 1:
+		rango[0] = argumentos[0]
+		rango[1] = argumentos[1]
+	return int_to_hex(rango[0] + randi() % (rango[1]+1-rango[0]))
+
+func int_to_hex(i):
+	if i <= 0:
+		return "0"
+	if i < 10:
+		return str(i)
+	if i < 16:
+		return ["a","b","c","d","e","f"][i-10]
+	return "0"
 
 class MeshRep:
 	var vertexes	# Vector3

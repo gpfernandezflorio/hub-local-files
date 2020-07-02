@@ -62,6 +62,15 @@ func registrar_periodico(nodo, funcion):
 	else:
 		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
 
+# Anula la función periódica en el nodo
+func anular_periodico(nodo):
+	var accion = "T"
+	if registro_eventos.has(accion):
+		for registro in registro_eventos[accion]:
+			if registro["nodo"] == self:
+				registro_eventos[accion].erase(registro)
+				return
+
 # Asigna el modo del cursor del mouse
 func set_modo_mouse(modo=0):
 	if HUB.os == "HTML5":
@@ -101,34 +110,49 @@ func mouse_movido(ev):
 func ventana_escalada():
 	if registro_eventos.has("WS"):
 		for registro in registro_eventos["WS"]:
-			registro["nodo"].call(registro["funcion"], OS.get_window_size())
+			var nodo = registro["nodo"]
+			if nodo.is_inside_tree():
+				registro["nodo"].call(registro["funcion"], OS.get_window_size())
+			else:
+				registro_eventos["WS"].erase(registro)
 
 func tecla_presionada(ev):
 	var accion = "P"+str(ev.scancode)
 	if registro_eventos.has(accion):
 		for registro in registro_eventos[accion]:
 			var nodo = registro["nodo"]
-			var corresponde = nodo != HUB.terminal.campo_entrada
-			if HUB.terminal.activa():
-				corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
-			if corresponde:
-				nodo.call(registro["funcion"])
+			if nodo.is_inside_tree():
+				var corresponde = nodo != HUB.terminal.campo_entrada
+				if HUB.terminal.activa():
+					corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
+				if corresponde:
+					nodo.call(registro["funcion"])
+			else:
+				registro_eventos[accion].erase(registro)
 
 func tecla_soltada(ev):
 	var accion = "R"+str(ev.scancode)
 	if registro_eventos.has(accion):
 		for registro in registro_eventos[accion]:
 			var nodo = registro["nodo"]
-			var corresponde = nodo != HUB.terminal.campo_entrada
-			if HUB.terminal.activa():
-				corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
-			if corresponde:
-				nodo.call(registro["funcion"])
+			if nodo.is_inside_tree():
+				var corresponde = nodo != HUB.terminal.campo_entrada
+				if HUB.terminal.activa():
+					corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
+				if corresponde:
+					nodo.call(registro["funcion"])
+			else:
+				registro_eventos[accion].erase(registro)
+
 
 func periodico(delta):
 	if registro_eventos.has("T"):
 		for registro in registro_eventos["T"]:
-			registro["nodo"].call(registro["funcion"], delta)
+			var nodo = registro["nodo"]
+			if nodo.is_inside_tree():
+				nodo.call(registro["funcion"], delta)
+			else:
+				registro_eventos["T"].erase(registro)
 
 # Constantes del teclado:
 #	KEY_ESCAPE,KEY_F1,KEY_F2,KEY_F3,KEY_F4,KEY_F5,KEY_F6,KEY_F7,KEY_F8,KEY_F9,KEY_F10,KEY_F11,KEY_F12,

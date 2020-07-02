@@ -127,6 +127,14 @@ func num(s):
 		return float(s)
 	return 0
 
+func color(c):
+	var s = c
+	if s.length() == 3:
+		s = c[0]+c[0]+c[1]+c[1]+c[2]+c[2]
+	if s.is_valid_html_color():
+		return Color(s)
+	return HUB.error(HUB.errores.error('Color inválido: '+c))
+
 func validar_argumento(arg, valor, modulo):
 	var resultado = valor
 	for validador in arg.validar.split(";"):
@@ -151,6 +159,13 @@ func validar_argumento(arg, valor, modulo):
 			if typeof(valor)==TYPE_STRING and valor.is_valid_float():
 				resultado = float(resultado)
 			elif typeof(valor)!=TYPE_REAL:
+				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
+		elif validador == "COLOR":
+			if typeof(valor)==TYPE_STRING:
+				resultado = color(resultado)
+				if HUB.errores.fallo(resultado):
+					return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador, resultado), modulo)
+			elif typeof(valor)!=TYPE_COLOR:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador == "ARR":
 			if typeof(valor) != TYPE_ARRAY:
@@ -277,6 +292,10 @@ func restriccion(validador):
 		return "un entero"
 	elif validador == "DEC":
 		return "una fracción"
+	elif validador == "COLOR":
+		return "un código de color"
+	elif validador == "ARR":
+		return "una lista"
 	elif validador.begins_with(">="):
 		return "mayor o igual a " + str_desde(validador,2)
 	elif validador.begins_with("<="):
