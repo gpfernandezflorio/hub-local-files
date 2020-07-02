@@ -17,23 +17,9 @@ var codigos_objeto = ["HUB3DLang","Funcion"]
 # Códigos válidos de tipo script
 var codigos_script = ["SRC"]
 
-# ¿Ejecutando la versión compilada?
-var compilado
-# ¿Los fuentes están en userFS?
-var userFS_src
-# La verdadera ubicación de los archivos de usuario
-# Si estoy en el editor o usando el FS del usuario, es igual a la ruta raiz
-var ruta_user = "user://"
-
 func inicializar(hub):
 	HUB = hub
-	compilado = not OS.is_debug_build()
-	userFS_src = Globals.get("userfs")
-	if HUB.os == "HTML5":
-		ruta_user = "/userfs/"
-	if userFS_src or not compilado:
-		ruta_user = HUB.ruta_raiz
-	file_system = FileSystem.new(compilado, userFS_src, HUB.os, HUB.ruta_raiz)
+	file_system = FileSystem.new(HUB.ruta_raiz)
 	return true
 
 # Carga el contenido de un archivo
@@ -41,8 +27,9 @@ func abrir(ruta, nombre, tipo=null):
 	if not existe(ruta, nombre):
 		return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 	if tipo != null: # Verificaciones adicionales
-		var verificacion_encabezado = verificar_encabezado_script(
-			ruta, nombre, nombre.replace(".gd",""), tipo)
+		var contenido = leer(ruta, nombre).split("\n")
+		var verificacion_encabezado = verificar_encabezado(
+			contenido, ruta, nombre, nombre.replace(".gd",""), tipo)
 		if HUB.errores.fallo(verificacion_encabezado):
 			return HUB.error(archivo_invalido(nombre, tipo, verificacion_encabezado), modulo)
 		if tipo in codigos_script:
@@ -55,128 +42,91 @@ func abrir(ruta, nombre, tipo=null):
 # Carga el contenido de un archivo como texto
 func leer(ruta, nombre, tipo=null):
 	var contenido = ""
-	if existe_user(ruta.plus_file(nombre)):
-		contenido = file_system.leer(ruta_user.plus_file(ruta).plus_file(nombre))
-	elif existe_raiz(ruta.plus_file(nombre)):
-		# Sólo lo puedo abrir si no es un script
-		if file_system.nombre_real(ruta.plus_file(nombre)).ends_with(".gdc"):
-			return HUB.error(archivo_binario(ruta, nombre), modulo)
-		contenido = file_system.leer(HUB.ruta_raiz.plus_file(ruta).plus_file(nombre))
+	if existe(ruta, nombre):
+		contenido = file_system.leer(ruta.plus_file(nombre))
 	else:
 		return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 	if tipo != null: # Verificaciones adicionales
-		var verificacion_encabezado = verificar_encabezado(contenido.split("\n"),
-			ruta, nombre, nombre.replace(".gd",""), tipo)
+		var verificacion_encabezado = verificar_encabezado(
+			contenido.split("\n"), ruta, nombre, nombre.replace(".gd",""), tipo)
 		if HUB.errores.fallo(verificacion_encabezado):
 			return HUB.error(archivo_invalido(nombre, tipo, verificacion_encabezado), modulo)
 	return contenido
 
 # Escribe texto al final de un archivo existente
 func escribir(ruta, nombre, contenido, en_nueva_linea=true):
-	if existe_user(ruta.plus_file(nombre)):
-		file_system.escribir(ruta_user.plus_file(ruta).plus_file(nombre), contenido, en_nueva_linea)
+	if existe(ruta, nombre):
+		file_system.escribir(ruta.plus_file(nombre), contenido, en_nueva_linea)
 		return null
-	if existe_raiz(ruta.plus_file(nombre)):
-		return HUB.error(solo_lectura(ruta, nombre), modulo)
 	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Sobrescribe el contenido de un archivo existente
 func sobrescribir(ruta, nombre, contenido):
-	if existe_user(ruta.plus_file(nombre)):
-		file_system.sobrescribir(ruta_user.plus_file(ruta).plus_file(nombre), contenido)
+	if existe(ruta, nombre):
+		file_system.sobrescribir(ruta.plus_file(nombre), contenido)
 		return null
-	if existe_raiz(ruta.plus_file(nombre)):
-		return HUB.error(solo_lectura(ruta, nombre), modulo)
 	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Determina si un archivo existe
 func existe(ruta, nombre):
-	return existe_user(ruta.plus_file(nombre)) or existe_raiz(ruta.plus_file(nombre))
+	return file_system.existe(ruta.plus_file(nombre))
 
 # Determina si un archivo es un archivo (no es un directorio)
 func es_archivo(ruta, nombre):
-	if existe_user(ruta.plus_file(nombre)):
-		return file_system.es_archivo(ruta_user.plus_file(ruta).plus_file(nombre))
-	if existe_raiz(ruta.plus_file(nombre)):
-		return file_system.es_archivo(HUB.ruta_raiz.plus_file(ruta).plus_file(nombre))
+	if existe(ruta, nombre):
+		return file_system.es_archivo(ruta.plus_file(nombre))
 	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Determina si un archivo es un directorio
 func es_directorio(ruta, nombre):
-	if existe_user(ruta.plus_file(nombre)):
-		return file_system.es_directorio(ruta_user.plus_file(ruta).plus_file(nombre))
-	if existe_raiz(ruta.plus_file(nombre)):
-		return file_system.es_directorio(HUB.ruta_raiz.plus_file(ruta).plus_file(nombre))
+	if existe(ruta, nombre):
+		return file_system.es_directorio(ruta.plus_file(nombre))
 	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Crea un nuevo archivo vacío
 func crear(ruta, nombre):
-	if existe_user(ruta.plus_file(nombre)):
+	if existe(ruta, nombre):
 		return HUB.error(archivo_ya_existe(ruta, nombre), modulo)
 	crear_carpetas_intermedias(ruta.plus_file(nombre))
-	file_system.crear(ruta_user.plus_file(ruta).plus_file(nombre))
+	file_system.crear(ruta.plus_file(nombre))
 	return null
 
 # Crea una nueva carpeta
 func crear_carpeta(ruta, nombre):
-	if existe_user(ruta.plus_file(nombre)):
+	if existe(ruta, nombre):
 		return HUB.error(archivo_ya_existe(ruta, nombre), modulo)
 	crear_carpetas_intermedias(ruta.plus_file(nombre))
-	file_system.crear_carpeta(ruta_user.plus_file(ruta), nombre)
+	file_system.crear_carpeta(ruta, nombre)
 	return null
 
 # Borrar un archivo
 func borrar(ruta, nombre):
-	if existe_user(ruta.plus_file(nombre)):
-		file_system.borrar(ruta_user.plus_file(ruta).plus_file(nombre))
+	if existe(ruta, nombre):
+		file_system.borrar(ruta.plus_file(nombre))
 		return null
-	if existe_raiz(ruta.plus_file(nombre)):
-		return HUB.error(solo_lectura(ruta, nombre), modulo)
 	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Listar archivos en un directorio
-func listar(ruta, carpeta):
-	var lista_user = existe_user(ruta.plus_file(carpeta))
-	var lista_raiz = existe_raiz(ruta.plus_file(carpeta))
-	if lista_user or lista_raiz:
-		if es_directorio(ruta, carpeta):
-			if lista_user:
-				return file_system.listar(ruta_user.plus_file(ruta).plus_file(carpeta))
-			if lista_raiz:
-				return file_system.listar(HUB.ruta_raiz.plus_file(ruta).plus_file(carpeta))
-		return HUB.error(no_es_un_directorio(ruta, carpeta), modulo)
-	return HUB.error(archivo_inexistente(ruta, carpeta), modulo)
+func listar(ruta, nombre):
+	if existe(ruta, nombre):
+		if es_directorio(ruta, nombre):
+			return file_system.listar(ruta.plus_file(nombre))
+		return HUB.error(no_es_un_directorio(ruta, nombre), modulo)
+	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
 # Funciones auxiliares
 
 func crear_carpetas_intermedias(ruta):
-	var carpetas = (ruta).split("/")
+	var carpetas = ruta.split("/")
 	carpetas.resize(carpetas.size()-1)
 	var nueva_ruta = ""
 	for carpeta in carpetas:
 		if not existe(nueva_ruta, carpeta):
-			file_system.crear_carpeta(ruta_user.plus_file(nueva_ruta), carpeta)
+			file_system.crear_carpeta(nueva_ruta, carpeta)
 		nueva_ruta += carpeta + "/"
 
 func fs_load(ruta):
-	if existe_user(ruta):
-		return load(ruta_user.plus_file(ruta))
-	if existe_raiz(ruta):
-		return load(HUB.ruta_raiz.plus_file(ruta))
-
-func existe_user(ruta):
-	return file_system.existe(ruta_user.plus_file(ruta))
-
-func existe_raiz(ruta):
-	return file_system.existe(HUB.ruta_raiz.plus_file(ruta))
-
-func verificar_encabezado_script(ruta, archivo, nombre, codigo_tipo):
-	# Asume que el archivo existe y por lo tanto, leer no falla
-	if not existe_user(ruta.plus_file(archivo)):
-		# El encabezado fue eliminado, no se puede hacer nada
-		return ""
-	var contenido = leer(ruta, archivo).split("\n")
-	return verificar_encabezado(contenido, ruta, archivo, nombre, codigo_tipo)
+	return load(HUB.ruta_raiz.plus_file(ruta))
 
 func verificar_encabezado(contenido, ruta, archivo, nombre, codigo_tipo):
 	var subtipo = null # En caso de éxito, devuelvo el subtipo, si hay uno
@@ -236,105 +186,60 @@ func verificar_funciones(archivo, script, codigo_tipo, codigo_subtipo=null):
 class FileSystem:
 	var file
 	var dir
-	var compilado
-	var userFS
-	var os
-	var nombres_compilados
 	var ruta_raiz
-	func _init(compilado, userFS, os, ruta_raiz):
+	func _init(ruta_raiz):
 		self.file = File.new()
 		self.dir = Directory.new()
-		self.compilado = compilado
-		self.userFS = userFS
-		self.os = os
-		self.nombres_compilados = compilado and (not userFS)
 		self.ruta_raiz = ruta_raiz
-	func leer(ruta_al_archivo):
-		var ruta = nombre_real(ruta_al_archivo)
-		file.open(ruta, File.READ)
+	func leer(ruta):
+		file.open(ruta_raiz.plus_file(ruta), File.READ)
 		var contenido = file.get_as_text()
 		file.close()
 		return contenido
-	func escribir(ruta_al_archivo, contenido, en_nueva_linea=true):
-		file.open(ruta_al_archivo, File.READ_WRITE)
+	func escribir(ruta, contenido, en_nueva_linea=true):
+		file.open(ruta_raiz.plus_file(ruta), File.READ_WRITE)
 		var contenido_a_escribir = contenido
 		var contenido_actual = file.get_as_text()
 		if en_nueva_linea and not contenido_actual.empty():
 			contenido_a_escribir = contenido_actual + "\n" + contenido_a_escribir
 		file.store_string(contenido_a_escribir)
 		file.close()
-	func sobrescribir(ruta_al_archivo, contenido):
-		file.open(ruta_al_archivo, File.WRITE)
+	func sobrescribir(ruta, contenido):
+		file.open(ruta_raiz.plus_file(ruta), File.WRITE)
 		file.store_string(contenido)
 		file.close()
-	func existe(ruta_al_archivo):
-		return es_archivo(ruta_al_archivo) or es_directorio(ruta_al_archivo)
-	func es_archivo(ruta_al_archivo):
-		for ruta in posibles_rutas(ruta_al_archivo):
-			if file.file_exists(ruta):
-				return true
-		return false
-	func es_directorio(ruta_al_archivo):
-#		print(ruta_al_archivo)
-		if nombres_compilados and ruta_al_archivo.begins_with(ruta_raiz):
-#			print("NO SÉ SI ES UNA CARPETA")
-			return false
-#		print(dir.dir_exists(ruta_al_archivo))
-		return dir.dir_exists(ruta_al_archivo)
-	func crear(ruta_al_archivo):
-		file.open(ruta_al_archivo, File.WRITE)
+	func existe(ruta):
+		return es_archivo(ruta) or es_directorio(ruta)
+	func es_archivo(ruta):
+		return file.file_exists(ruta_raiz.plus_file(ruta))
+	func es_directorio(ruta):
+		return dir.dir_exists(ruta_raiz.plus_file(ruta))
+	func crear(ruta):
+		file.open(ruta_raiz.plus_file(ruta), File.WRITE)
 		file.close()
-	func crear_carpeta(ruta, archivo):
-		dir.open(ruta)
-		dir.make_dir(archivo)
-	func borrar(ruta_al_archivo):
-		if es_archivo(ruta_al_archivo):
-			dir.remove(ruta_al_archivo)
-		else:
-			var archivos = listar(ruta_al_archivo)
+	func crear_carpeta(ruta, nombre):
+		dir.open(ruta_raiz.plus_file(ruta))
+		dir.make_dir(nombre)
+	func borrar(ruta):
+		var ruta_completa = ruta_raiz.plus_file(ruta)
+		if es_archivo(ruta):
+			dir.remove(ruta_completa)
+		elif es_directorio(ruta):
+			var archivos = listar(ruta)
 			for archivo in archivos:
-				borrar(ruta_al_archivo+"/"+archivo)
-			dir.remove(ruta_al_archivo)
+				borrar(ruta.plus_file(archivo))
+			dir.remove(ruta_completa)
 	func listar(ruta):
-#		print("LISTAR "+ruta)
-		if nombres_compilados and ruta.begins_with(ruta_raiz):
-#			print("NO PUEDO LISTAR")
-			return []
 		var archivos = []
-		dir.open(ruta)
+		dir.open(ruta_raiz.plus_file(ruta))
 		dir.list_dir_begin()
 		var archivo = dir.get_next()
 		while (archivo != ""):
 			if not archivo.begins_with("."):
-				archivos.append(nombre_abstracto(archivo))
+				archivos.append(archivo)
 			archivo = dir.get_next()
 		dir.list_dir_end()
 		return archivos
-	# Asume que el archivo existe (en alguna variante)
-	func nombre_real(ruta_original):
-		if nombres_compilados and \
-			ruta_original.begins_with(ruta_raiz) and \
-			ruta_original.ends_with(".gd"):
-			if file.file_exists(ruta_original + "c"):
-				return ruta_original + "c"
-			if file.file_exists(ruta_original.replace(".gd",".h")):
-				return ruta_original.replace(".gd",".h")
-		return ruta_original
-	func nombre_abstracto(ruta_real):
-		if nombres_compilados:
-			if ruta_real.ends_with(".gdc"):
-				return ruta_real.substr(0, ruta_real.length()-2)
-			if ruta_real.ends_with(".h"):
-				return ruta_real.substr(0, ruta_real.length()-2) + "gd"
-		return ruta_real
-	func posibles_rutas(ruta_al_archivo):
-		var resultado = [ruta_al_archivo]
-		if ruta_al_archivo.ends_with(".gd") and \
-			nombres_compilados and \
-			ruta_al_archivo.begins_with(ruta_raiz):
-				resultado.append(ruta_al_archivo.replace(".gd",".h"))
-				resultado.append(ruta_al_archivo+"c")
-		return resultado
 
 # Errores
 
@@ -349,19 +254,6 @@ func archivo_ya_existe(ruta, archivo, stack_error=null):
 	return HUB.errores.error('No se puede crear el archivo "' + \
 	archivo + '" en la ' + ('ruta raíz.' if ruta.empty() else \
 	'carpeta "' + ruta + '" porque ya existe.'), stack_error)
-
-# Archivo binario
-func archivo_binario(ruta, archivo, stack_error=null):
-	return HUB.errores.error('El archivo "' + archivo + \
-	'" en la ' + ('ruta raíz.' if ruta.empty() else \
-	'carpeta "' + ruta + '" no se puede leer porque es ' + \
-	'un archivo binario.'), stack_error)
-
-# Archivo de sólo lectura
-func solo_lectura(ruta, archivo, stack_error=null):
-	return HUB.errores.error('El archivo "' + archivo + \
-	'" en la ' + ('ruta raíz.' if ruta.empty() else \
-	'carpeta "' + ruta + '" es de sólo lectura.'), stack_error)
 
 # Archivo inválido
 func archivo_invalido(archivo, tipo, stack_error=null):

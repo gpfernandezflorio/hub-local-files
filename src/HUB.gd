@@ -60,8 +60,8 @@ func inicializar(hub):
 		):
 			return false
 	eventos.iniciar()
-	if archivos.existe("comandos/", "sh.gd") and \
-		archivos.existe("shell/", "INI.gd"):
+	if archivos.existe("comandos", "sh.gd") and \
+		archivos.existe("shell", "INI.gd"):
 		terminal.ejecutar("sh INI.gd -s")
 	return true
 
