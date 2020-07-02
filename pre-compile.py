@@ -10,13 +10,21 @@
 import os
 
 def main():
-  renombrar_gd_a_h("shell")
-  renombrar_gd_a_h("objetos", objeto_HUB3DLang)
+  escribir_fs_en_txt()
+  for d in os.listdir("."):
+    if os.path.isdir(d) and not d.startswith("."):
+      renombrar_gd_a_h(d)
+  #renombrar_gd_a_h("shell")
+  #renombrar_gd_a_h("objetos", objeto_HUB3DLang)
 
   raw_input('\nConversión completa. Presione ENTER para revertir\n')
 
-  renombrar_h_a_gd("shell")
-  renombrar_h_a_gd("objetos")
+  #renombrar_h_a_gd("shell")
+  #renombrar_h_a_gd("objetos")
+  for d in os.listdir("."):
+    if os.path.isdir(d) and not d.startswith("."):
+      renombrar_h_a_gd(d)
+  os.remove("fs.txt")
 
 def todos(x):
   return True
@@ -45,6 +53,21 @@ def objeto_HUB3DLang(x):
   tipo = f.read().split("\n")[2][3:]
   f.close()
   return tipo == "HUB3DLang"
+
+def escribir_fs_en_txt():
+  f = open("fs.txt",'w')
+  escribir_dir_en_txt(f, ".")
+  f.close()
+
+def escribir_dir_en_txt(f,d):
+  for l in os.listdir(d):
+    if not l.startswith("."):
+      if os.path.isdir(os.path.join(d,l)):
+        f.write("D|"+l+"\n")
+        escribir_dir_en_txt(f,os.path.join(d,l))
+        f.write("||\n")
+      elif l.endswith(".gd"):
+        f.write("F|"+l+"\n")
 
 if __name__ == '__main__':
   main()

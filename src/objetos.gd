@@ -47,7 +47,7 @@ func inicializar(hub):
 	HUB = hub
 	HUB.archivos.codigos_script.append(codigo_objetos)
 	HUB.archivos.codigos_script.append(codigo_comportamientos)
-	script_objeto = HUB.archivos.abrir(HUB.hub_src + carpeta_src, script_objeto)
+	script_objeto = HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_src), script_objeto)
 	if script_objeto != null:
 		script_objeto.set_name("Objeto")
 		return true
@@ -110,8 +110,8 @@ func es_un_objeto(algo):
 func crear_componente(id):
 	if id in componentes_validos.keys():
 		var resultado = componentes_validos[id].new()
-		if HUB.archivos.existe(HUB.hub_src + carpeta_componentes, id+".gd"):
-			resultado.set_script(HUB.archivos.abrir(HUB.hub_src + carpeta_componentes, id+".gd"))
+		if HUB.archivos.existe(HUB.hub_src.plus_file(carpeta_componentes), id+".gd"):
+			resultado.set_script(HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_componentes), id+".gd"))
 		return resultado
 	return HUB.error(HUB.errores.error('Componente desconocido: '+id), modulo)
 

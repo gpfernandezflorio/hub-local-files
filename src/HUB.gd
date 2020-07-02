@@ -9,7 +9,7 @@ extends Node
 # Ruta a la carpeta de archivos de usuario
 var ruta_raiz
 # Ruta a la carpeta de archivos fuente de HUB
-var hub_src = "src/"
+var hub_src = "src"
 
 # Manipulador de archivos
 var archivos = Node.new()
@@ -37,7 +37,7 @@ var varios = Node.new()
 # OS: “Android”, “BlackBerry 10”, “Flash”, “Haiku”, “iOS”, “HTML5”, “OSX”, “Server”, “Windows”, “WinRT”, “X11”
 var os
 
-func inicializar(hub, extension):
+func inicializar(hub):
 	ruta_raiz = get_parent().ruta_raiz
 	os = OS.get_name()
 	for componente in [
@@ -55,7 +55,7 @@ func inicializar(hub, extension):
 	]:
 		if not inicializar_componente(
 			componente[0],
-			componente[1] + extension,
+			componente[1] + ".gd",
 			componente[2]
 		):
 			return false
@@ -92,7 +92,7 @@ func salir():
 
 func inicializar_componente(nodo, script, nombre):
 	add_child(nodo)
-	var ruta_completa = ruta_raiz+hub_src+script
+	var ruta_completa = ruta_raiz.plus_file(hub_src).plus_file(script)
 	if not File.new().file_exists(ruta_completa):
 		return false
 	nodo.set_script(load(ruta_completa))

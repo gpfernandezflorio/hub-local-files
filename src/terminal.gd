@@ -20,7 +20,7 @@ extends Node
 var HUB
 var modulo = "TERMINAL"
 # Ruta a la carpeta de archivos fuente de la terminal
-var carpeta_src = "terminal/"
+var carpeta_src = "terminal"
 
 # Campo para ingresar comandos
 var campo_entrada = LineEdit.new()
@@ -128,9 +128,9 @@ func imprimir_entorno(activado=true):
 
 func inicializar_componente(nodo, script, nombre):
 	add_child(nodo)
-	if not HUB.archivos.existe(HUB.hub_src+carpeta_src, script):
+	if not HUB.archivos.existe(HUB.hub_src.plus_file(carpeta_src), script):
 		return false
-	nodo.set_script(HUB.archivos.abrir(HUB.hub_src+carpeta_src, script))
+	nodo.set_script(HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_src), script))
 	if not nodo.has_method("inicializar"):
 		return false
 	nodo.set_name(nombre)
