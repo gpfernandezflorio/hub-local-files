@@ -13,6 +13,8 @@ var tipos
 var parser_lib
 var parser
 var modulo = "HUB3DLang"
+var caching = true
+var cache
 
 var pila_entorno = []
 
@@ -37,7 +39,7 @@ func inicializar(hub):
 	var regex_ex1 = "("+regex_opT+")?"+"(("+regex_num_letrs+")|("+regex_letrs_float+"))"
 	var regex_any = "(("+regex_opT+")?("+regex_valid+"))|("+regex_ex1+")"
 	var regex_ex = "("+regex_any+")*"+regex_ex1+"("+regex_any+")*"
-	var valid_mods = "n|p|s|ox|oy|oz|rx|ry|rz|c|m"
+	var valid_mods = "n|p|s|ox|oy|oz|olx|oly|olz|rx|ry|rz|c|m"
 	parser = parser_lib.crear_parser([
 		# Un Hobjeto se define a partir de una secuencia de líneas
 		# Cada línea puede ser una de estas 3:
@@ -103,8 +105,13 @@ func inicializar(hub):
 		"opF":"\\*|%",				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
 		"string":regex_ex
 	}, tds)
+	cache = {
+		"FILE":{}, # Sólo el tipo y el contenido de los archivos (para no tener que ir al FS cada vez)
+		"OBJ":{}
+	}
 
-func crear(texto, entorno={}):
+func crear(texto, entorno={}, cached=true):
+	caching = cached
 	var nuevos_objetos = [] # El texto podría contener varias líneas
 	var raiz = null
 	pila_entorno.push_front(entorno)
@@ -396,7 +403,11 @@ func aplicar_modificaciones(algo, mods):
 					return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + script + '".', c), modulo)
 		# OFFSET
 		elif (modificador.begins_with("o")):
+			var local = false # ¿relativo a la rotación?
 			var eje = modificador[1]
+			if eje == "l":
+				local = true
+				eje = modificador[2]
 			var movimiento = Vector3(0,0,0)
 			var valor = mods[modificador]
 			if tipos.es_un_string(valor):
@@ -414,7 +425,10 @@ func aplicar_modificaciones(algo, mods):
 				movimiento.z = valor
 			else:
 				return HUB.error(HUB.errores.error('Eje inválido para el modificador "' + modificador + '".'), modulo)
-			resultado.set_translation(resultado.get_transform().origin + movimiento)
+			if local or tipos.es_un_mesh_rep(resultado):
+				resultado.translate(movimiento)
+			else:
+				resultado.set_translation(resultado.get_transform().origin + movimiento)
 		# ROTATE
 		elif (modificador.begins_with("r")):
 			var eje = modificador[1]
@@ -479,7 +493,7 @@ func base(texto, argumentos):
 		resultado = HUB.objetos.crear(null)
 	elif esta_definido(texto) and argumentos[0].empty() and argumentos[1].keys().empty():
 		resultado = obtener(texto)
-	elif HUB.archivos.existe("objetos/", texto + ".gd"):
+	elif HUB.archivos.existe("objetos", texto + ".gd"):
 		resultado = desde_archivo(texto, argumentos)
 	elif argumentos[0].empty() and argumentos[1].keys().empty():
 		resultado = texto
@@ -491,12 +505,19 @@ func definir(clave, valor):
 	pila_entorno[0][clave] = valor
 
 func obtener(clave):
-	if clave in pila_entorno[0]:
-		return pila_entorno[0][clave]
+	for e in pila_entorno:
+		if clave in e:
+			if tipos.es_un_nodo(e[clave]):
+				return e[clave].duplicate()
+			else:
+				return e[clave]
 	return null
 
 func esta_definido(clave):
-	return pila_entorno[0].has(clave)
+	for e in pila_entorno:
+		if e.has(clave):
+			return true
+	return false
 
 func componente_a_objeto(componente):
 	var nuevo_objeto = HUB.objetos.crear(null)
@@ -507,28 +528,47 @@ func componente_a_objeto(componente):
 
 func desde_archivo(nombre, argumentos):
 	# OJO: "argumentos" es un par lista-diccionario
-	var contenido_archivo = HUB.archivos.leer("objetos/", nombre + ".gd", "Objeto")
+	# TODO: "nombre" podría ser sólo el último eslabón del path.
+		# Todo lo que viene debería estar en un ciclo explorando el path hacia arriba.
+	if caching:
+		if nombre in cache["FILE"]:
+			var cached = cache["FILE"][nombre]
+			if cached[0] == "OBJ":
+				return desde_archivo_obj(cached[1], argumentos)
+			elif cached[0] == "FUNC":
+				return desde_archivo_func(nombre, argumentos)
+	var contenido_archivo = HUB.archivos.leer("objetos", nombre + ".gd", "Objeto")
 	if HUB.errores.fallo(contenido_archivo):
 		return contenido_archivo
 	# La función leer retornó ok, así que esto no puede fallar:
 	var tipo_archivo = contenido_archivo.split("\n")[2]
 	tipo_archivo = HUB.varios.str_desde(tipo_archivo,3)
 	if tipo_archivo == "HUB3DLang":
-		var entorno = {}
-		var i=1
-		for argumento in argumentos[0]:
-			entorno[str(i)] = argumento
-			i+=1
-		for argumento in argumentos[1].keys():
-			entorno[argumento] = argumentos[1][argumento]
-		return crear(contenido_archivo, entorno)
+		if caching: # OJO: "nombre" acá tiene que ser el path global
+			cache["FILE"][nombre] = ["OBJ", contenido_archivo]
+		return desde_archivo_obj(contenido_archivo, argumentos)
 	if tipo_archivo == "Funcion":
-		var resultado = HUB.objetos.generar(nombre, argumentos)
-		if tipos.es_un_string(resultado):
-			return crear(resultado)
-		return resultado
+		if caching: # OJO: "nombre" acá tiene que ser el path global
+			cache["FILE"][nombre] = ["FUNC", contenido_archivo]
+		return desde_archivo_func(nombre, argumentos)
 	# Nunca debería llegar acá...
 	return null
+
+func desde_archivo_obj(contenido_archivo, argumentos):
+	var entorno = {}
+	var i=1
+	for argumento in argumentos[0]:
+		entorno[str(i)] = argumento
+		i+=1
+	for argumento in argumentos[1].keys():
+		entorno[argumento] = argumentos[1][argumento]
+	return crear(contenido_archivo, entorno, caching)
+
+func desde_archivo_func(nombre, argumentos):
+	var resultado = HUB.objetos.generar(nombre, argumentos)
+	if tipos.es_un_string(resultado):
+		return crear(resultado, {}, caching)
+	return resultado
 
 func modificador_admite_varios(mod):
 	return mod in ["s","c"]
