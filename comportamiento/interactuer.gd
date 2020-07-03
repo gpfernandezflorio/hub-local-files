@@ -33,14 +33,14 @@ func inicializar(hub, yo, args):
 	var shape = SphereShape.new()
 	shape.set_radius(args["r"])
 	colisionador.add_shape(shape)
-	colisionador.connect("area_enter_shape", self, "interact_in")
-	colisionador.connect("area_exit_shape", self, "interact_out")
+	colisionador.connect("area_enter_shape", self, "contacto_in")
+	colisionador.connect("area_exit_shape", self, "contacto_out")
 	add_child(colisionador)
 	posibilidades = []
 	yo.interfaz(self, "interact", arg_map_interact)
 	return null
 
-func interact_in(i, objeto, a, s):
+func contacto_in(i, objeto, a, s):
 	if objeto.get_parent().has_method("interact_in"):
 		var interactive = objeto.get_parent()
 		interactive.interact_in()
@@ -48,7 +48,9 @@ func interact_in(i, objeto, a, s):
 			posibilidades[0].interact_out()
 		posibilidades.push_front(interactive)
 
-func interact_out(i, objeto, a, s):
+func contacto_out(i, objeto, a, s):
+	if objeto == null:
+		return
 	if objeto.get_parent().has_method("interact_out"):
 		var interactive = objeto.get_parent()
 		var change = posibilidades[0] == interactive

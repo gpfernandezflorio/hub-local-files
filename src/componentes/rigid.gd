@@ -35,6 +35,9 @@ func inicializar(hub, yo):
 	HUB.eventos.registrar_periodico(self, "periodico")
 	return true
 
+func finalizar():
+	HUB.eventos.anular_periodico(self)
+
 func periodico(delta):
 	if body_real.get_mode() == 0:
 		yo.set_global_transform(body_real.get_global_transform())

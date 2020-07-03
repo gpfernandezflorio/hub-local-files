@@ -31,6 +31,8 @@ var errores = Node.new()
 var procesos = Node.new()
 # Entorno de testing
 var testing = Node.new()
+# Garbage Collector
+var GC = Node.new()
 # Varios
 var varios = Node.new()
 
@@ -47,10 +49,11 @@ func inicializar(hub):
 		[objetos,      "objetos",    "Objetos"],
 		[bibliotecas,  "bibliotecas","Bibliotecas"],
 		[terminal,     "terminal",   "Terminal"],
-		[nodo_usuario, "usuario",    "Nodo Usuario"],
 		[errores,      "errores",    "Errores"],
 		[procesos,     "procesos",   "Procesos"],
 		[testing,      "testing",    "Testing"],
+		[GC,           "GC",         "GC"],
+		[nodo_usuario, "usuario",    "Nodo Usuario"],
 		[varios,       "varios",     "Varios"]
 	]:
 		if not inicializar_componente(

@@ -55,7 +55,7 @@ func inicializar(hub):
 
 # Crea y devuelve un objeto vacío sin comportamiento
 func crear(hijo_de=HUB.nodo_usuario.mundo):
-	var nuevo_objeto = Spatial.new()
+	var nuevo_objeto = HUB.GC.crear_nodo(Spatial)
 	nuevo_objeto.set_name("objeto sin nombre")
 	nuevo_objeto.set_script(script_objeto)
 	nuevo_objeto.inicializar(HUB)
@@ -88,12 +88,7 @@ func borrar(objeto_o_nombre, desde=HUB.nodo_usuario.mundo):
 				nombre + '".', objeto), modulo)
 	else:
 		return HUB.error(HUB.errores.error('Argumento inválido para borrar :' + HUB.varios.str(objeto_o_nombre)), modulo)
-	var padre = objeto.padre()
-	padre.quitar_hijo(objeto)
-	if objeto.is_inside_tree():
-		objeto.queue_free()
-	else:
-		pass # ¿no debería eliminarlo igual?
+	HUB.GC.borrar_objeto(objeto)
 	return ""
 
 # Determina si algo es un objeto del HUB
@@ -109,7 +104,7 @@ func es_un_objeto(algo):
 # Crea un nuevo componente
 func crear_componente(id):
 	if id in componentes_validos.keys():
-		var resultado = componentes_validos[id].new()
+		var resultado = HUB.GC.crear_nodo(componentes_validos[id])
 		if HUB.archivos.existe(HUB.hub_src.plus_file(carpeta_componentes), id+".gd"):
 			resultado.set_script(HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_componentes), id+".gd"))
 		return resultado
@@ -137,7 +132,7 @@ func generar(nombre, args=[[],{}]):
 		var script = HUB.archivos.abrir(carpeta_objetos, nombre + ".gd", codigo_objetos)
 		if HUB.errores.fallo(script):
 			return HUB.error(generador_inexistente(nombre, script), modulo)
-		var nodo = Node.new()
+		var nodo = HUB.GC.crear_nodo(Node)
 		nodo.set_script(script)
 		var resultado = HUB.varios.cargar_bibliotecas(nodo, modulo)
 		if HUB.errores.fallo(resultado):
@@ -175,7 +170,7 @@ func componente_candidato(objeto, nombre, tipo_o_requisitos):
 # Funciones auxiliares
 
 func cargar_comportamiento(nombre):
-	var nodo = Spatial.new()
+	var nodo = HUB.GC.crear_nodo(Spatial)
 	var script = null
 	if nombre in comportamientos_cargados:
 		script = comportamientos_cargados[nombre]

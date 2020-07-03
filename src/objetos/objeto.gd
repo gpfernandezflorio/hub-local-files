@@ -92,7 +92,8 @@ func agregar_hijo(objeto):
 func quitar_hijo(objeto):
 	if not es_hijo(objeto):
 		return HUB.error(hijo_inexistente(objeto.nombre()), get_name())
-	hijos.remove_child(objeto)
+	if objeto.is_inside_tree():
+		hijos.remove_child(objeto)
 
 # Quita un objeto hijo
 func quitar_hijo_nombrado(nombre):
@@ -141,6 +142,10 @@ func hijos():
 # Devuelve la lista de componentes
 func componentes():
 	return componentes.get_children()
+
+# Devuelve la lista de comportamientos
+func comportamientos():
+	return comportamientos.get_children()
 
 # Devuelve el objeto padre
 func padre():

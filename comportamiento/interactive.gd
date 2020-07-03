@@ -57,6 +57,10 @@ func inicializar(hub, yo, args):
 	material_on.set("params/glow",8)
 	return null
 
+func finalizar():
+	if i > -1:
+		HUB.eventos.anular_periodico(self)
+
 func materiales(mesh):
 	var ms = []
 	for j in range(mesh.get_surface_count()):

@@ -52,6 +52,16 @@ func inicializar(hub, yo, args):
 	registrar_inputs()
 	return null
 
+func finalizar():
+	anular_inputs()
+
+func anular_inputs():
+	if control == "KM":
+		HUB.eventos.anular_mouse_mov(self)
+	for k in controles[control]:
+		HUB.eventos.anular_press(controles[control][k], self)
+		HUB.eventos.anular_release(controles[control][k], self)
+
 func registrar_inputs():
 	if control == "KM":
 		HUB.eventos.registrar_mouse_mov(self, "mouse")

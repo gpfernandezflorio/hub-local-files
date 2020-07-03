@@ -55,6 +55,9 @@ func inicializar(hub, yo, args):
 	HUB.eventos.registrar_periodico(self, "periodico")
 	return null
 
+func finalizar():
+	HUB.eventos.anular_periodico(self)
+
 func periodico(delta):
 	var velocidad = calcular_velocidad()
 	var angulo = calcular_angulo()

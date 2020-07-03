@@ -21,55 +21,46 @@ func inicializar(hub):
 # Registra la función del nodo cuando se mueve el mouse
 func registrar_mouse_mov(nodo, funcion):
 	# La funcion debe tomar un Vector2 como argumento
-	var accion = "MM"
-	if registro_eventos.has(accion):
-		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
-	else:
-		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+	registrar_generico("MM", nodo, funcion)
+
+# Anula la función del nodo cuando se mueve el mouse
+func anular_mouse_mov(nodo):
+	anular_generico("MM", nodo)
 
 # Registra la función del nodo cuando se presiona un botón
 func registrar_press(boton, nodo, funcion):
 	# La funcion no debe tomar parámetros
-	var accion = "P" + str(boton)
-	if registro_eventos.has(accion):
-		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
-	else:
-		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+	registrar_generico("P" + str(boton), nodo, funcion)
+
+# Anula la función del nodo cuando se presiona un botón
+func anular_press(boton, nodo):
+	anular_generico("P" + str(boton), nodo)
 
 # Registra la función del nodo cuando se suelta un botón
 func registrar_release(boton, nodo, funcion):
 	# La funcion no debe tomar parámetros
-	var accion = "R" + str(boton)
-	if registro_eventos.has(accion):
-		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
-	else:
-		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+	registrar_generico("R" + str(boton), nodo, funcion)
+
+# Anula la función del nodo cuando se suelta un botón
+func anular_release(boton, nodo):
+	anular_generico("R" + str(boton), nodo)
 
 # Registra la función del nodo cuando cambia la resolución de la pantalla
 func registrar_ventana_escalada(nodo, funcion):
 	# La funcion debe tomar un Vector2 como parámetro
-	var accion = "WS"
-	if registro_eventos.has(accion):
-		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
-	else:
-		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+	registrar_generico("WS", nodo, funcion)
+
+# Anula la función del nodo cuando cambia la resolución de la pantalla
+func anular_ventana_escalada(nodo):
+	anular_generico("WS", nodo)
 
 # Registra una función periódica en el nodo
 func registrar_periodico(nodo, funcion):
-	var accion = "T"
-	if registro_eventos.has(accion):
-		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
-	else:
-		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+	registrar_generico("T", nodo, funcion)
 
 # Anula la función periódica en el nodo
 func anular_periodico(nodo):
-	var accion = "T"
-	if registro_eventos.has(accion):
-		for registro in registro_eventos[accion]:
-			if registro["nodo"] == self:
-				registro_eventos[accion].erase(registro)
-				return
+	anular_generico("T", nodo)
 
 # Asigna el modo del cursor del mouse
 func set_modo_mouse(modo=0):
@@ -98,6 +89,20 @@ func _input(ev):
 func _fixed_process(delta):
 	periodico(delta)
 
+func registrar_generico(accion, nodo, funcion):
+	if registro_eventos.has(accion):
+		registro_eventos[accion].append({"nodo":nodo,"funcion":funcion})
+	else:
+		registro_eventos[accion] = [{"nodo":nodo,"funcion":funcion}]
+
+func anular_generico(accion, nodo):
+	var id_referencia = str(nodo)
+	if registro_eventos.has(accion):
+		for registro in registro_eventos[accion]:
+			if str(registro["nodo"]) == id_referencia:
+				registro_eventos[accion].erase(registro)
+				return
+
 func mouse_movido(ev):
 	if registro_eventos.has("MM"):
 		var mov = ev.relative_pos
@@ -111,7 +116,7 @@ func ventana_escalada():
 	if registro_eventos.has("WS"):
 		for registro in registro_eventos["WS"]:
 			var nodo = registro["nodo"]
-			if nodo.is_inside_tree():
+			if HUB.GC.es_valido(nodo):
 				registro["nodo"].call(registro["funcion"], OS.get_window_size())
 			else:
 				registro_eventos["WS"].erase(registro)
@@ -121,7 +126,7 @@ func tecla_presionada(ev):
 	if registro_eventos.has(accion):
 		for registro in registro_eventos[accion]:
 			var nodo = registro["nodo"]
-			if nodo.is_inside_tree():
+			if HUB.GC.es_valido(nodo):
 				var corresponde = nodo != HUB.terminal.campo_entrada
 				if HUB.terminal.activa():
 					corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
@@ -135,7 +140,7 @@ func tecla_soltada(ev):
 	if registro_eventos.has(accion):
 		for registro in registro_eventos[accion]:
 			var nodo = registro["nodo"]
-			if nodo.is_inside_tree():
+			if HUB.GC.es_valido(nodo):
 				var corresponde = nodo != HUB.terminal.campo_entrada
 				if HUB.terminal.activa():
 					corresponde = nodo in [HUB, HUB.terminal, HUB.terminal.campo_entrada]
@@ -144,12 +149,11 @@ func tecla_soltada(ev):
 			else:
 				registro_eventos[accion].erase(registro)
 
-
 func periodico(delta):
 	if registro_eventos.has("T"):
 		for registro in registro_eventos["T"]:
 			var nodo = registro["nodo"]
-			if nodo.is_inside_tree():
+			if HUB.GC.es_valido(nodo):
 				nodo.call(registro["funcion"], delta)
 			else:
 				registro_eventos["T"].erase(registro)
@@ -170,3 +174,4 @@ func periodico(delta):
 	# R + str(scancode) : Se suelta una tecla o un botón del mouse
 	# WS : Cambió el tamaño de la pantalla
 	# MM : Se movió el mouse
+	# T : Para funciones periódicas
