@@ -196,34 +196,25 @@ func coordenadas_cubo(w,h,p,h3,tipos,for_mesh=false):
 		if w.begins_with("!"):
 			center_x = true
 			w = HUB.varios.str_desde(w, 1)
-		if w.is_valid_float():
-			w = float(w)
-		elif h3.esta_definido(w):
-			w = h3.obtener(w)
-		else:
-			return HUB.error(h3.identificador_invalido(w), h3.modulo)
+		w = h3.obtener_como_numero(w)
+		if HUB.errores.fallo(w):
+			return w
 	# ALTO
 	if tipos.es_un_string(h):
 		if h.begins_with("!"):
 			center_y = true
 			h = HUB.varios.str_desde(h, 1)
-		if h.is_valid_float():
-			h = float(h)
-		elif h3.esta_definido(h):
-			h = h3.obtener(h)
-		else:
-			return HUB.error(h3.identificador_invalido(h), h3.modulo)
+		h = h3.obtener_como_numero(h)
+		if HUB.errores.fallo(h):
+			return h
 	# PROF.
 	if tipos.es_un_string(p):
 		if p.begins_with("!"):
 			center_z = true
 			p = HUB.varios.str_desde(p, 1)
-		if p.is_valid_float():
-			p = float(p)
-		elif h3.esta_definido(p):
-			p = h3.obtener(p)
-		else:
-			return HUB.error(h3.identificador_invalido(p), h3.modulo)
+		p = h3.obtener_como_numero(p)
+		if HUB.errores.fallo(p):
+			return p
 	# Posiciones sobre el plano
 	var x0 = 0.0
 	var x1 = w

@@ -13,10 +13,10 @@ var tipos
 var parser_lib
 var parser
 var modulo = "HUB3DLang"
-var caching = true
-var cache
 
-var pila_entorno = []
+# CACHE:
+var pila_entorno = []	# Diccionarios con "path", "pid", "caching", "data" (sólo argumentos)
+var cache = {}			# Variables y objetos generados en estructura tipo FS
 
 func inicializar(hub):
 	HUB = hub
@@ -105,13 +105,16 @@ func inicializar(hub):
 		"opF":"\\*|%",				# '*' y '%' (la diagonal '/' la uso para rutas a archivos)
 		"string":regex_ex
 	}, tds)
-	cache = {
-		"FILE":{}, # Sólo el tipo y el contenido de los archivos (para no tener que ir al FS cada vez)
-		"OBJ":{}
-	}
 
-func crear(texto, entorno={}, cached=true):
-	caching = cached
+func crear(texto, entorno={}):
+	if not "caching" in entorno:
+		entorno["caching"] = true
+	if not "pid" in entorno:
+		entorno["pid"] = "HUB" # TODO: Pedir el pid a HUB.procesos (¿actual o en foco?)
+	if not "path" in entorno:
+		entorno["path"] = null
+	if not "data" in entorno:
+		entorno["data"] = {}
 	var nuevos_objetos = [] # El texto podría contener varias líneas
 	var raiz = null
 	pila_entorno.push_front(entorno)
@@ -124,8 +127,8 @@ func crear(texto, entorno={}, cached=true):
 			nuevo_objeto = nuevo_objeto["valor"]
 			if HUB.objetos.es_un_objeto(nuevo_objeto):
 				nuevos_objetos.push_back(nuevo_objeto)
-	if "$" in entorno.keys():
-		raiz = entorno["$"]
+	if "$" in entorno["data"].keys(): # OJO: ¿Dónde guardo la variable "$"?
+		raiz = entorno["data"]["$"]
 	else:
 		if nuevos_objetos.size() == 1:
 			raiz = nuevos_objetos[0]
@@ -215,9 +218,8 @@ func reduce(produccion, valores):
 			if HUB.errores.fallo(resultado):
 				return resultado
 			if tipos.es_un_string(resultado):
-				if esta_definido(resultado):
-					resultado = obtener(valores[0])
-				else:
+				resultado = obtener(valores[0])
+				if resultado == null:
 					return HUB.error(identificador_invalido(resultado), modulo)
 		if tipos.es_una_lista(resultado):
 			resultado = base(resultado[0], resultado[1])
@@ -266,12 +268,10 @@ func reduce(produccion, valores):
 	if produccion == 13:
 		var valor1 = valores[0]
 		if tipos.es_un_string(valor1):
-			if esta_definido(valor1):
-				valor1 = obtener(valor1)
+			valor1 = obtener_si_esta(valor1)
 		var valor2 = valores[2]
 		if tipos.es_un_string(valor2):
-			if esta_definido(valor2):
-				valor2 = obtener(valor2)
+			valor2 = obtener_si_esta(valor2)
 		if tipos.es_un_numero(valor1) and tipos.es_un_numero(valor2):
 			if valores[1] == '+':
 				return valor1 + valor2
@@ -287,12 +287,10 @@ func reduce(produccion, valores):
 	if produccion == 15:
 		var valor1 = valores[0]
 		if tipos.es_un_string(valor1):
-			if esta_definido(valor1):
-				valor1 = obtener(valor1)
+			valor1 = obtener_si_esta(valor1)
 		var valor2 = valores[2]
 		if tipos.es_un_string(valor2):
-			if esta_definido(valor2):
-				valor2 = obtener(valor2)
+			valor2 = obtener_si_esta(valor2)
 		if tipos.es_un_numero(valor1) and tipos.es_un_numero(valor2):
 			if valores[1] == '*':
 				return valor1 * valor2
@@ -306,8 +304,7 @@ func reduce(produccion, valores):
 	if produccion == 17:
 		var valor = valores[1]
 		if tipos.es_un_string(valor):
-			if esta_definido(valor):
-				valor = obtener(valor)
+			valor = obtener_si_esta(valor)
 		if tipos.es_un_numero(valor):
 			if valores[0] == '+':
 				return valor
@@ -382,12 +379,15 @@ func aplicar_modificaciones(algo, mods):
 				resultado.set_name(mods["n"])
 		# PARENT
 		elif (modificador == "p"):
-			if esta_definido(mods["p"]):
-				hijo_de = obtener(mods["p"])
-			else:
-				hijo_de = HUB.objetos.localizar(mods["p"])
-				if HUB.errores.fallo(hijo_de):
-					return HUB.error(parent_invalido(mods["p"], hijo_de), modulo)
+			pass # Revisar: lo que está en el cache son definiciones de objetos, no objetos.
+				 # Debería usar sólo el "localizar" pero puede fallar si todavía no lo agregué al árbol.
+				 # Solución: Guardar otro diccionario de nombres -> objetos 
+			#if esta_definido(mods["p"]):
+			#	hijo_de = obtener(mods["p"])
+			#else:
+			#	hijo_de = HUB.objetos.localizar(mods["p"])
+			#	if HUB.errores.fallo(hijo_de):
+			#		return HUB.error(parent_invalido(mods["p"], hijo_de), modulo)
 		# SCRIPT
 		elif (modificador == "s"):
 			if tipos.es_un_componente(resultado):
@@ -411,10 +411,9 @@ func aplicar_modificaciones(algo, mods):
 			var movimiento = Vector3(0,0,0)
 			var valor = mods[modificador]
 			if tipos.es_un_string(valor):
-				if esta_definido(valor):
-					valor = obtener(valor)
-				else:
-					return HUB.error(HUB.errores.error('La variable "' + valor + '" no está definida.'), modulo)
+				valor = obtener_como_numero(valor)
+				if HUB.errores.fallo(valor):
+					return valor
 			if not tipos.es_un_numero(valor):
 				return HUB.error(HUB.errores.error('Tipo inválido para el modificador "' + modificador + '".'), modulo)
 			if eje == "x":
@@ -434,10 +433,9 @@ func aplicar_modificaciones(algo, mods):
 			var eje = modificador[1]
 			var valor = mods[modificador]
 			if tipos.es_un_string(valor):
-				if esta_definido(valor):
-					valor = obtener(valor)
-				else:
-					return HUB.error(HUB.errores.error('La variable "' + valor + '" no está definida.'), modulo)
+				valor = obtener_como_numero(valor)
+				if HUB.errores.fallo(valor):
+					return valor
 			if not tipos.es_un_numero(valor):
 				return HUB.error(HUB.errores.error('Tipo inválido para el modificador "' + modificador + '".'), modulo)
 			if eje == "x":
@@ -487,37 +485,63 @@ func aplicar_modificaciones(algo, mods):
 
 func base(texto, argumentos):
 	# OJO: "argumentos" es un par lista-diccionario
-	var resultado = null
-	# Primitivas:
 	if texto == "_":
-		resultado = HUB.objetos.crear(null)
-	elif esta_definido(texto) and argumentos[0].empty() and argumentos[1].keys().empty():
-		resultado = obtener(texto)
-	elif HUB.archivos.existe("objetos", texto + ".gd"):
-		resultado = desde_archivo(texto, argumentos)
-	elif argumentos[0].empty() and argumentos[1].keys().empty():
-		resultado = texto
-	else:
-		return HUB.error(HUB.errores.error('primitiva "'+texto+'" no definida'), modulo)
-	return resultado
+		return HUB.objetos.crear(null)
+	var sin_argumentos = argumentos[0].empty() and argumentos[1].keys().empty()
+	if sin_argumentos:
+		var valor = obtener(texto)
+		if valor != null:
+			return valor
+	var archivo = buscar_archivo(texto)
+	if archivo != null:
+		return desde_archivo(archivo, argumentos)
+	if sin_argumentos:
+		return texto
+	return HUB.error(HUB.errores.error('primitiva "'+texto+'" no definida'), modulo)
 
 func definir(clave, valor):
-	pila_entorno[0][clave] = valor
+	var path = pila_entorno[0]["path"]
+	if path == null:
+		pila_entorno[0]["data"][clave] = valor
+	else:
+		definir_path(path, clave, valor)
+
+func definir_path(path, clave, valor):
+	pass # TODO: Definir en el FS de "cache"
 
 func obtener(clave):
+	# Primero la busco en el entorno
 	for e in pila_entorno:
-		if clave in e:
-			if tipos.es_un_nodo(e[clave]):
-				return e[clave].duplicate()
+		if clave in e["data"]:
+			var valor = e["data"][clave]
+			if tipos.es_un_nodo(valor):
+				return valor.duplicate()
 			else:
-				return e[clave]
+				return valor
+	# Si no está en el entorno, la busco en la cache
+	var path = pila_entorno[0]["path"]
+	if path != null:
+		obtener_path(path, clave)
 	return null
 
-func esta_definido(clave):
-	for e in pila_entorno:
-		if e.has(clave):
-			return true
-	return false
+func obtener_path(path, clave):
+	pass # TODO: Explorar en el FS de "cache"
+
+func obtener_si_esta(clave):
+	var valor = obtener(clave)
+	if valor == null:
+		return clave
+	return valor
+
+func obtener_como_numero(clave):
+	if clave.is_valid_integer():
+		return int(clave)
+	if clave.is_valid_float():
+		return float(clave)
+	var valor = obtener(clave)
+	if valor == null:
+		return HUB.error(identificador_invalido(clave), modulo)
+	return valor
 
 func componente_a_objeto(componente):
 	var nuevo_objeto = HUB.objetos.crear(null)
@@ -526,17 +550,36 @@ func componente_a_objeto(componente):
 		nuevo_objeto.nombrar(componente.get_name())
 	return nuevo_objeto
 
-func desde_archivo(nombre, argumentos):
+func buscar_archivo(nombre):
+	var ruta_actual = pila_entorno[0]["path"]
+	if ruta_actual != null:
+		var recorrido = ruta_actual.split("/")
+		for i in range(recorrido.size()-1):
+			var ruta = ""
+			for j in range(recorrido.size()-1-i):
+				ruta += recorrido[j] + "/"
+			ruta = ruta.plus_file(nombre)
+			if HUB.archivos.existe("objetos", ruta + ".gd"):
+				return ruta
+	if HUB.archivos.existe("objetos", nombre + ".gd"):
+		return nombre
+	return null
+
+func desde_archivo(ruta_completa, argumentos):
 	# OJO: "argumentos" es un par lista-diccionario
+	var nombre = ruta_completa
+	# DELETE::
 	# TODO: "nombre" podría ser sólo el último eslabón del path.
 		# Todo lo que viene debería estar en un ciclo explorando el path hacia arriba.
-	if caching:
-		if nombre in cache["FILE"]:
-			var cached = cache["FILE"][nombre]
-			if cached[0] == "OBJ":
-				return desde_archivo_obj(cached[1], argumentos)
-			elif cached[0] == "FUNC":
-				return desde_archivo_func(nombre, argumentos)
+#	if caching:
+#		if nombre in cache["FILE"]:
+#			var cached = cache["FILE"][nombre]
+#			if cached[0] == "OBJ":
+#				return desde_archivo_obj(cached[1], argumentos)
+#			elif cached[0] == "FUNC":
+#				return desde_archivo_func(nombre, argumentos)
+
+	# TODO: Explorar distintas rutas posibles
 	var contenido_archivo = HUB.archivos.leer("objetos", nombre + ".gd", "Objeto")
 	if HUB.errores.fallo(contenido_archivo):
 		return contenido_archivo
@@ -544,30 +587,45 @@ func desde_archivo(nombre, argumentos):
 	var tipo_archivo = contenido_archivo.split("\n")[2]
 	tipo_archivo = HUB.varios.str_desde(tipo_archivo,3)
 	if tipo_archivo == "HUB3DLang":
-		if caching: # OJO: "nombre" acá tiene que ser el path global
-			cache["FILE"][nombre] = ["OBJ", contenido_archivo]
+		#if caching: # OJO: "nombre" acá tiene que ser el path global
+		#	cache["FILE"][nombre] = ["OBJ", contenido_archivo]
 		return desde_archivo_obj(contenido_archivo, argumentos)
 	if tipo_archivo == "Funcion":
-		if caching: # OJO: "nombre" acá tiene que ser el path global
-			cache["FILE"][nombre] = ["FUNC", contenido_archivo]
+		#if caching: # OJO: "nombre" acá tiene que ser el path global
+		#	cache["FILE"][nombre] = ["FUNC", contenido_archivo]
 		return desde_archivo_func(nombre, argumentos)
 	# Nunca debería llegar acá...
 	return null
 
 func desde_archivo_obj(contenido_archivo, argumentos):
-	var entorno = {}
+	var data_entorno = {}
 	var i=1
 	for argumento in argumentos[0]:
-		entorno[str(i)] = argumento
+		data_entorno[str(i)] = argumento
 		i+=1
 	for argumento in argumentos[1].keys():
-		entorno[argumento] = argumentos[1][argumento]
-	return crear(contenido_archivo, entorno, caching)
+		data_entorno[argumento] = argumentos[1][argumento]
+	var path = null # TODO: Si el de pila_entorno[0] no es null, concatenarlo a nombre
+	var caching = true # TODO: Ver si lleva argumentos, ver el de pila_entorno[0], etc
+	var entorno = {
+		"data":data_entorno,
+		"pid":pila_entorno[0]["pid"],
+		"path":path,
+		"caching":caching
+	}
+	return crear(contenido_archivo, entorno)
 
 func desde_archivo_func(nombre, argumentos):
 	var resultado = HUB.objetos.generar(nombre, argumentos)
 	if tipos.es_un_string(resultado):
-		return crear(resultado, {}, caching)
+		var path = null # TODO: Si el de pila_entorno[0] no es null, concatenarlo a nombre
+		var entorno = {
+			"data":{}, # ¿No debería pasarle también lo generado en la versión _obj?
+			"pid":pila_entorno[0]["pid"],
+			"path":path,
+			"caching":false # ¿Siempre?
+		}
+		return crear(resultado, entorno)
 	return resultado
 
 func modificador_admite_varios(mod):
@@ -639,10 +697,9 @@ func agregar_colisionador(body, cs):
 					if r[0] == "!":
 						center_r = true
 						r = HUB.varios.str_desde(r,1)
-					if r.is_valid_float():
-						r = float(r)
-					if esta_definido(r):
-						r = obtener(r)
+					r = obtener_como_numero(r)
+					if HUB.errores.fallo(r):
+						return r
 				if tipos.es_un_numero(r):
 					shape.set_radius(r)
 				else:
@@ -657,10 +714,9 @@ func agregar_colisionador(body, cs):
 						if h[0] == "!":
 							center_h = true
 							h = HUB.varios.str_desde(h,1)
-						if h.is_valid_float():
-							h = float(h)
-						elif esta_definido(h):
-							h = obtener(h)
+						h = obtener_como_numero(h)
+						if HUB.errores.fallo(h):
+							return h
 					if tipos.es_un_numero(h):
 						shape.set_height(h-2*r)
 						if not center_h:
@@ -688,12 +744,11 @@ var material_arg_map = {"lista":[
 func agregar_material(meshes, mat):
 	var id = mat
 	var args = [[],{}]
-	var material
 	if tipos.es_una_lista(mat):
 		id = mat[0]
 		args = mat[1]
-	if esta_definido(id):
-		material = obtener(id)
+	var material = obtener(id)
+	if material != null:
 		if typeof(material) != 18 or material.get_type() != "FixedMaterial":
 			return HUB.error(HUB.errores.error('No es un material: '+id), modulo)
 	elif id != "fixed":
