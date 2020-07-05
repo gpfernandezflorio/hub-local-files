@@ -63,6 +63,18 @@ func crear(hijo_de=HUB.nodo_usuario.mundo):
 		hijo_de.agregar_hijo(nuevo_objeto)
 	return nuevo_objeto
 
+# Determina si hay un objeto con el nombre dado
+func existe(nombre_completo, desde=HUB.nodo_usuario.mundo):
+	var nodo = nombre_completo.split("/")[0]
+	for hijo in desde.hijos():
+		if hijo.get_name() == nodo:
+			if nodo.length() == nombre_completo.length():
+				return true
+			var offset_nombre = nodo.length()+1
+			var siguientes = HUB.varios.str_desde(nombre_completo,offset_nombre)
+			return localizar(siguientes, hijo)
+	return false
+
 # Ubica y devuelve a un objeto por su nombre completo (omitiendo "Mundo/")
 func localizar(nombre_completo, desde=HUB.nodo_usuario.mundo):
 	var nodo = nombre_completo.split("/")[0]

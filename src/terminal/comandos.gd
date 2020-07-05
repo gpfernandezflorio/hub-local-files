@@ -54,3 +54,6 @@ func cargar(comando):
 		return HUB.error(HUB.terminal.comando_no_cargado(comando, resultado), modulo)
 	comandos_cargados[comando] = nodo
 	return nodo
+
+func comando_valido(comando):
+	return comando in comandos_cargados or HUB.archivos.existe_archivo("comandos/", comando + ".gd")

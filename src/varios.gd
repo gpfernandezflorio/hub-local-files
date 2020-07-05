@@ -13,17 +13,17 @@ func inicializar(hub):
 	HUB = hub
 	return true
 
-func parsear_argumentos_objetos(nodo, args, modulo):
+func parsear_argumentos_objetos(nodo, args, modulo=null):
 	if "arg_map" in nodo:
 		return parsear_argumentos_general(nodo.arg_map, args, modulo)
 	return args
 
-func parsear_argumentos_comportamientos(nodo, args, modulo):
+func parsear_argumentos_comportamientos(nodo, args, modulo=null):
 	if "arg_map" in nodo:
 		return parsear_argumentos_general(nodo.arg_map, args, modulo)
 	return args
 
-func parsear_argumentos_comandos(nodo, lista_de_argumentos, modulo):
+func parsear_argumentos_comandos(nodo, lista_de_argumentos, modulo=null):
 	if "arg_map" in nodo:
 		var codigos_vistos = []
 		var args = {}
@@ -37,7 +37,10 @@ func parsear_argumentos_comandos(nodo, lista_de_argumentos, modulo):
 					codigo = arg.substr(1,d-1)
 					valor = str_desde(arg,d+1)
 				if codigo in codigos_vistos:
-					return HUB.error(modificador_repetido(codigo), modulo)
+					if modulo == null:
+						return null
+					else:
+						return HUB.error(modificador_repetido(codigo), modulo)
 				args[codigo] = valor
 				codigos_vistos.append(codigo)
 			else:
@@ -45,7 +48,7 @@ func parsear_argumentos_comandos(nodo, lista_de_argumentos, modulo):
 		return parsear_argumentos_general(nodo.arg_map, [argumentos_libres, args], modulo)
 	return lista_de_argumentos
 
-func parsear_argumentos_general(arg_map, args, modulo):
+func parsear_argumentos_general(arg_map, args, modulo=null):
 	var resultado = args[1]
 	var codigos_vistos = []
 	var codigos_validos = []
@@ -55,7 +58,10 @@ func parsear_argumentos_general(arg_map, args, modulo):
 		if arg.codigo in resultado:
 			codigos_vistos.append(arg.codigo)
 			if (arg.nombre != arg.codigo) and (arg.nombre in resultado):
-				return HUB.error(modificador_repetido_por_nombre(arg.codigo, arg.nombre), modulo)
+				if modulo == null:
+					return null
+				else:
+					return HUB.error(modificador_repetido_por_nombre(arg.codigo, arg.nombre), modulo)
 		else:
 			if arg.nombre in resultado:
 				resultado[arg.codigo] = resultado[arg.nombre]
@@ -68,7 +74,10 @@ func parsear_argumentos_general(arg_map, args, modulo):
 	# Verificar modificadores/nombres válidos
 	for k in resultado:
 		if not k in codigos_validos:
-			return HUB.error(modificador_invalido(k, resultado[k]), modulo)
+			if modulo == null:
+				return null
+			else:
+				return HUB.error(modificador_invalido(k, resultado[k]), modulo)
 	var obligatorios = 0
 	if "obligatorios" in arg_map:
 		obligatorios = arg_map.obligatorios
@@ -83,7 +92,8 @@ func parsear_argumentos_general(arg_map, args, modulo):
 				codigos_vistos.append(codigo)
 				argumentos_libres.pop_front()
 			else:
-				return HUB.error(faltan_argumentos_obligatorios(arg_map.lista[i].nombre), modulo)
+				if modulo != null:
+					return HUB.error(faltan_argumentos_obligatorios(arg_map.lista[i].nombre), modulo)
 	# Mapear los argumentos sin nombre (args[0])
 	var acepta_argumentos_extra = "extra" in arg_map
 	if acepta_argumentos_extra:
@@ -95,12 +105,15 @@ func parsear_argumentos_general(arg_map, args, modulo):
 			while i_arg < cantidad_de_argumentos and arg_map.lista[i_arg].codigo in codigos_vistos:
 				i_arg+=1
 			if i_arg >= cantidad_de_argumentos:
-				return HUB.error(mas_argumentos_que_los_esperados(cantidad_de_argumentos), modulo)
+				if modulo == null:
+					return null
+				else:
+					return HUB.error(mas_argumentos_que_los_esperados(cantidad_de_argumentos), modulo)
 			resultado[arg_map.lista[i_arg].codigo] = arg
 			i_arg+=1
 	# Validar valores ingresados
 	for arg in arg_map.lista:
-		if "validar" in arg:
+		if "validar" in arg and modulo != null:
 			var validacion = validar_argumento(arg, resultado[arg.codigo], modulo)
 			if HUB.errores.fallo(validacion):
 				return validacion
@@ -185,7 +198,7 @@ func validar_argumento(arg, valor, modulo):
 	return resultado
 
 func str_desde(s, i):
-	return s.substr(i, s.length()-i)
+	return s.right(i)
 
 func coordenadas_cubo(w,h,p,h3,tipos,for_mesh=false):
 	var center_x = false

@@ -15,7 +15,7 @@ var lib_map = [
 
 var arg_map = {
 	"lista":[
-		{"nombre":"raíz", "codigo":"r", "default":""},
+		{"nombre":"raíz", "codigo":"r", "default":"", "path":"OBJ"},
 		{"nombre":"posición", "codigo":"p", "validar":"BOOL","default":false},
 		{"nombre":"tipo", "codigo":"t", "validar":"BOOL", "default":false},
 		{"nombre":"script", "codigo":"s", "validar":"BOOL", "default":false}

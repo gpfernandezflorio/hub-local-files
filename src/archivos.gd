@@ -71,13 +71,21 @@ func sobrescribir(ruta, nombre, contenido):
 func existe(ruta, nombre):
 	return file_system.existe(ruta.plus_file(nombre))
 
-# Determina si un archivo es un archivo (no es un directorio)
+# Determina si un archivo existe como archivo
+func existe_archivo(ruta, nombre):
+	return file_system.es_archivo(ruta.plus_file(nombre))
+
+# Determina si un archivo existe como directorio
+func existe_directorio(ruta, nombre):
+	return file_system.es_directorio(ruta.plus_file(nombre))
+
+# Determina si un archivo existente es un archivo (no es un directorio)
 func es_archivo(ruta, nombre):
 	if existe(ruta, nombre):
 		return file_system.es_archivo(ruta.plus_file(nombre))
 	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
 
-# Determina si un archivo es un directorio
+# Determina si un archivo existente es un directorio
 func es_directorio(ruta, nombre):
 	if existe(ruta, nombre):
 		return file_system.es_directorio(ruta.plus_file(nombre))

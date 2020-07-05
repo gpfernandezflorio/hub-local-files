@@ -10,7 +10,7 @@ var HUB
 var arg_map = {
 	"obligatorios":1,
 	"lista":[
-		{"nombre":"carpeta", "codigo":"n"}
+		{"nombre":"archivo", "codigo":"n", "path":"ROOT"}
 	]
 }
 

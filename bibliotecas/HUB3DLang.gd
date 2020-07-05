@@ -381,7 +381,7 @@ func aplicar_modificaciones(algo, mods):
 				resultado.set_name(mods["n"])
 		# PARENT
 		elif (modificador == "p"):
-			var hijo_de = objeto_registrado(mods["p"])
+			hijo_de = objeto_registrado(mods["p"])
 			if hijo_de == null:
 				hijo_de = HUB.objetos.localizar(mods["p"])
 				if HUB.errores.fallo(hijo_de):

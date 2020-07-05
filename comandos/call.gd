@@ -11,7 +11,7 @@ var arg_map = {
 	"extra":true,
 	"obligatorios":2,
 	"lista":[
-		{"nombre":"objeto", "codigo":"o"},
+		{"nombre":"objeto", "codigo":"o", "path":"OBJ"},
 		{"nombre":"método", "codigo":"m"}
 	]
 }

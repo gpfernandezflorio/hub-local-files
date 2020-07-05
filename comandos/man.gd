@@ -9,7 +9,7 @@ var HUB
 
 var arg_map = {
 	"lista":[
-		{"nombre":"comando", "codigo":"i", "default":""}
+		{"nombre":"comando", "codigo":"i", "default":"", "path":"CMD"}
 	]
 }
 

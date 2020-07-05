@@ -10,7 +10,7 @@ var HUB
 var arg_map = {
 	"obligatorios":1,
 	"lista":[
-		{"nombre":"objeto", "codigo":"o"}
+		{"nombre":"objeto", "codigo":"o", "path":"OBJ"}
 	]
 }
 

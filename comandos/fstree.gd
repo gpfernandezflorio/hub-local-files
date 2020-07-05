@@ -15,7 +15,7 @@ var lib_map = [
 
 var arg_map = {
 	"lista":[
-		{"nombre":"raíz", "codigo":"r", "default":""}
+		{"nombre":"raíz", "codigo":"r", "default":"", "path":"ROOT"}
 	]
 }
 

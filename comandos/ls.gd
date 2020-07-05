@@ -9,7 +9,7 @@ var HUB
 
 var arg_map = {
 	"lista":[
-		{"nombre":"carpeta", "codigo":"i", "default":""}
+		{"nombre":"carpeta", "codigo":"i", "default":"", "path":"ROOT"}
 	]
 }
 

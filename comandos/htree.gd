@@ -15,7 +15,7 @@ var lib_map = [
 
 var arg_map = {
 	"lista":[
-		{"nombre":"raíz", "codigo":"r", "default":""},
+		{"nombre":"raíz", "codigo":"r", "default":"", "path":"HOBJ"},
 		{"nombre":"todos", "codigo":"a", "validar":"BOOL", "default":false},
 		{"nombre":"tipo", "codigo":"t", "validar":"BOOL", "default":false},
 		{"nombre":"posición", "codigo":"p", "validar":"BOOL","default":false}
@@ -31,7 +31,7 @@ func inicializar(hub):
 	return null
 
 func comando(argumentos):
-	var root = get_node(str(HUB.get_path())+"/"+argumentos["r"])
+	var root = get_node(str(HUB.get_path()).plus_file(argumentos["r"]))
 	HUB.mensaje(printer.imprimir_arbol(root, AtributosNodo.new(printer, argumentos)))
 
 class AtributosNodo:
