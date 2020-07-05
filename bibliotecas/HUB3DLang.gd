@@ -15,8 +15,10 @@ var parser
 var modulo = "HUB3DLang"
 
 # CACHE:
-var pila_entorno = []	# Diccionarios con "path", "pid", "caching", "data" (sólo argumentos)
 var cache = {}			# Variables y objetos generados en estructura tipo FS
+var pila_entorno = []	# Diccionarios con "path", "pid", "caching",
+						# "namespace" (para objetos que todavía no se agregaron al árbol) y
+						# "data" (para argumentos y para el resto si el archivo es null)
 
 func inicializar(hub):
 	HUB = hub
@@ -127,9 +129,8 @@ func crear(texto, entorno={}):
 			nuevo_objeto = nuevo_objeto["valor"]
 			if HUB.objetos.es_un_objeto(nuevo_objeto):
 				nuevos_objetos.push_back(nuevo_objeto)
-	if "$" in entorno["data"].keys(): # OJO: ¿Dónde guardo la variable "$"?
-		raiz = entorno["data"]["$"]
-	else:
+	var raiz = objeto_registrado("$")
+	if raiz == null:
 		if nuevos_objetos.size() == 1:
 			raiz = nuevos_objetos[0]
 		else:
@@ -159,7 +160,7 @@ func reduce(produccion, valores):
 	# I -> START C
 	if produccion == 0:
 		if HUB.objetos.es_un_objeto(valores[0]):
-			definir(valores[0].nombre(), valores[0]) # TODO: Esto hacerlo cuando le doy un nombre con :n
+			registrar_objeto(valores[0].nombre(), valores[0])
 		else:
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
 		return valores[0]
@@ -167,7 +168,7 @@ func reduce(produccion, valores):
 	if produccion == 1:
 		if not HUB.objetos.es_un_objeto(valores[2]):
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
-		definir("$", valores[2])
+		registrar_objeto("$", valores[2])
 		return null
 	# I -> $ variable = START C
 	if produccion == 2:
@@ -375,19 +376,16 @@ func aplicar_modificaciones(algo, mods):
 		if (modificador == "n"):
 			if HUB.objetos.es_un_objeto(resultado):
 				resultado.nombrar(mods["n"])
+				registrar_objeto(mods["n"], resultado)
 			else:
 				resultado.set_name(mods["n"])
 		# PARENT
 		elif (modificador == "p"):
-			pass # Revisar: lo que está en el cache son definiciones de objetos, no objetos.
-				 # Debería usar sólo el "localizar" pero puede fallar si todavía no lo agregué al árbol.
-				 # Solución: Guardar otro diccionario de nombres -> objetos 
-			#if esta_definido(mods["p"]):
-			#	hijo_de = obtener(mods["p"])
-			#else:
-			#	hijo_de = HUB.objetos.localizar(mods["p"])
-			#	if HUB.errores.fallo(hijo_de):
-			#		return HUB.error(parent_invalido(mods["p"], hijo_de), modulo)
+			var hijo_de = objeto_registrado(mods["p"])
+			if hijo_de == null:
+				hijo_de = HUB.objetos.localizar(mods["p"])
+				if HUB.errores.fallo(hijo_de):
+					return HUB.error(parent_invalido(mods["p"], hijo_de), modulo)
 		# SCRIPT
 		elif (modificador == "s"):
 			if tipos.es_un_componente(resultado):
@@ -507,7 +505,25 @@ func definir(clave, valor):
 		definir_path(path, clave, valor)
 
 func definir_path(path, clave, valor):
-	pass # TODO: Definir en el FS de "cache"
+	var recorrido = path.split("/")
+	var dict = cache
+	for d in recorrido:
+		if not d in dict:
+			dict[d] = {}
+		dict = dict[d]
+	dict[clave] = valor
+
+func registrar_objeto(clave, objeto):
+	if "namespace" in pila_entorno[0]:
+		pila_entorno[0]["namespace"][clave] = objeto
+	else:
+		pila_entorno[0]["namespace"] = {clave:objeto}
+
+func objeto_registrado(clave):
+	for e in pila_entorno:
+		if "namespace" in e and clave in e["namespace"]:
+			return e["namespace"][clave]
+	return null
 
 func obtener(clave):
 	# Primero la busco en el entorno
@@ -521,11 +537,19 @@ func obtener(clave):
 	# Si no está en el entorno, la busco en la cache
 	var path = pila_entorno[0]["path"]
 	if path != null:
-		obtener_path(path, clave)
+		return obtener_path(path, clave)
 	return null
 
 func obtener_path(path, clave):
-	pass # TODO: Explorar en el FS de "cache"
+	var recorrido = path.split("/")
+	var dict = cache
+	for d in recorrido:
+		if not d in dict:
+			return null
+		dict = dict[d]
+	if clave in dict:
+		return dict[clave]
+	return null
 
 func obtener_si_esta(clave):
 	var valor = obtener(clave)
@@ -554,9 +578,9 @@ func buscar_archivo(nombre):
 	var ruta_actual = pila_entorno[0]["path"]
 	if ruta_actual != null:
 		var recorrido = ruta_actual.split("/")
-		for i in range(recorrido.size()-1):
+		for i in range(recorrido.size()):
 			var ruta = ""
-			for j in range(recorrido.size()-1-i):
+			for j in range(recorrido.size()-i):
 				ruta += recorrido[j] + "/"
 			ruta = ruta.plus_file(nombre)
 			if HUB.archivos.existe("objetos", ruta + ".gd"):
@@ -566,38 +590,20 @@ func buscar_archivo(nombre):
 	return null
 
 func desde_archivo(ruta_completa, argumentos):
-	# OJO: "argumentos" es un par lista-diccionario
-	var nombre = ruta_completa
-	# DELETE::
-	# TODO: "nombre" podría ser sólo el último eslabón del path.
-		# Todo lo que viene debería estar en un ciclo explorando el path hacia arriba.
-#	if caching:
-#		if nombre in cache["FILE"]:
-#			var cached = cache["FILE"][nombre]
-#			if cached[0] == "OBJ":
-#				return desde_archivo_obj(cached[1], argumentos)
-#			elif cached[0] == "FUNC":
-#				return desde_archivo_func(nombre, argumentos)
-
-	# TODO: Explorar distintas rutas posibles
-	var contenido_archivo = HUB.archivos.leer("objetos", nombre + ".gd", "Objeto")
+	var contenido_archivo = HUB.archivos.leer("objetos", ruta_completa + ".gd", "Objeto")
 	if HUB.errores.fallo(contenido_archivo):
 		return contenido_archivo
 	# La función leer retornó ok, así que esto no puede fallar:
 	var tipo_archivo = contenido_archivo.split("\n")[2]
 	tipo_archivo = HUB.varios.str_desde(tipo_archivo,3)
 	if tipo_archivo == "HUB3DLang":
-		#if caching: # OJO: "nombre" acá tiene que ser el path global
-		#	cache["FILE"][nombre] = ["OBJ", contenido_archivo]
-		return desde_archivo_obj(contenido_archivo, argumentos)
+		return desde_archivo_obj(ruta_completa, contenido_archivo, argumentos)
 	if tipo_archivo == "Funcion":
-		#if caching: # OJO: "nombre" acá tiene que ser el path global
-		#	cache["FILE"][nombre] = ["FUNC", contenido_archivo]
-		return desde_archivo_func(nombre, argumentos)
+		return desde_archivo_func(ruta_completa, argumentos)
 	# Nunca debería llegar acá...
 	return null
 
-func desde_archivo_obj(contenido_archivo, argumentos):
+func desde_archivo_obj(ruta_completa, contenido_archivo, argumentos):
 	var data_entorno = {}
 	var i=1
 	for argumento in argumentos[0]:
@@ -605,12 +611,11 @@ func desde_archivo_obj(contenido_archivo, argumentos):
 		i+=1
 	for argumento in argumentos[1].keys():
 		data_entorno[argumento] = argumentos[1][argumento]
-	var path = null # TODO: Si el de pila_entorno[0] no es null, concatenarlo a nombre
 	var caching = true # TODO: Ver si lleva argumentos, ver el de pila_entorno[0], etc
 	var entorno = {
 		"data":data_entorno,
 		"pid":pila_entorno[0]["pid"],
-		"path":path,
+		"path":ruta_completa,
 		"caching":caching
 	}
 	return crear(contenido_archivo, entorno)
