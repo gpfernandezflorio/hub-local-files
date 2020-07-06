@@ -54,30 +54,47 @@ func autocompletar():
 	var pos_cursor = get_cursor_pos()
 	var resto = todo_el_texto.right(pos_cursor)
 	todo_el_texto = todo_el_texto.left(pos_cursor)
-	var ultimo_espacio = todo_el_texto.find_last(" ")
-	var inicio = todo_el_texto.substr(0,ultimo_espacio)
-	var preludio = todo_el_texto.right(ultimo_espacio+1)
+	var argumentos = get_parent().parsear_argumentos(todo_el_texto)
+	if todo_el_texto.empty() or todo_el_texto.ends_with(" "):
+		argumentos.push_back("")
+	var preludio = argumentos[argumentos.size()-1]
+	var inicio = todo_el_texto
+	if not preludio.empty():
+		inicio = todo_el_texto.left(todo_el_texto.find_last(preludio)-1)
+	var arg_pre = ""
+	var i_igual = preludio.find("=")
+	if i_igual != -1:
+		arg_pre = preludio.left(i_igual+1)
+		preludio = preludio.right(i_igual+1)
+	elif preludio.begins_with("-"):
+		arg_pre = preludio.left(2)
+		preludio = preludio.right(2)
 	var ultima_diagonal = preludio.find_last("/")
 	var carpeta = preludio.substr(0,ultima_diagonal+1)
 	if ultima_diagonal != -1:
-		preludio = preludio.substr(ultima_diagonal+1,preludio.length())
+		preludio = preludio.right(ultima_diagonal+1)
 	var posibilidades = []
 	if inicio.empty(): # Estoy escribiendo el comando
 		posibilidades = posibilidades_por_argumento("CMD", carpeta, preludio)
 	else:
-		inicio += " "
-		posibilidades = posibilidades_por_comando_por_argumento(carpeta, todo_el_texto.split(" "), preludio)
+		posibilidades = posibilidades_por_comando_por_argumento(carpeta, argumentos, preludio)
+		if not inicio.ends_with(" "):
+			inicio += " "
 	if HUB.errores.fallo(posibilidades):
 		return posibilidades
 	if posibilidades.size() == 1:
 		var i_igual = preludio.find("=")
-		if i_igual != -1:
-			carpeta += preludio.left(i_igual+1)
-		elif preludio.length() > 0 and preludio[0] == "-":
-			carpeta += preludio.left(2)
+		var opt = posibilidades[0]
+		if (carpeta+opt).find(" ") != -1 and not inicio.ends_with('"'):
+			inicio += '"'
+			if not opt.ends_with("/"):
+				opt += '"'
+		if not opt.ends_with("/"):
+			opt += " "
 		var autocompletado = \
 			carpeta + \
-			posibilidades[0]
+			opt
+		inicio += arg_pre
 		set_text(inicio + autocompletado + resto)
 		set_cursor_pos(inicio.length() + autocompletado.length())
 	elif posibilidades.size() > 1:
@@ -104,10 +121,7 @@ func posibilidades_por_comando_por_argumento(carpeta, todo_el_texto, preludio):
 	for a in argumentos:
 		var arg = str(argumentos[a])
 		for b in arg_map:
-			if b.codigo == a and (
-				arg == arg_real or
-				"-"+b.codigo+arg == arg_real or
-				"-"+b.nombre+"="+arg == arg_real):
+			if b.codigo == a and (arg == arg_real):
 				if "path" in b:
 					return posibilidades_por_argumento(b["path"], carpeta, arg)
 	return []
@@ -150,7 +164,7 @@ func filtrar_posibilidades_ruta(ruta, preludio, carpeta, posibilidades, incluir_
 				if not incluir_extension:
 					opt = archivo.split(".")[0]
 				if incluir_extension or (not incluir_extension and archivo.ends_with(".gd")):
-					archivos_posibles.append(opt+" ")
+					archivos_posibles.append(opt)
 			elif HUB.archivos.es_directorio(ruta.plus_file(carpeta), archivo):
 				archivos_posibles.append(archivo+"/")
 	return archivos_posibles
@@ -170,6 +184,8 @@ func posibilidades_OBJ(preludio):
 		padre = HUB.nodo_usuario.mundo
 	var hijos = []
 	for hijo in padre.hijos():
+		if hijo.nombre() == nombre and not hijo.hijos().empty():
+			return [hijo.nombre()+"/"]
 		if hijo.nombre().begins_with(nombre):
 			hijos.append(hijo.nombre())
 	return hijos
@@ -188,6 +204,8 @@ func posibilidades_HOBJ(preludio):
 		padre = get_node(str(HUB.get_path()))
 	var hijos = []
 	for hijo in padre.get_children():
+		if hijo.get_name() == nombre and not hijo.get_children().empty():
+			return [hijo.get_name()+"/"]
 		if hijo.get_name().begins_with(nombre):
 			hijos.append(hijo.get_name())
 	return hijos

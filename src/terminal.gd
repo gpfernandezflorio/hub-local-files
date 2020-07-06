@@ -167,6 +167,8 @@ func parsear_argumentos(argumentos):
 			tmp += " " + token
 		elif not token.empty():
 			resultado.append(token)
+	if not tmp.empty():
+		resultado.append(tmp)
 	return resultado
 
 # Errores
