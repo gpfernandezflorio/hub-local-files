@@ -15,10 +15,11 @@ var parser
 var modulo = "HUB3DLang"
 
 # CACHE:
-var cache = {}			# Variables y objetos generados en estructura tipo FS
-var pila_entorno = []	# Diccionarios con "path", "pid", "caching",
+var cache = {"PID":{},
+			"PATH":{}}	# Sólo Variables y Meshes pero no Hobjetos
+var pila_entorno = []	# Diccionarios con "path", "pid"
 						# "namespace" (para objetos que todavía no se agregaron al árbol) y
-						# "data" (para argumentos y para el resto si el archivo es null)
+						# "data" (sólo para argumentos)
 
 func inicializar(hub):
 	HUB = hub
@@ -49,7 +50,7 @@ func inicializar(hub):
 		["I",["$","=","START","C"]],					# 1
 		["I",["$","variable","=","START","C"]],			# 2
 		# C es un comentario opcional, iniciado con '#'
-		# START es una definición. Puede ser un número o un Hobjeto
+		# START es una definición. Puede ser un número, un meshRep o un Hobjeto
 		# En los primeros dos casos, un número genera un error ya que definen el Hobjeto principal
 			# Si hay una línea "$=A", A es el Hobjeto principal (sólo puede haber una de estas)
 			# Si hay una única línea "A", A es el Hobjeto principal
@@ -62,7 +63,7 @@ func inicializar(hub):
 		# Si tiene más de un elemento, todos ellos deben ser Hobjetos o componentes
 			# En tal caso, se devuelve un nuevo Hobjeto cuyos hijos son los Hobjetos de la lista y sus componentes, los componentes de la lista
 			# A menos que la lista tenga exactamente un elemento, los Hobjetos que ya tienen padre se ignoran
-		# Sólo si la lista tiene un elemento, dicho elemento puede ser un número
+		# Sólo si la lista tiene un elemento, dicho elemento puede ser un número o un meshRep
 		["HOME",["HOME","&","OBJ"]],					# 4
 		# En este caso, la lista ya tiene más de un elemento así OBJ debe ser un Hobjeto o un componente
 		["HOME",["OBJ"]],								# 5
@@ -109,10 +110,8 @@ func inicializar(hub):
 	}, tds)
 
 func crear(texto, entorno={}):
-	if not "caching" in entorno:
-		entorno["caching"] = true
 	if not "pid" in entorno:
-		entorno["pid"] = "HUB" # TODO: Pedir el pid a HUB.procesos (¿actual o en foco?)
+		entorno["pid"] = HUB.procesos.actual()
 	if not "path" in entorno:
 		entorno["path"] = null
 	if not "data" in entorno:
@@ -159,27 +158,37 @@ class HUB3DLangTDS:
 func reduce(produccion, valores):
 	# I -> START C
 	if produccion == 0:
-		if HUB.objetos.es_un_objeto(valores[0]):
-			registrar_objeto(valores[0].nombre(), valores[0])
+		var resultado = valores[0]
+		if tipos.es_un_mesh_rep(resultado):
+			resultado = componente_a_objeto(resultado.make())
+		if HUB.objetos.es_un_objeto(resultado):
+			registrar_objeto(resultado.nombre(), resultado)
 		else:
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
-		return valores[0]
+		return resultado
 	# I -> $ = START C
 	if produccion == 1:
-		if not HUB.objetos.es_un_objeto(valores[2]):
+		var resultado = valores[2]
+		if tipos.es_un_mesh_rep(resultado):
+			resultado = componente_a_objeto(resultado.make())
+		elif not HUB.objetos.es_un_objeto(resultado):
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
-		registrar_objeto("$", valores[2])
+		registrar_objeto("$", resultado)
 		return null
 	# I -> $ variable = START C
 	if produccion == 2:
-		definir(valores[1], valores[3])
+		var resultado = valores[3]
+		if HUB.objetos.es_un_objeto(resultado):
+			registrar_objeto(valores[1], resultado)
+		else:
+			definir(valores[1], resultado)
 		return null
 	# START -> HOME
 	if produccion == 3:
 		if valores[0].size() == 1:
 			var resultado = valores[0][0]
 			if tipos.es_un_mesh_rep(resultado):
-				resultado = resultado.make()
+				return resultado
 			if tipos.es_un_componente(resultado):
 				resultado = componente_a_objeto(resultado)
 			return resultado
@@ -194,7 +203,9 @@ func reduce(produccion, valores):
 			elif tipos.es_un_mesh_rep(elemento):
 				meshes.append(elemento)
 		if not meshes.empty():
-			componentes.append(mesh_a_partir_de_reps(meshes))
+			var mesh = union_de_mesh_reps(meshes)
+			# TODO: SI sólo hay meshReps, devolver "mesh" en lugar de lo que sigue:
+			componentes.append(mesh.make())
 		var nuevo_objeto = HUB.objetos.crear(null)
 		for componente in componentes:
 			nuevo_objeto.agregar_componente(componente)
@@ -219,9 +230,15 @@ func reduce(produccion, valores):
 			if HUB.errores.fallo(resultado):
 				return resultado
 			if tipos.es_un_string(resultado):
-				resultado = obtener(valores[0])
-				if resultado == null:
-					return HUB.error(identificador_invalido(resultado), modulo)
+				var res_reg = objeto_registrado(resultado)
+				if res_reg == null:
+					var res_obt = obtener(valores[0])
+					if res_obt == null:
+						return HUB.error(identificador_invalido(resultado), modulo)
+					else:
+						resultado = res_obt
+				else:
+					resultado = res_reg
 		if tipos.es_una_lista(resultado):
 			resultado = base(resultado[0], resultado[1])
 			if HUB.errores.fallo(resultado):
@@ -467,7 +484,7 @@ func aplicar_modificaciones(algo, mods):
 				else:
 					return HUB.error(HUB.errores.error('No se puede agregar el material si el componente no es una malla'), modulo)
 			else:
-				# agregar a "meshes" todos los componentes de tipo meshInstance y luego:
+				meshes = agregar_componentes_meshes(meshes, resultado)
 				if meshes.empty():
 					return HUB.error(HUB.errores.error('No se puede agregar el material si el objeto no tiene un componente malla'), modulo)
 			var resultado_material = agregar_material(meshes, mods["m"])
@@ -480,6 +497,15 @@ func aplicar_modificaciones(algo, mods):
 			resultado = componente_a_objeto(resultado)
 		hijo_de.agregar_hijo(resultado)
 	return resultado
+
+func agregar_componentes_meshes(meshes, obj):
+	var result = meshes
+	for componente in obj.componentes():
+		if componente.has_method("set_material_override"):
+			result.append(componente)
+	for hijo in obj.hijos():
+		result = agregar_componentes_meshes(result, hijo)
+	return result
 
 func base(texto, argumentos):
 	# OJO: "argumentos" es un par lista-diccionario
@@ -499,19 +525,29 @@ func base(texto, argumentos):
 
 func definir(clave, valor):
 	var path = pila_entorno[0]["path"]
-	if path == null:
-		pila_entorno[0]["data"][clave] = valor
-	else:
+	var pid = pila_entorno[0]["pid"]
+	if path != null:
 		definir_path(path, clave, valor)
+	else:
+		definir_pid(pid, clave, valor)
+
+func definir_pid(pid, clave, valor):
+	var dict = cache["PID"]
+	if pid in cache["PID"]:
+		cache["PID"][pid][clave] = valor
+	else:
+		cache["PID"][pid] = {clave:valor}
 
 func definir_path(path, clave, valor):
 	var recorrido = path.split("/")
-	var dict = cache
+	var dict = cache["PATH"]
 	for d in recorrido:
 		if not d in dict:
 			dict[d] = {}
 		dict = dict[d]
-	dict[clave] = valor
+	if not clave in dict:
+		dict[clave] = {}
+	dict[clave]["."] = valor
 
 func registrar_objeto(clave, objeto):
 	if "namespace" in pila_entorno[0]:
@@ -530,25 +566,37 @@ func obtener(clave):
 	for e in pila_entorno:
 		if clave in e["data"]:
 			var valor = e["data"][clave]
-			if tipos.es_un_nodo(valor):
-				return valor.duplicate()
-			else:
-				return valor
+			return valor
 	# Si no está en el entorno, la busco en la cache
 	var path = pila_entorno[0]["path"]
-	if path != null:
-		return obtener_path(path, clave)
+	if path == null:
+		path = ""
+	var obt_path = obtener_path(path, clave)
+	if obt_path != null:
+		return obt_path
+	var pid = pila_entorno[0]["pid"]
+	var obt_pid = obtener_pid(pid, clave)
+	if obt_pid != null:
+		return obt_pid
+	return null
+
+func obtener_pid(pid, clave):
+	if pid in cache["PID"]:
+		if clave in cache["PID"][pid]:
+			return cache["PID"][pid][clave]
 	return null
 
 func obtener_path(path, clave):
 	var recorrido = path.split("/")
-	var dict = cache
+	var dict = cache["PATH"]
 	for d in recorrido:
 		if not d in dict:
 			return null
 		dict = dict[d]
 	if clave in dict:
-		return dict[clave]
+		dict = dict[clave]
+		if "." in dict:
+			return dict["."]
 	return null
 
 func obtener_si_esta(clave):
@@ -611,24 +659,20 @@ func desde_archivo_obj(ruta_completa, contenido_archivo, argumentos):
 		i+=1
 	for argumento in argumentos[1].keys():
 		data_entorno[argumento] = argumentos[1][argumento]
-	var caching = true # TODO: Ver si lleva argumentos, ver el de pila_entorno[0], etc
 	var entorno = {
 		"data":data_entorno,
 		"pid":pila_entorno[0]["pid"],
-		"path":ruta_completa,
-		"caching":caching
+		"path":ruta_completa
 	}
 	return crear(contenido_archivo, entorno)
 
 func desde_archivo_func(nombre, argumentos):
 	var resultado = HUB.objetos.generar(nombre, argumentos)
 	if tipos.es_un_string(resultado):
-		var path = null # TODO: Si el de pila_entorno[0] no es null, concatenarlo a nombre
 		var entorno = {
 			"data":{}, # ¿No debería pasarle también lo generado en la versión _obj?
 			"pid":pila_entorno[0]["pid"],
-			"path":path,
-			"caching":false # ¿Siempre?
+			"path":nombre,
 		}
 		return crear(resultado, entorno)
 	return resultado
@@ -769,13 +813,13 @@ func agregar_material(meshes, mat):
 		for i in range(m.get_surface_count()):
 			m.surface_set_material(i, material)
 
-func mesh_a_partir_de_reps(meshes):
+func union_de_mesh_reps(meshes):
 	var resultado = meshes[0]
 	meshes.pop_front()
 	while(not meshes.empty()):
 		resultado.merge(meshes[0])
 		meshes.pop_front()
-	return resultado.make()
+	return resultado
 
 func random(argumentos):
 	var tipo = "f"
