@@ -31,8 +31,7 @@ func inicializar(hub):
 func gen(argumentos):
 	var tipo = argumentos["t"]
 	if tipo in tipos_validos:
-		var resultado = HUB.objetos.crear_componente(tipo)
-		resultado.set_name("luz")
+		var resultado = h3.nueva_luz(tipo)
 		resultado.set("params/radius", argumentos["r"])
 		resultado.set("params/attenuation", argumentos["a"])
 		resultado.set("params/energy", argumentos["i"])

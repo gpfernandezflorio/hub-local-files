@@ -41,7 +41,8 @@ func gen(argumentos):
 		Vector3(x0,y0,z0),Vector3(x1,y0,z0),Vector3(x1,y0,z1),Vector3(x0,y0,z1),
 		Vector3(x0,y1,z0),Vector3(x1,y1,z0),Vector3(x1,y1,z1),Vector3(x0,y1,z1)
 	],[
-		h3.nueva_cara([3,2,6,7]),h3.nueva_cara([0,3,7,4]),h3.nueva_cara([1,5,6,2]),
-		h3.nueva_cara([0,4,5,1]),h3.nueva_cara([0,1,2,3]),h3.nueva_cara([7,6,5,4])
-	])
+		h3.nueva_cara([3,2,6,7], []),h3.nueva_cara([0,3,7,4], []),h3.nueva_cara([1,5,6,2], []),
+		h3.nueva_cara([0,4,5,1], []),h3.nueva_cara([0,1,2,3], []),h3.nueva_cara([7,6,5,4], [])
+	], [],
+	"cubo")
 	return resultado

@@ -85,7 +85,9 @@ func gen(argumentos):
 		vertexes[3] = tmp
 	var resultado = h3.nuevo_mesh_rep(
 		vertexes,
-		[h3.nueva_cara([0,1,2,3])]
+		[h3.nueva_cara([0,1,2,3], [])],
+		[],
+		"cara"
 	)
 	var rotacion = float(HUB.varios.str_desde(eje, 1))
 	resultado.call("rotate_"+eje[0], rotacion)

@@ -17,7 +17,7 @@ var modulo = "HUB3DLang"
 # CACHE:
 var cache = {"PID":{},
 			"PATH":{}}	# Sólo Variables y Meshes pero no Hobjetos
-var pila_entorno = []	# Diccionarios con "path", "pid"
+var pila_entorno = []	# Diccionarios con "path", "pid", "caching"
 						# "namespace" (para objetos que todavía no se agregaron al árbol) y
 						# "data" (sólo para argumentos)
 
@@ -116,6 +116,8 @@ func crear(texto, entorno={}):
 		entorno["path"] = null
 	if not "data" in entorno:
 		entorno["data"] = {}
+	if not "caching" in entorno:
+		entorno["caching"] = true
 	var nuevos_objetos = [] # El texto podría contener varias líneas
 	var raiz = null
 	pila_entorno.push_front(entorno)
@@ -126,26 +128,35 @@ func crear(texto, entorno={}):
 				pila_entorno.pop_front()
 				return HUB.error(HUB.errores.error('No se pudo generar el objeto "' + linea + '".', nuevo_objeto), modulo)
 			nuevo_objeto = nuevo_objeto["valor"]
-			if HUB.objetos.es_un_objeto(nuevo_objeto):
+			if es_una_repH(nuevo_objeto):
 				nuevos_objetos.push_back(nuevo_objeto)
 	var raiz = objeto_registrado("$")
 	if raiz == null:
 		if nuevos_objetos.size() == 1:
 			raiz = nuevos_objetos[0]
-		else:
+		elif nuevos_objetos.size() > 1:
 			var hijos = []
 			for hijo in nuevos_objetos:
-				if hijo.padre() == null:
+				if hijo.padre == null:
 					hijos.append(hijo)
-			if hijos.size() == 1:
+			if hijos.size() == 0:
+				raiz = encontrar_raiz(nuevos_objetos)
+			elif hijos.size() == 1:
 				raiz = nuevos_objetos[0]
 			else:
-				raiz = HUB.objetos.crear()
+				raiz = HRep.new(HUB)
 				for hijo in hijos:
-					raiz.agregar_hijo(hijo)
+					raiz.hijos.append(hijo)
 	pila_entorno.pop_front()
-	if raiz.padre() == null and pila_entorno.empty():
-		HUB.nodo_usuario.mundo.agregar_hijo(raiz)
+	if pila_entorno.empty() and raiz != null:
+		raiz = raiz.make()
+		if HUB.errores.fallo(raiz):
+			return raiz
+		if raiz[1] == null:
+			HUB.nodo_usuario.mundo.agregar_hijo(raiz[0])
+		else:
+			raiz[1].agregar_hijo(raiz[0])
+		raiz = raiz[0]
 	return raiz
 
 class HUB3DLangTDS:
@@ -159,62 +170,50 @@ func reduce(produccion, valores):
 	# I -> START C
 	if produccion == 0:
 		var resultado = valores[0]
-		if tipos.es_un_mesh_rep(resultado):
-			resultado = componente_a_objeto(resultado.make())
-		if HUB.objetos.es_un_objeto(resultado):
-			registrar_objeto(resultado.nombre(), resultado)
-		else:
+		if tipos.es_un_numero(resultado):
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
+		if not es_una_repH(resultado):
+			resultado = componente_a_objeto(resultado)
+		registrar_objeto(resultado.nombre, resultado)
 		return resultado
 	# I -> $ = START C
 	if produccion == 1:
 		var resultado = valores[2]
-		if tipos.es_un_mesh_rep(resultado):
-			resultado = componente_a_objeto(resultado.make())
-		elif not HUB.objetos.es_un_objeto(resultado):
+		if tipos.es_un_numero(resultado):
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
+		if not tipos.es_una_repH(resultado):
+			resultado = componente_a_objeto(resultado)
 		registrar_objeto("$", resultado)
 		return null
 	# I -> $ variable = START C
 	if produccion == 2:
-		var resultado = valores[3]
-		if HUB.objetos.es_un_objeto(resultado):
-			registrar_objeto(valores[1], resultado)
-		else:
-			definir(valores[1], resultado)
+		definir(valores[1], valores[3])
 		return null
 	# START -> HOME
 	if produccion == 3:
 		if valores[0].size() == 1:
-			var resultado = valores[0][0]
-			if tipos.es_un_mesh_rep(resultado):
-				return resultado
-			if tipos.es_un_componente(resultado):
-				resultado = componente_a_objeto(resultado)
-			return resultado
+			return valores[0][0]
 		var objetos = []
 		var componentes = []
 		var meshes = []
 		for elemento in valores[0]:
-			if HUB.objetos.es_un_objeto(elemento) and elemento.padre() == null:
+			if es_una_repH(elemento) and elemento.padre == null:
 				objetos.append(elemento)
-			elif tipos.es_un_componente(elemento):
-				componentes.append(elemento)
-			elif tipos.es_un_mesh_rep(elemento):
+			elif es_una_repM(elemento):
 				meshes.append(elemento)
+			elif es_una_rep(elemento):
+				componentes.append(elemento)
 		if not meshes.empty():
-			var mesh = union_de_mesh_reps(meshes)
-			# TODO: SI sólo hay meshReps, devolver "mesh" en lugar de lo que sigue:
-			componentes.append(mesh.make())
-		var nuevo_objeto = HUB.objetos.crear(null)
+			componentes.append(union_de_mesh_reps(meshes))
+		var nuevo_objeto = HRep.new(HUB)
 		for componente in componentes:
-			nuevo_objeto.agregar_componente(componente)
+			nuevo_objeto.componentes.append(componente)
 		for objeto in objetos:
-			nuevo_objeto.agregar_hijo(objeto)
+			nuevo_objeto.hijos.append(objeto)
 		return nuevo_objeto
 	# HOME -> HOME & OBJ
 	if produccion == 4:
-		if HUB.objetos.es_un_objeto(valores[2]) or tipos.es_un_componente(valores[2]) or tipos.es_un_mesh_rep(valores[2]):
+		if es_una_rep(valores[2]): # HUB.objetos.es_un_objeto(valores[2]) or tipos.es_un_componente(valores[2]) or tipos.es_un_mesh_rep(valores[2]):
 			valores[0].append(valores[2])
 		else:
 			return HUB.error(HUB.errores.error("no se pueden unir con '&'"), modulo)
@@ -230,15 +229,15 @@ func reduce(produccion, valores):
 			if HUB.errores.fallo(resultado):
 				return resultado
 			if tipos.es_un_string(resultado):
-				var res_reg = objeto_registrado(resultado)
-				if res_reg == null:
+				#var res_reg = objeto_registrado(resultado)
+				#if res_reg == null:
 					var res_obt = obtener(valores[0])
 					if res_obt == null:
 						return HUB.error(identificador_invalido(resultado), modulo)
 					else:
 						resultado = res_obt
-				else:
-					resultado = res_reg
+				#else:
+				#	resultado = res_reg
 		if tipos.es_una_lista(resultado):
 			resultado = base(resultado[0], resultado[1])
 			if HUB.errores.fallo(resultado):
@@ -251,7 +250,7 @@ func reduce(produccion, valores):
 	# MODS -> mod EXPR MODS
 	if produccion == 7:
 		var dic = valores[2]
-		var i = HUB.varios.str_desde(valores[0], 1)
+		var i = valores[0].right(1)
 		if modificador_admite_varios(i):
 			if i in dic:
 				dic[i].push_front(valores[1])
@@ -337,6 +336,7 @@ func reduce(produccion, valores):
 	# FACT -> PRIM ARGS
 	if produccion == 19:
 		if tipos.es_un_string(valores[0]) and valores[0] == "random":
+			pila_entorno[0]["caching"] = false
 			return random(valores[1][0])
 		if valores[1][0].empty() and valores[1][1].keys().empty():
 			# Lo devuelvo como texto ya que no sé para qué se va a usar
@@ -385,27 +385,27 @@ func reduce(produccion, valores):
 
 func aplicar_modificaciones(algo, mods):
 	var resultado = algo
-	var hijo_de = null
 	for modificador in mods.keys():
-		if tipos.es_un_mesh_rep(resultado) and modificador_invalido_en_mesh_rep(modificador):
-			resultado = resultado.make()
 		# NOMBRE
 		if (modificador == "n"):
-			if HUB.objetos.es_un_objeto(resultado):
-				resultado.nombrar(mods["n"])
+			resultado.nombre = mods["n"]
+			if es_una_repH(resultado):
 				registrar_objeto(mods["n"], resultado)
-			else:
-				resultado.set_name(mods["n"])
 		# PARENT
 		elif (modificador == "p"):
-			hijo_de = objeto_registrado(mods["p"])
+			if not es_una_repH(resultado):
+				resultado = componente_a_objeto(resultado)
+			var ubicacion = "L"
+			var hijo_de = objeto_registrado(mods["p"])
 			if hijo_de == null:
+				ubicacion = "G"
 				hijo_de = HUB.objetos.localizar(mods["p"])
 				if HUB.errores.fallo(hijo_de):
 					return HUB.error(parent_invalido(mods["p"], hijo_de), modulo)
+			resultado.padre = [ubicacion, hijo_de]
 		# SCRIPT
 		elif (modificador == "s"):
-			if tipos.es_un_componente(resultado):
+			if not es_una_repH(resultado):
 				resultado = componente_a_objeto(resultado)
 			var scripts = mods["s"]
 			for script in scripts:
@@ -413,9 +413,7 @@ func aplicar_modificaciones(algo, mods):
 				if tipos.es_una_lista(script):
 					args = script[1]
 					script = script[0]
-				var c = resultado.agregar_comportamiento(script, args)
-				if HUB.errores.fallo(c):
-					return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + script + '".', c), modulo)
+				resultado.comportamientos.append([script,args])
 		# OFFSET
 		elif (modificador.begins_with("o")):
 			var local = false # ¿relativo a la rotación?
@@ -439,10 +437,7 @@ func aplicar_modificaciones(algo, mods):
 				movimiento.z = valor
 			else:
 				return HUB.error(HUB.errores.error('Eje inválido para el modificador "' + modificador + '".'), modulo)
-			if local or tipos.es_un_mesh_rep(resultado):
-				resultado.translate(movimiento)
-			else:
-				resultado.set_translation(resultado.get_transform().origin + movimiento)
+			resultado.offset(movimiento, local)
 		# ROTATE
 		elif (modificador.begins_with("r")):
 			var eje = modificador[1]
@@ -464,8 +459,8 @@ func aplicar_modificaciones(algo, mods):
 		# COLLIDER
 		elif (modificador == "c"):
 			var body = null
-			if tipos.es_un_componente(resultado):
-				if resultado.has_method("add_shape"):
+			if es_una_repC(resultado):
+				if resultado.tipo == "BODY":
 					body = resultado
 				else:
 					return HUB.error(HUB.errores.error('No se puede agregar el colisionador si el componente no es un body'), modulo)
@@ -478,8 +473,8 @@ func aplicar_modificaciones(algo, mods):
 		# MATERIAL
 		elif (modificador == "m"):
 			var meshes = []
-			if tipos.es_un_componente(resultado):
-				if resultado.has_method("set_material_override"):
+			if es_una_repC(resultado):
+				if resultado.tipo == "MESH":
 					meshes.append(resultado)
 				else:
 					return HUB.error(HUB.errores.error('No se puede agregar el material si el componente no es una malla'), modulo)
@@ -492,25 +487,28 @@ func aplicar_modificaciones(algo, mods):
 				return resultado_material
 		else:
 			return HUB.error(modificador_invalido(modificador), modulo)
-	if hijo_de != null:
-		if tipos.es_un_componente(resultado):
-			resultado = componente_a_objeto(resultado)
-		hijo_de.agregar_hijo(resultado)
 	return resultado
+
+func encontrar_raiz(objetos):
+	# Asume que todos tienen padre
+	for obj in objetos:
+		if not obj.padre[1] in objetos:
+			return obj
+	return null
 
 func agregar_componentes_meshes(meshes, obj):
 	var result = meshes
-	for componente in obj.componentes():
-		if componente.has_method("set_material_override"):
+	for componente in obj.componentes:
+		if es_una_repM(componente):
 			result.append(componente)
-	for hijo in obj.hijos():
+	for hijo in obj.hijos:
 		result = agregar_componentes_meshes(result, hijo)
 	return result
 
 func base(texto, argumentos):
 	# OJO: "argumentos" es un par lista-diccionario
 	if texto == "_":
-		return HUB.objetos.crear(null)
+		return HRep.new(HUB)
 	var sin_argumentos = argumentos[0].empty() and argumentos[1].keys().empty()
 	if sin_argumentos:
 		var valor = obtener(texto)
@@ -524,12 +522,15 @@ func base(texto, argumentos):
 	return HUB.error(HUB.errores.error('primitiva "'+texto+'" no definida'), modulo)
 
 func definir(clave, valor):
-	var path = pila_entorno[0]["path"]
-	var pid = pila_entorno[0]["pid"]
-	if path != null:
-		definir_path(path, clave, valor)
+	if pila_entorno[0]["caching"]:
+		var path = pila_entorno[0]["path"]
+		var pid = pila_entorno[0]["pid"]
+		if path != null:
+			definir_path(path, clave, valor)
+		else:
+			definir_pid(pid, clave, valor)
 	else:
-		definir_pid(pid, clave, valor)
+		pila_entorno[0]["data"][clave] = valor
 
 func definir_pid(pid, clave, valor):
 	var dict = cache["PID"]
@@ -566,7 +567,10 @@ func obtener(clave):
 	for e in pila_entorno:
 		if clave in e["data"]:
 			var valor = e["data"][clave]
-			return valor
+			if es_una_rep(valor):
+				return copiar_rep(valor)
+			else:
+				return valor
 	# Si no está en el entorno, la busco en la cache
 	var path = pila_entorno[0]["path"]
 	if path == null:
@@ -583,7 +587,11 @@ func obtener(clave):
 func obtener_pid(pid, clave):
 	if pid in cache["PID"]:
 		if clave in cache["PID"][pid]:
-			return cache["PID"][pid][clave]
+			var valor = cache["PID"][pid][clave]
+			if es_una_rep(valor):
+				return copiar_rep(valor)
+			else:
+				return valor
 	return null
 
 func obtener_path(path, clave):
@@ -596,7 +604,11 @@ func obtener_path(path, clave):
 	if clave in dict:
 		dict = dict[clave]
 		if "." in dict:
-			return dict["."]
+			var valor = dict["."]
+			if es_una_rep(valor):
+				return copiar_rep(valor)
+			else:
+				return valor
 	return null
 
 func obtener_si_esta(clave):
@@ -616,10 +628,12 @@ func obtener_como_numero(clave):
 	return valor
 
 func componente_a_objeto(componente):
-	var nuevo_objeto = HUB.objetos.crear(null)
-	nuevo_objeto.agregar_componente(componente)
-	if not componente.get_name().begins_with("@@"):
-		nuevo_objeto.nombrar(componente.get_name())
+	var nuevo_objeto = HRep.new(HUB)
+	nuevo_objeto.componentes.append(componente)
+	print(">")
+	print(componente.nombre)
+	if componente.nombre != null and not componente.nombre.begins_with("@@"):
+		nuevo_objeto.nombre = componente.nombre
 	return nuevo_objeto
 
 func buscar_archivo(nombre):
@@ -638,6 +652,10 @@ func buscar_archivo(nombre):
 	return null
 
 func desde_archivo(ruta_completa, argumentos):
+	if pila_entorno[0]["caching"] and argumentos[0].empty() and argumentos[1].keys().empty():
+		var en_cache = obtener(ruta_completa)
+		if en_cache != null:
+			return en_cache
 	var contenido_archivo = HUB.archivos.leer("objetos", ruta_completa + ".gd", "Objeto")
 	if HUB.errores.fallo(contenido_archivo):
 		return contenido_archivo
@@ -662,9 +680,13 @@ func desde_archivo_obj(ruta_completa, contenido_archivo, argumentos):
 	var entorno = {
 		"data":data_entorno,
 		"pid":pila_entorno[0]["pid"],
-		"path":ruta_completa
+		"path":ruta_completa,
+		"caching":data_entorno.keys().size()==0
 	}
-	return crear(contenido_archivo, entorno)
+	var obj = crear(contenido_archivo, entorno)
+	if pila_entorno[0]["caching"] and data_entorno.keys().size()==0:
+		definir_path(ruta_completa, ".", obj)
+	return obj
 
 func desde_archivo_func(nombre, argumentos):
 	var resultado = HUB.objetos.generar(nombre, argumentos)
@@ -673,15 +695,13 @@ func desde_archivo_func(nombre, argumentos):
 			"data":{}, # ¿No debería pasarle también lo generado en la versión _obj?
 			"pid":pila_entorno[0]["pid"],
 			"path":nombre,
+			"caching":false
 		}
 		return crear(resultado, entorno)
 	return resultado
 
 func modificador_admite_varios(mod):
 	return mod in ["s","c"]
-
-func modificador_invalido_en_mesh_rep(mod):
-	return not mod[0] in ["o","r"]
 
 var valid_colls = {
 	"plane":{"arg_map":
@@ -724,7 +744,6 @@ func agregar_colisionador(body, cs):
 			args = HUB.varios.parsear_argumentos_general(valid_colls[id]["arg_map"], args, modulo)
 			if HUB.errores.fallo(args):
 				return args
-			var collider = CollisionShape.new()
 			var shape = valid_colls[id]["clase"].new()
 			var t = Transform()
 			var pos = Vector3(0,0,0)
@@ -777,12 +796,12 @@ func agregar_colisionador(body, cs):
 						return HUB.error(HUB.errores.error('Argumento inválido: '+h), modulo)
 					if rotated:
 						t = t.rotated(Vector3(1,0,0),PI/2)
-			collider.set_name(valid_colls[id]["nombre"])
-			collider.set_shape(shape)
 			t = t.translated(pos)
-			body.add_shape(shape, t)
-			body.add_child(collider)		# DEBUG
-			collider.set_transform(t)		# DEBUG
+			body.shapes.append(
+				{"nombre":valid_colls[id]["nombre"],
+				"shape":shape,
+				"transform":t}
+			)
 		else:
 			return HUB.error(HUB.errores.error('Identificador de colisionador inválido: '+id), modulo)
 
@@ -809,9 +828,7 @@ func agregar_material(meshes, mat):
 		material = FixedMaterial.new()
 	material.set("params/diffuse", args["c"])
 	for mi in meshes:
-		var m = mi.get_mesh()
-		for i in range(m.get_surface_count()):
-			m.surface_set_material(i, material)
+		mi.material = material
 
 func union_de_mesh_reps(meshes):
 	var resultado = meshes[0]
@@ -885,12 +902,184 @@ func int_to_hex(i):
 		return ["a","b","c","d","e","f"][i-10]
 	return "0"
 
+func es_una_rep(algo):
+	return typeof(algo) == TYPE_OBJECT and algo.has_method("make")
+
+func es_una_repH(algo):
+	return es_una_rep(algo) and "tipo" in algo and algo.tipo == "HOBJ"
+
+func es_una_repC(algo):
+	return es_una_rep(algo) and not es_una_repH(algo)
+
+func es_una_repM(algo):
+	return es_una_rep(algo) and "tipo" in algo and algo.tipo == "MESH"
+
+func copiar_rep(original):
+	if es_una_repH(original):
+		return copiar_rep_h(original)
+	return copiar_rep_c(original)
+
+func copiar_rep_h(original):
+	var copia = HRep.new(HUB)
+	copia.nombre = original.nombre
+	copia.padre = original.padre
+	for c in original.componentes:
+		copia.componentes.append(copiar_rep_c(c))
+	for c in original.comportamientos:
+		var args = [[],{}]
+		for a in c[1][0]:
+			args[0].append(a)
+		for a in c[1][1].keys():
+			args[1][a] = c[1][1][a]
+		var c2 = [c[0],args]
+		copia.comportamientos.append(c2)
+	for h in original.hijos:
+		copia.hijos.append(copiar_rep_h(h))
+	copia.transform = Spatial.new()
+	copia.transform.set_transform(original.transform.get_transform())
+	return copia
+
+class HRep:			# Hobjeto
+	var tipo = "HOBJ"
+	var nombre			# String
+	var padre			# Par String-referencia (el string indica si el Local o Global) o null
+	var componentes		# Lista de otros Rep que tengan "make"
+	var comportamientos	# Lista de pares String-arg_map
+	var hijos			# Lista de HRep
+	var transform		# Spatial
+	var HUB
+	func _init(HUB):
+		nombre = null
+		componentes = []
+		comportamientos = []
+		hijos = []
+		transform = Spatial.new()
+		self.HUB = HUB
+		padre = null
+	func offset(movimiento, local):
+		if local:
+			transform.translate(movimiento)
+		else:
+			transform.set_translation(transform.get_transform().origin + movimiento)
+	func rotate_x(a):
+		transform.rotate_x(a)
+	func rotate_y(a):
+		transform.rotate_y(a)
+	func rotate_z(a):
+		transform.rotate_z(a)
+	func make():
+		var resultado = HUB.objetos.crear(null)
+		if nombre != null:
+			resultado.nombrar(nombre)
+		for hijo in hijos:
+			resultado.agregar_hijo(hijo.make()[0])
+		for componente in componentes:
+			resultado.agregar_componente(componente.make())
+		for comportamiento in comportamientos:
+			var c = resultado.agregar_comportamiento(comportamiento[0], comportamiento[1])
+			if HUB.errores.fallo(c):
+				return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + comportamiento[0] + '".', c))
+		resultado.set_transform(transform.get_transform())
+		return [resultado, padre]
+
+class CRep:			# Componente genérico
+	var tipo
+	var nombre
+	var clase			# Class
+	var script			# String
+	var transform		# Spatial
+	var params			# Dict
+	var HUB
+	func _init(HUB, tipo, clase, script, nombre):
+		self.tipo = tipo
+		self.nombre = nombre
+		self.clase = clase
+		self.script = script
+		transform = Spatial.new()
+		params = {}
+		self.HUB = HUB
+	func rotate_x(a):
+		transform.rotate_x(a)
+	func rotate_y(a):
+		transform.rotate_y(a)
+	func rotate_z(a):
+		transform.rotate_z(a)
+	func offset(movimiento, local):
+		if local:
+			transform.translate(movimiento)
+		else:
+			transform.set_translation(transform.get_transform().origin + movimiento)
+	func set(arg, val):
+		params[arg] = val
+	func make():
+		var resultado = HUB.GC.crear_nodo(clase)
+		if nombre != null:
+			resultado.set_name(nombre)
+		if script != null:
+			resultado.set_script(script)
+		for p in params.keys():
+			resultado.set(p, params[p])
+		return resultado
+
+class BodyRep extends CRep:
+	var shapes
+	func _init(H,t,c,s,n).(H,t,c,s,n):
+		shapes = []
+	func make():
+		var resultado = .make()
+		for shape in shapes:
+			var collider = CollisionShape.new()
+			var forma = shape["shape"].duplicate()
+			collider.set_name(shape["nombre"])
+			collider.set_shape(forma)
+			var t = shape["transform"]
+			resultado.add_shape(forma, t)
+			resultado.add_child(collider)	# DEBUG
+			collider.set_transform(t)		# DEBUG
+		return resultado
+
+func copiar_rep_c(original):
+	if es_una_repM(original):
+		return copiar_rep_m(original)
+	var clase = CRep
+	if original.tipo == "BODY":
+		clase = BodyRep
+	var copia = clase.new(HUB, original.tipo, original.clase, original.script, original.nombre)
+	copia.transform = Spatial.new()
+	copia.transform.set_transform(original.transform.get_transform())
+	for p in original.params:
+		copia.params[p] = original.params[p]
+	if original.tipo == "BODY":
+		for shape in original.shapes:
+			copia.shapes.append({
+				"nombre":shape["nombre"],
+				"shape":shape["shape"].duplicate(),
+				"transform":Transform(shape["transform"])
+			})
+	return copia
+
+func copiar_rep_m(original):
+	var vs = []
+	var fs = []
+	var uvs = []
+	for v in original.vertexes:
+		vs.push_back(v)
+	for f in original.faces:
+		fs.push_back(f)
+	for uv in original.uvs:
+		uvs.push_back(uv)
+	return MeshRep.new(vs, fs, uvs, original.nombre)
+
 class MeshRep:
+	var tipo = "MESH"
+	var nombre
 	var vertexes	# Vector3
 	var uvs			# Vector2
 	var faces		# FaceRep
 	var pi_180 = PI/180.0
-	func _init(vs, fs, uvs):
+	var material = null
+	func _init(vs, fs, uvs, nombre="malla"):
+		self.nombre = nombre
 		self.vertexes = vs
 		self.faces = fs
 		self.uvs = uvs
@@ -912,7 +1101,7 @@ class MeshRep:
 	func rotate_z(a):
 		for i in range(vertexes.size()):
 			vertexes[i] = vertexes[i].rotated(Vector3(0.0,0.0,1.0),a*pi_180)
-	func translate(a):
+	func offset(a, local): # IGNORO argumento "local"
 		for i in range(vertexes.size()):
 			vertexes[i] += a
 	func make():
@@ -943,10 +1132,13 @@ class MeshRep:
 		st.generate_normals()
 		st.index()
 		st.commit(mesh)
-		var obj = MeshInstance.new()
-		obj.set_name("malla")
-		obj.set_mesh(mesh)
-		return obj
+		if material != null:
+			for i in range(mesh.get_surface_count()):
+				mesh.surface_set_material(i, material)
+		var resultado = MeshInstance.new()
+		resultado.set_name(nombre)
+		resultado.set_mesh(mesh)
+		return resultado
 
 class FaceRep:
 	var vertexes	# int
@@ -966,11 +1158,42 @@ class FaceRep:
 	func size():
 		return vertexes.size()
 
-func nuevo_mesh_rep(vs, fs, uvs=[]):
-	return MeshRep.new(vs, fs, uvs)
+func nuevo_mesh_rep(vs, fs, uvs, nombre=null):
+	return MeshRep.new(vs, fs, uvs, nombre)
 
-func nueva_cara(vs, uvs=[]):
+func nueva_cara(vs, uvs):
 	return FaceRep.new(vs, uvs)
+
+func nueva_camara():
+	return nuevo_componente("camara", "OTROS", "cámara")
+
+func nuevo_body(tipo):
+	return nuevo_componente(tipo, "BODY", "body", BodyRep)
+
+func nueva_luz(tipo):
+	return nuevo_componente(tipo, "OTROS", "luz")
+
+func nuevo_componente(tipo, grupo, nombre, baseRep = CRep):
+	if tipo in componentes_validos.keys():
+		var script = null
+		var ruta_componentes = HUB.objetos.ruta_componentes()
+		if HUB.archivos.existe(ruta_componentes, tipo+".gd"):
+			script = HUB.archivos.abrir(ruta_componentes, tipo+".gd")
+		return baseRep.new(HUB, grupo, componentes_validos[tipo], script, nombre)
+	return HUB.error(HUB.errores.error('Componente desconocido: '+tipo), modulo)
+
+var componentes_validos = {
+	# body
+	"static":StaticBody,
+	"rigid":Spatial, # Caso especial. Lo maneja el script 'rigid.gd'
+	"kinematic":KinematicBody,
+	# luz
+	"omni":OmniLight,
+	"spot":SpotLight,
+	"dir":DirectionalLight,
+	# otros
+	"camara":Camera
+}
 
 # Errores
 

@@ -28,7 +28,6 @@ func inicializar(hub):
 func gen(argumentos):
 	var tipo = argumentos["t"]
 	if tipo in tipos_validos:
-		var resultado = HUB.objetos.crear_componente(tipo)
-		resultado.set_name("body")
+		var resultado = h3.nuevo_body(tipo)
 		return resultado
 	return HUB.error(HUB.errores.error("Tipo de body inválido: "+tipo), modulo)

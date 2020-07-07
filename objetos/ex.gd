@@ -161,7 +161,7 @@ func gen(argumentos):
 			for i in range(vs-1):
 				faces.append(cara([current+i,current+i+1,current+vs+i+1,current+vs+i]))
 			current += vs
-	return h3.nuevo_mesh_rep(vertexes, faces)
+	return h3.nuevo_mesh_rep(vertexes, faces, [], "extrude")
 
 func cara(vertices):
 	if invertir_caras:

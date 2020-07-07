@@ -27,9 +27,3 @@ func es_un_racional(algo):
 
 func es_un_nodo(algo):
 	return typeof(algo) == TYPE_OBJECT and algo.has_method("get_tree")
-
-func es_un_componente(algo):
-	return typeof(algo) == TYPE_OBJECT and algo.has_method("get_tree") and not HUB.objetos.es_un_objeto(algo)
-
-func es_un_mesh_rep(algo):
-	return typeof(algo) == TYPE_OBJECT and algo.has_method("make")

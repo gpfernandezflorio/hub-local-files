@@ -23,6 +23,5 @@ func inicializar(hub):
 	return null
 
 func gen(argumentos):
-	var resultado = Camera.new()
-	resultado.set_name("cámara")
+	var resultado = h3.nueva_camara()
 	return resultado

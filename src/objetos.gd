@@ -32,17 +32,6 @@ var comportamientos_cargados = {} # Dicc(string : GDScript)
 # Diccionario con los generadores cargados
 var generadores_cargados = {} # Dicc(string : Node)
 
-var componentes_validos = {
-	# body
-	"static":StaticBody,
-	"rigid":Spatial, # Caso especial. Lo maneja el script 'rigid.gd'
-	"kinematic":KinematicBody,
-	# luz
-	"omni":OmniLight,
-	"spot":SpotLight,
-	"dir":DirectionalLight
-}
-
 func inicializar(hub):
 	HUB = hub
 	HUB.archivos.codigos_script.append(codigo_objetos)
@@ -113,15 +102,6 @@ func es_un_objeto(algo):
 				return script.get_name() == "Objeto"
 	return false
 
-# Crea un nuevo componente
-func crear_componente(id):
-	if id in componentes_validos.keys():
-		var resultado = HUB.GC.crear_nodo(componentes_validos[id])
-		if HUB.archivos.existe(HUB.hub_src.plus_file(carpeta_componentes), id+".gd"):
-			resultado.set_script(HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_componentes), id+".gd"))
-		return resultado
-	return HUB.error(HUB.errores.error('Componente desconocido: '+id), modulo)
-
 # Adjunta un script a un objeto
 func agregar_comportamiento_a_objeto(objeto, nombre_script, args=[[],{}]):
 	var comportamiento = cargar_comportamiento(nombre_script)
@@ -178,6 +158,9 @@ func componente_candidato(objeto, nombre, tipo_o_requisitos):
 		return candidatos[0]
 	# ¿Qué hago si hay más de uno?
 	return candidatos[0] # Por ahora, devuelvo el primero
+
+func ruta_componentes():
+	return HUB.hub_src.plus_file(carpeta_componentes)
 
 # Funciones auxiliares
 
