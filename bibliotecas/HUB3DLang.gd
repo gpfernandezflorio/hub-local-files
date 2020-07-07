@@ -630,8 +630,6 @@ func obtener_como_numero(clave):
 func componente_a_objeto(componente):
 	var nuevo_objeto = HRep.new(HUB)
 	nuevo_objeto.componentes.append(componente)
-	print(">")
-	print(componente.nombre)
 	if componente.nombre != null and not componente.nombre.begins_with("@@"):
 		nuevo_objeto.nombre = componente.nombre
 	return nuevo_objeto
@@ -948,6 +946,7 @@ class HRep:			# Hobjeto
 	var hijos			# Lista de HRep
 	var transform		# Spatial
 	var HUB
+	var pi_180 = PI/180.0
 	func _init(HUB):
 		nombre = null
 		componentes = []
@@ -962,17 +961,20 @@ class HRep:			# Hobjeto
 		else:
 			transform.set_translation(transform.get_transform().origin + movimiento)
 	func rotate_x(a):
-		transform.rotate_x(a)
+		transform.rotate_x(a*pi_180)
 	func rotate_y(a):
-		transform.rotate_y(a)
+		transform.rotate_y(a*pi_180)
 	func rotate_z(a):
-		transform.rotate_z(a)
+		transform.rotate_z(a*pi_180)
 	func make():
 		var resultado = HUB.objetos.crear(null)
 		if nombre != null:
 			resultado.nombrar(nombre)
 		for hijo in hijos:
-			resultado.agregar_hijo(hijo.make()[0])
+			var res = hijo.make()
+			if HUB.errores.fallo(res):
+				return res
+			resultado.agregar_hijo(res[0])
 		for componente in componentes:
 			resultado.agregar_componente(componente.make())
 		for comportamiento in comportamientos:
@@ -990,6 +992,7 @@ class CRep:			# Componente genérico
 	var transform		# Spatial
 	var params			# Dict
 	var HUB
+	var pi_180 = PI/180.0
 	func _init(HUB, tipo, clase, script, nombre):
 		self.tipo = tipo
 		self.nombre = nombre
@@ -999,11 +1002,11 @@ class CRep:			# Componente genérico
 		params = {}
 		self.HUB = HUB
 	func rotate_x(a):
-		transform.rotate_x(a)
+		transform.rotate_x(a*pi_180)
 	func rotate_y(a):
-		transform.rotate_y(a)
+		transform.rotate_y(a*pi_180)
 	func rotate_z(a):
-		transform.rotate_z(a)
+		transform.rotate_z(a*pi_180)
 	func offset(movimiento, local):
 		if local:
 			transform.translate(movimiento)
@@ -1019,6 +1022,7 @@ class CRep:			# Componente genérico
 			resultado.set_script(script)
 		for p in params.keys():
 			resultado.set(p, params[p])
+		resultado.set_transform(transform.get_transform())
 		return resultado
 
 class BodyRep extends CRep:
@@ -1186,7 +1190,7 @@ var componentes_validos = {
 	# body
 	"static":StaticBody,
 	"rigid":Spatial, # Caso especial. Lo maneja el script 'rigid.gd'
-	"kinematic":KinematicBody,
+	"kinematic":Spatial, # Caso especial. Lo maneja el script 'kinematic.gd'
 	# luz
 	"omni":OmniLight,
 	"spot":SpotLight,

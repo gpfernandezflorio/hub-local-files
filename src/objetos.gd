@@ -88,7 +88,7 @@ func borrar(objeto_o_nombre, desde=HUB.nodo_usuario.mundo):
 			return HUB.error(HUB.errores.error('No se pudo eliminar el objeto "' + \
 				nombre + '".', objeto), modulo)
 	else:
-		return HUB.error(HUB.errores.error('Argumento inválido para borrar :' + HUB.varios.str(objeto_o_nombre)), modulo)
+		return HUB.error(HUB.errores.error('Argumento inválido para borrar :' + str(objeto_o_nombre)), modulo)
 	HUB.GC.borrar_objeto(objeto)
 	return ""
 

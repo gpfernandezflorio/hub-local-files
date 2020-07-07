@@ -84,8 +84,8 @@ func periodico(delta):
 			for j in range(m[0].get_surface_count()):
 				m[0].set("surface_" + str(j+1) + "/material",m[1][j])
 	else:
-		i+=delta
+		i+=delta*2
 		for m in mallas:
 			for j in range(m[0].get_surface_count()):
 				m[0].set("surface_" + str(j+1) + "/material",material_on)
-		material_on.set("params/diffuse",Color(0.6+sin(i)/6,0.6+sin(i)/6,sin(i)/4))
+		material_on.set("params/diffuse",Color(0.6+cos(i)/6,0.6+sin(i)/6,cos(i)/4))

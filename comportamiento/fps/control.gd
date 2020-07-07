@@ -63,7 +63,7 @@ func periodico(delta):
 	var angulo = calcular_angulo()
 	var velocidad_real = velocidad.rotated(Vector3(0,1,0),angulo)
 	var movimiento = calcular_movimiento(velocidad_real, delta)
-	yo.mover(movimiento)
+	cuerpo.mover(movimiento)
 	calcular_rotacion(delta)
 
 func calcular_velocidad():
@@ -78,6 +78,11 @@ func calcular_angulo():
 
 func calcular_movimiento(velocidad, delta):
 	var movimiento = velocidad*delta
+	if cuerpo.is_colliding():
+		var cn = cuerpo.get_collision_normal()
+		#velocidad_real = cn.slide(velocidad_real)
+		#movimiento = velocidad_real*delta
+		movimiento = cn.slide(movimiento)
 	return movimiento
 
 func calcular_rotacion(delta):
