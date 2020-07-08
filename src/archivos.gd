@@ -22,6 +22,10 @@ var carpeta_recursos = "recursos"
 func inicializar(hub):
 	HUB = hub
 	file_system = FileSystem.new(HUB.ruta_raiz)
+	if not OS.is_debug_build() and not Globals.get("userfs"):
+		carpeta_recursos = Globals.get("res_dir").plus_file(carpeta_recursos)
+	else:
+		carpeta_recursos = HUB.ruta_raiz.plus_file(carpeta_recursos)
 	return true
 
 # Carga el contenido de un archivo
@@ -123,6 +127,14 @@ func listar(ruta, nombre):
 			return file_system.listar(ruta.plus_file(nombre))
 		return HUB.error(no_es_un_directorio(ruta, nombre), modulo)
 	return HUB.error(archivo_inexistente(ruta, nombre), modulo)
+
+# Recursos
+func abrir_recurso(nombre):
+	if not existe_recurso(nombre):
+		return HUB.error(recurso_inexistente(nombre), modulo)
+	return load(carpeta_recursos.plus_file(nombre))
+func existe_recurso(nombre):
+	return File.new().file_exists(carpeta_recursos.plus_file(nombre))
 
 # Funciones auxiliares
 
@@ -305,3 +317,8 @@ func no_es_un_directorio(ruta, archivo, stack_error=null):
 	return HUB.errores.error('El archivo "' + archivo + \
 	'" en la ' + ('ruta raíz' if ruta.empty() else \
 	'carpeta "' + ruta + '"') + ' no es una carpeta.', stack_error)
+
+# Recurso inexistente
+func recurso_inexistente(archivo, stack_error=null):
+	return HUB.errores.error('El recurso "' + archivo + \
+	'" no se encuentra en la carpeta de recursos.', stack_error)

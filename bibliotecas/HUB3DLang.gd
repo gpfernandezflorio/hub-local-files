@@ -1212,7 +1212,7 @@ var componentes_validos = {
 	"dir":DirectionalLight,
 	# otros
 	"camara":Camera,
-	"audio":SpatialStreamPlayer
+	"audio":Spatial # Caso especial. Lo maneja el script 'audio.gd'
 }
 
 # Errores
