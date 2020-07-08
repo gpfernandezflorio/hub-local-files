@@ -17,6 +17,8 @@ var codigos_objeto = ["HUB3DLang","Funcion"]
 # Códigos válidos de tipo script
 var codigos_script = ["SRC"]
 
+var carpeta_recursos = "recursos"
+
 func inicializar(hub):
 	HUB = hub
 	file_system = FileSystem.new(HUB.ruta_raiz)

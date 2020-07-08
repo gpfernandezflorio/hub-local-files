@@ -1189,6 +1189,9 @@ func nuevo_body(tipo):
 func nueva_luz(tipo):
 	return nuevo_componente(tipo, "OTROS", "luz")
 
+func nuevo_audio():
+	return nuevo_componente("audio", "OTROS", "audio")
+
 func nuevo_componente(tipo, grupo, nombre, baseRep = CRep):
 	if tipo in componentes_validos.keys():
 		var script = null
@@ -1208,7 +1211,8 @@ var componentes_validos = {
 	"spot":SpotLight,
 	"dir":DirectionalLight,
 	# otros
-	"camara":Camera
+	"camara":Camera,
+	"audio":SpatialStreamPlayer
 }
 
 # Errores
