@@ -596,6 +596,18 @@ func obtener_pid(pid, clave):
 
 func obtener_path(path, clave):
 	var recorrido = path.split("/")
+	for i in range(recorrido.size()):
+		var ruta = ""
+		for j in range(recorrido.size()-i-1):
+			ruta += recorrido[j] + "/"
+		ruta += recorrido[recorrido.size()-i-1]
+		var aux = obtener_path_aux(ruta, clave)
+		if aux != null:
+			return aux
+	return null
+
+func obtener_path_aux(path, clave):
+	var recorrido = path.split("/")
 	var dict = cache["PATH"]
 	for d in recorrido:
 		if not d in dict:

@@ -174,11 +174,13 @@ func validar_argumento(arg, valor, modulo):
 			elif typeof(valor)!=TYPE_REAL:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador == "COLOR":
-			if typeof(valor)==TYPE_STRING:
+			if typeof(resultado)==TYPE_INT:
+				resultado = str(resultado)
+			if typeof(resultado)==TYPE_STRING:
 				resultado = color(resultado)
 				if HUB.errores.fallo(resultado):
 					return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador, resultado), modulo)
-			elif typeof(valor)!=TYPE_COLOR:
+			elif typeof(resultado)!=TYPE_COLOR:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador == "ARR":
 			if typeof(valor) != TYPE_ARRAY:
