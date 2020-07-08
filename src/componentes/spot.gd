@@ -8,11 +8,17 @@ extends SpotLight
 var HUB
 var yo
 var intensidad
+var color
+var atenuacion
+var radio
 
 func inicializar(hub, yo):
 	HUB = hub
 	self.yo = yo
-	intensidad = get("params/energy")
+	set("params/energy", intensidad)
+	set("params/radius", radio)
+	set("params/attenuation", atenuacion)
+	set("colors/diffuse", color)
 	yo.interfaz(self, "alternar", {"lista":[]}, true)
 	yo.interfaz(self, "encender", {"lista":[]}, true)
 	yo.interfaz(self, "apagar", {"lista":[]}, true)

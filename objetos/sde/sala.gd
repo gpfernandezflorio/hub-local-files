@@ -13,3 +13,4 @@ pared:ox5:ry-90:nIzquierda:mfixed(c=866)
 switch:oz-5:oy1.8:ox3:nswitch
 (cube(!.2,.1,!.2)&(luz(r=10,i=0.5,c=ba5):oy-.1)):oy2.9:nluz
 estacion/rsa:ox4:ry90
+luz(ambient,i=.02)

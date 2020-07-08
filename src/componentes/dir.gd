@@ -1,22 +1,20 @@
-## OMNI
+## Dir
 ## SRC
 
-# Script para los componentes de tipo OmniLight
+# Script para los componentes de tipo DirectionalLight
 
-extends OmniLight
+extends DirectionalLight
 
 var HUB
 var yo
 var intensidad
 var color
 var atenuacion
-var radio
 
 func inicializar(hub, yo):
 	HUB = hub
 	self.yo = yo
 	set("params/energy", intensidad)
-	set("params/radius", radio)
 	set("params/attenuation", atenuacion)
 	set("colors/diffuse", color)
 	yo.interfaz(self, "alternar", {"lista":[]}, true)

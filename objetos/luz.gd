@@ -18,7 +18,7 @@ var arg_map = {
 		{"nombre":"atenuación", "codigo":"a", "default":1, "validar":"NUM;>0"}
 	]
 }
-var tipos_validos = ["omni","spot","dir"]
+var tipos_validos = ["omni","spot","dir","ambient"]
 
 var modulo = "Luz"
 var h3 # Biblioteca HUB3DLang
@@ -32,10 +32,10 @@ func gen(argumentos):
 	var tipo = argumentos["t"]
 	if tipo in tipos_validos:
 		var resultado = h3.nueva_luz(tipo)
-		resultado.set("params/radius", argumentos["r"])
-		resultado.set("params/attenuation", argumentos["a"])
-		resultado.set("params/energy", argumentos["i"])
-		resultado.set("colors/diffuse", argumentos["c"])
+		resultado.set("radio", argumentos["r"])
+		resultado.set("atenuacion", argumentos["a"])
+		resultado.set("intensidad", argumentos["i"])
+		resultado.set("color", argumentos["c"])
 		return resultado
 	return HUB.error(HUB.errores.error("Tipo de luz inválido: "+tipo), modulo)
 

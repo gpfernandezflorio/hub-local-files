@@ -1033,7 +1033,8 @@ class CRep:			# Componente genérico
 		if script != null:
 			resultado.set_script(script)
 		for p in params.keys():
-			resultado.set(p, params[p])
+			if p in resultado:
+				resultado.set(p, params[p])
 		resultado.set_transform(transform.get_transform())
 		return resultado
 
@@ -1210,6 +1211,7 @@ var componentes_validos = {
 	"omni":OmniLight,
 	"spot":SpotLight,
 	"dir":DirectionalLight,
+	"ambient":WorldEnvironment,
 	# otros
 	"camara":Camera,
 	"audio":Spatial # Caso especial. Lo maneja el script 'audio.gd'

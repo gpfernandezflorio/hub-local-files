@@ -18,6 +18,7 @@ var HUB3DLang
 var jugador
 var fichas
 var piso
+var luz
 
 func inicializar(hub, pid, argumentos):
 	HUB = hub
@@ -28,6 +29,7 @@ func inicializar(hub, pid, argumentos):
 	HUB.terminal.cerrar()			# Ocultar terminal
 	HUB3DLang.crear("$ficha=(body(rigid):cbox(!1,!3,!0.2)&cube(!1,!3,!0.2):nc):oy1.5:sinteractive(push,m=c)")
 	piso = HUB3DLang.crear("face(!100,!100)&body(static):cplane:nPiso")
+	luz = HUB3DLang.crear("luz(ambient,i=.9)")
 	#HUB3DLang.crear("camara:oy40:rx"+str(PI/2))
 	jugador = HUB3DLang.crear("fps")# Crear jugador
 	# Crear dominó
@@ -35,11 +37,12 @@ func inicializar(hub, pid, argumentos):
 	var delta_angulo = 0.2
 	var diff = Vector2(0,-1)
 	fichas = []
-	for i in range(130):
+	var PI_180 = 180/PI
+	for i in range(150):
 		pos += diff.rotated(i*delta_angulo)
 		if delta_angulo > 0.1:
 			delta_angulo *= 0.995
-		fichas.append(HUB3DLang.crear("ficha:mfixed(random(c)):ry"+str(-i*delta_angulo)+":ox"+str(pos.x)+":oz"+str(pos.y)))
+		fichas.append(HUB3DLang.crear("ficha:mfixed(random(c)):ry"+str(-i*delta_angulo*PI_180)+":ox"+str(pos.x)+":oz"+str(pos.y)))
 	return null
 
 func finalizar():
@@ -49,5 +52,6 @@ func finalizar():
 	HUB.objetos.borrar(jugador)
 	for p in fichas:
 		HUB.objetos.borrar(p)
+	HUB.objetos.borrar(luz)
 	HUB.objetos.borrar(piso)
 	return null
