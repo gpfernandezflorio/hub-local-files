@@ -24,8 +24,16 @@ func inicializar(hub):
 	return true
 
 # Devuelve el pid del proceso actual
-func actual():
+func actual_pid():
 	return proceso_actual
+
+func obtener(pid=null):
+	var pid_solicitado = pid
+	if pid_solicitado == null:
+		pid_solicitado = proceso_actual
+	if not pid_solicitado in procesos_activos.keys():
+		return HUB.error(pid_inexistente(pid_solicitado), modulo)
+	return procesos_activos[pid_solicitado].nodo
 
 # Crea un nuevo proceso
 func nuevo(programa, argumentos=[]):
@@ -46,12 +54,16 @@ func nuevo(programa, argumentos=[]):
 		remove_child(nodo)
 		nodo.queue_free()
 		return HUB.error(programa_no_cargado(programa, resultado), modulo)
+	procesos_activos[pid] = Proceso.new(nodo)
+	var tmp = proceso_actual
+	proceso_actual = pid
 	var resultado_inicializar = nodo.inicializar(HUB, pid, argumentos)
 	if HUB.errores.fallo(resultado_inicializar):
 		remove_child(nodo)
 		nodo.queue_free()
+		procesos_activos.erase(proceso_actual)
+		proceso_actual = tmp
 		return HUB.error(programa_no_cargado(programa, resultado_inicializar), modulo)
-	procesos_activos[pid] = Proceso.new(nodo)
 	return nodo
 
 # Devuelve la lista de procesos activos

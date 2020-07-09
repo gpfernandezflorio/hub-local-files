@@ -171,9 +171,9 @@ class VerificadorProgramaFinalizado:
 		if nombre in HUB.procesos.todos():
 			return 'Se esperaba que el proceso con pid "' + nombre + \
 			'" hubiese finalizado pero aún existe.'
-		if HUB.procesos.actual() != "HUB":
+		if HUB.procesos.actual_pid() != "HUB":
 			return 'Se esperaba que el proceso actual fuese el HUB pero es "' + \
-			HUB.procesos.actual() + '".'
+			HUB.procesos.actual_pid() + '".'
 		return ""
 
 func descripcion():

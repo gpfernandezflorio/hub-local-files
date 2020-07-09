@@ -36,3 +36,15 @@ func finalizar():
 	HUB.objetos.borrar(jugador)
 	HUB.objetos.borrar(sala)
 	return null
+
+# argumentos: [quien, target, que]
+func interruptor_luz(args):
+	var encendida = sala.hijo_nombrado("luz").mensaje("alternar")
+	#if encendida:
+	#	sala.hijo_nombrado("morse").mensaje("apagar")
+	#else:
+	#	sala.hijo_nombrado("morse").mensaje("encender")
+
+# argumentos: [quien, target, que]
+func rsa(args):
+	print("RSA")

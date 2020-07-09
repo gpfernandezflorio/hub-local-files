@@ -111,7 +111,7 @@ func inicializar(hub):
 
 func crear(texto, entorno={}):
 	if not "pid" in entorno:
-		entorno["pid"] = HUB.procesos.actual()
+		entorno["pid"] = HUB.procesos.actual_pid()
 	if not "path" in entorno:
 		entorno["path"] = null
 	if not "data" in entorno:

@@ -29,11 +29,21 @@ func inicializar(hub, yo, args):
 	HUB = hub
 	self.yo = yo
 	if args["s"] != null:
-		var code = HUB.archivos.abrir("scripts/", args["s"]+".gd")
-		if HUB.errores.fallo(code):
-			return HUB.error(HUB.errores.error("X", code), modulo)
-		script = Node.new()
-		script.set_script(code)
+		var nombre_funcion = args["s"]
+		var proceso = HUB.procesos.obtener()
+		if yo.sabe(nombre_funcion):
+			script = [yo, "mensaje", nombre_funcion]
+		elif proceso.has_method(nombre_funcion):
+			script = [proceso, nombre_funcion]
+		elif HUB.archivos.existe("scripts", nombre_funcion+".gd"):
+			var code = HUB.archivos.abrir("scripts", nombre_funcion+".gd")
+			script = [Node.new(), "exec"]
+			script[0].set_script(code)
+			var res_ini = script[0].inicializar(HUB)
+			if HUB.errores.fallo(res_ini):
+				return HUB.error(HUB.errores.error("X", res_ini), modulo)
+		else:
+			return HUB.error(HUB.errores.error("X"), modulo)
 	mallas = []
 	for m in args["m"]:
 		if yo.tiene_componente_nombrado(m):
@@ -75,7 +85,10 @@ func interact_out():
 
 func interact(quien, que):
 	if script != null:
-		script.exec(HUB, [quien, yo, que])
+		if script.size() == 3:
+			script[0].call(script[1], script[2], [quien, yo, que])
+		else:
+			script[0].call(script[1], [quien, yo, que])
 
 func periodico(delta):
 	if i < 0:

@@ -19,14 +19,18 @@ func inicializar(hub):
 	return null
 
 func comando(argumentos):
+	var actual = HUB.procesos.actual_pid()
 	for p in HUB.procesos.todos():
-		HUB.mensaje(p)
+		var m = p
+		if p == actual:
+			m = "[" + m + "]"
+		HUB.mensaje(m)
 
 func descripcion():
-	return "Finaliza un programa"
+	return "Lista los programas activos"
 
 func man():
-	var r = "[ END ] - " + descripcion()
-	r += "\nUso: end PID"
-	r += "\n PID : identificador del programa que se quiere finalizar."
+	var r = "[ PS ] - " + descripcion()
+	r += "\nUso: ps"
+	r += "\nIgnora cualquier argumento."
 	return r
