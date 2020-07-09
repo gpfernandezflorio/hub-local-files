@@ -411,7 +411,10 @@ func aplicar_modificaciones(algo, mods):
 			for script in scripts:
 				var args = [[],{}]
 				if tipos.es_una_lista(script):
-					args = script[1]
+					for i in script[1][0]:
+						args[0].append(i)
+					for i in script[1][1].keys():
+						args[1][i] = script[1][1][i]
 					script = script[0]
 				resultado.comportamientos.append([script,args])
 		# OFFSET
@@ -521,16 +524,21 @@ func base(texto, argumentos):
 		return texto
 	return HUB.error(HUB.errores.error('primitiva "'+texto+'" no definida'), modulo)
 
-func definir(clave, valor):
+func definir(clave, valor_original):
+	var copia
+	if es_una_rep(valor_original):
+		copia = copiar_rep(valor_original)
+	else:
+		copia = valor_original
 	if pila_entorno[0]["caching"]:
 		var path = pila_entorno[0]["path"]
 		var pid = pila_entorno[0]["pid"]
 		if path != null:
-			definir_path(path, clave, valor)
+			definir_path(path.plus_file(clave), copia)
 		else:
-			definir_pid(pid, clave, valor)
+			definir_pid(pid, clave, copia)
 	else:
-		pila_entorno[0]["data"][clave] = valor
+		pila_entorno[0]["data"][clave] = copia
 
 func definir_pid(pid, clave, valor):
 	var dict = cache["PID"]
@@ -539,16 +547,14 @@ func definir_pid(pid, clave, valor):
 	else:
 		cache["PID"][pid] = {clave:valor}
 
-func definir_path(path, clave, valor):
-	var recorrido = path.split("/")
+func definir_path(ruta_completa, valor):
+	var recorrido = ruta_completa.split("/")
 	var dict = cache["PATH"]
 	for d in recorrido:
 		if not d in dict:
 			dict[d] = {}
 		dict = dict[d]
-	if not clave in dict:
-		dict[clave] = {}
-	dict[clave]["."] = valor
+	dict["."] = valor
 
 func registrar_objeto(clave, objeto):
 	if "namespace" in pila_entorno[0]:
@@ -695,7 +701,7 @@ func desde_archivo_obj(ruta_completa, contenido_archivo, argumentos):
 	}
 	var obj = crear(contenido_archivo, entorno)
 	if pila_entorno[0]["caching"] and data_entorno.keys().size()==0:
-		definir_path(ruta_completa, ".", obj)
+		definir_path(ruta_completa, obj)
 	return obj
 
 func desde_archivo_func(nombre, argumentos):

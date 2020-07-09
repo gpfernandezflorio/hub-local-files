@@ -8,7 +8,7 @@ extends Node
 var HUB
 var modulo = get_parent().modulo
 # Ruta a la carpeta de comandos de HUB
-var carpeta_comandos = "comandos/"
+var carpeta_comandos = "comandos"
 # Diccionario con los comandos cargadas (en nodos)
 var comandos_cargados = {} # Dicc(string : nodo)
 # Código de comandos
@@ -26,9 +26,9 @@ func ejecutar(comando, argumentos=[]):
 	argumentos = HUB.varios.parsear_argumentos_comandos(nodo, argumentos, modulo)
 	if HUB.errores.fallo(argumentos):
 		return HUB.error(HUB.terminal.comando_fallido(comando, argumentos), modulo)
-	HUB.procesos.apilar_comando(comando)
+	var pid = HUB.procesos.apilar_comando(comando)
 	var resultado = nodo.comando(argumentos)
-	HUB.procesos.desapilar_comando()
+	HUB.procesos.desapilar_comando(pid)
 	if HUB.errores.fallo(resultado):
 		return HUB.error(HUB.terminal.comando_fallido(comando, resultado), modulo)
 	return resultado

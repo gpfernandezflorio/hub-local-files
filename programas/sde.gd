@@ -17,24 +17,48 @@ var HUB3DLang
 
 var jugador
 var sala
+var ventana
 
 func inicializar(hub, pid, argumentos):
 	HUB = hub
 	self.pid = pid
 	HUB3DLang = lib_map["HUB3DLang"]
 	HUB.pantalla.completa()			# Pantalla completa
-	HUB.eventos.set_modo_mouse(2)	# Ocultar mouse
 	HUB.terminal.cerrar()			# Ocultar terminal
-	jugador = HUB3DLang.crear("fps:ox-4:oz4:ry45")
-	sala = HUB3DLang.crear("sde/sala:nsala")
+	pantalla_inicio()
 	return null
 
+func pantalla_inicio():
+	HUB.eventos.set_modo_mouse()	# Mostrar mouse
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"tamanio":Vector2(75,75),
+		"botones":[
+			{"texto":"comenzar","accion":"crear_sala"},
+			{"texto":"salir","accion":"salir"}
+		]
+	})
+
+func crear_sala():
+	if ventana != null:
+		ventana.cerrar()
+		ventana = null
+	HUB.eventos.set_modo_mouse(2)	# Ocultar mouse
+	jugador = HUB3DLang.crear("fps:ox-4:oz4:ry45")
+	sala = HUB3DLang.crear("sde/sala:nsala")
+
+func salir():
+	HUB.procesos.finalizar(self)
+
 func finalizar():
+	if ventana != null:
+		ventana.cerrar()
+	if jugador != null:
+		HUB.objetos.borrar(jugador)
+	if sala != null:
+		HUB.objetos.borrar(sala)
 	HUB.eventos.set_modo_mouse()
-	HUB.terminal.abrir()
 	HUB.pantalla.completa(false)
-	HUB.objetos.borrar(jugador)
-	HUB.objetos.borrar(sala)
+	HUB.terminal.abrir()
 	return null
 
 # argumentos: [quien, target, que]

@@ -32,6 +32,7 @@ func borrar_nodo(nodo):
 	var id_referencia = str(nodo)
 	if id_referencia in mapa_de_referencias:
 		mapa_de_referencias.erase(id_referencia)
+	nodo.queue_free()
 
 func borrar_objeto(objeto):
 	for hijo in objeto.hijos():

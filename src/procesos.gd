@@ -10,7 +10,7 @@ extends Node
 var HUB
 var modulo = "PROCESOS"
 # Ruta a la carpeta de programas de HUB
-var carpeta_programas = "programas/"
+var carpeta_programas = "programas"
 # Código de programas
 var codigo = "Programa"
 # Procesos del sistema indexados por pid (un string)
@@ -85,20 +85,25 @@ func entorno(pid=null):
 	return resultado
 
 # Finaliza un proceso por su identificador
-func finalizar(pid=null):
-	var pid_solicitado = pid
+func finalizar(pid_o_nodo=null):
+	var pid_solicitado = pid_o_nodo
 	if pid_solicitado == null:
 		pid_solicitado = proceso_actual
-	if not pid_solicitado in procesos_activos.keys():
-		return HUB.error(pid_inexistente(pid_solicitado), modulo)
-	if pid_solicitado == "HUB":
-		return HUB.error(pid_invalido(pid_solicitado), modulo)
-	var proceso_solicitado = procesos_activos[pid_solicitado]
-	procesos_activos.erase(pid_solicitado)
-	proceso_solicitado.nodo.finalizar()
-	proceso_solicitado.nodo.queue_free()
-	if pid_solicitado == proceso_actual:
-		proceso_actual = "HUB"
+	if typeof(pid_solicitado) == TYPE_STRING:
+		if not pid_solicitado in procesos_activos.keys():
+			return HUB.error(pid_inexistente(pid_solicitado), modulo)
+		if pid_solicitado == "HUB":
+			return HUB.error(pid_invalido(pid_solicitado), modulo)
+		var proceso_solicitado = procesos_activos[pid_solicitado]
+		procesos_activos.erase(pid_solicitado)
+		proceso_solicitado.nodo.finalizar()
+		proceso_solicitado.nodo.queue_free()
+		if pid_solicitado == proceso_actual:
+			proceso_actual = "HUB"
+	else:
+		for pid in procesos_activos.keys():
+			if procesos_activos[pid].nodo == pid_solicitado:
+				finalizar(pid)
 
 # Funciones auxiliares
 
@@ -108,13 +113,15 @@ func apilar_comando(comando, proceso=null):
 	if i_proceso == null:
 		i_proceso = proceso_actual
 	procesos_activos[i_proceso].apilar(comando)
+	return i_proceso
 
 # Desapila un comando en la pila de comandos de un proceso
 func desapilar_comando(proceso=null):
 	var i_proceso = proceso
 	if i_proceso == null:
 		i_proceso = proceso_actual
-	procesos_activos[i_proceso].desapilar()
+	if i_proceso in procesos_activos.keys():
+		procesos_activos[i_proceso].desapilar()
 
 # Devuelve la pila de comandos de un proceso
 func pila_comandos(proceso=null):
