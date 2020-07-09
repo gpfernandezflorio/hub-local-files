@@ -35,25 +35,7 @@ func gui(nodo, args):
 	args["nodo"] = nodo
 	if "componentes" in args:
 		for c in args["componentes"]:
-			if "posicion" in c:
-				var p = c["posicion"]
-				if typeof(p) == TYPE_STRING:
-					var ps = p.split("-")
-					var a = ["c","c"]
-					if ps.size()==1:
-						a = parse_a(a,p)
-					elif ps.size()==2:
-						a = parse_a_y(a,ps[0])
-						a = parse_a_x(a,ps[1])
-					c["posicion"] = [a[0],a[1],Vector2(0,0)]
-				elif typeof(p) == TYPE_VECTOR2:
-					c["posicion"] = ["t","l",p]
-			else:
-				c["posicion"] = ["t","l",Vector2(0,0)]
-			if not "clase" in c:
-				c["clase"] = Panel
-			if not "hijos" in c:
-				c["hijos"] = []
+			completar_componente(c)
 	else:
 		args["componentes"] = []
 
@@ -72,12 +54,79 @@ func ventana(nodo, args):
 		pass
 	else:
 		args["botones"] = []
+	if "cuerpo" in args:
+		for c in args["cuerpo"]:
+			completar_componente(c)
+	else:
+		args["cuerpo"] = []
 
 	var panel = HUB.GC.crear_nodo(Panel)
 	panel.set_script(script_ventana)
 	gui.add_child(panel)
 	panel.inicializar(HUB, args)
 	return panel
+
+func inicializar_componente(c, dict_ids=null):
+	var nodo = HUB.GC.crear_nodo(c["clase"])
+	c["nodo"] = nodo
+	if "id" in c and dict_ids != null:
+		dict_ids[c["id"]] = nodo
+	if "args" in c:
+		for a in c["args"].keys():
+			nodo.set(a,c["args"][a])
+	for h in c["hijos"]:
+		inicializar_componente(h)
+		nodo.add_child(h["nodo"])
+
+func completar_componente(c):
+	if "posicion" in c:
+		var p = c["posicion"]
+		if typeof(p) == TYPE_STRING:
+			var ps = p.split("-")
+			var a = ["c","c"]
+			if ps.size()==1:
+				a = parse_a(a,p)
+			elif ps.size()==2:
+				a = parse_a_y(a,ps[0])
+				a = parse_a_x(a,ps[1])
+			c["posicion"] = [a[0],a[1],Vector2(0,0)]
+		elif typeof(p) == TYPE_VECTOR2:
+			c["posicion"] = ["t","l",p]
+	else:
+		c["posicion"] = ["t","l",Vector2(0,0)]
+	if not "clase" in c:
+		c["clase"] = Panel
+	if "hijos" in c:
+		for h in c["hijos"]:
+			completar_componente(h)
+	else:
+		c["hijos"] = []
+
+func resize_componente(c, marco=HUB.pantalla.resolucion):
+	var nodo = c["nodo"]
+	var size
+	if "tamanio" in c:
+		size = Vector2(marco.x*c["tamanio"].x/100,marco.y*c["tamanio"].y/100)
+		nodo.set_size(size)
+	else:
+		size = nodo.get_size()
+	var a_y = c["posicion"][0]
+	var a_x = c["posicion"][1]
+	var offset = c["posicion"][2]
+	offset = Vector2(marco.x*offset.x/100,marco.y*offset.y/100)
+	var pos = offset
+	if a_x == "r":
+		pos.x = marco.x-size.x-offset.x
+	elif a_x == "c":
+		pos.x = (marco.x-size.x)/2+offset.x
+	if a_y == "b":
+		pos.y = marco.y-size.y-offset.y
+	elif a_y == "c":
+		pos.y = (marco.y-size.y)/2+offset.y
+	nodo.set_size(size)
+	nodo.set_pos(pos)
+	for h in c["hijos"]:
+		resize_componente(h, size)
 
 func parse_a_y(a,p):
 	var res = a

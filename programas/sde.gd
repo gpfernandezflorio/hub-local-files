@@ -30,11 +30,16 @@ func inicializar(hub, pid, argumentos):
 
 func pantalla_inicio():
 	HUB.eventos.set_modo_mouse()	# Mostrar mouse
+	var texto_intro = HUB.archivos.leer("data/sde","intro.txt")
 	ventana = HUB.nodo_usuario.ventana(self,{
 		"tamanio":Vector2(75,75),
 		"botones":[
 			{"texto":"comenzar","accion":"crear_sala"},
 			{"texto":"salir","accion":"salir"}
+		],
+		"cuerpo":[
+			{"clase":ScrollContainer,"tamanio":Vector2(95,98),"posicion":"center","args":{"scroll/horizontal":false},
+			"hijos":[{"clase":Label,"args":{"text":texto_intro},"tamanio":Vector2(5,5)}]}
 		]
 	})
 
