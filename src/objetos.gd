@@ -14,15 +14,15 @@ extends Node
 var HUB
 var modulo = "OBJETOS"
 # Ruta a la carpeta de archivos fuente de este módulo
-var carpeta_src = "objetos/"
+var carpeta_src = "objetos"
 # Ruta a la carpeta de scripts de componentes
-var carpeta_componentes = "componentes/"
+var carpeta_componentes = "componentes"
 # Script genérico de un objeto
 var script_objeto = "objeto.gd"
 # Ruta a la carpeta de scripts de objeto
-var carpeta_objetos = "objetos/"
+var carpeta_objetos = "objetos"
 # Ruta a la carpeta de scripts de comportamiento
-var carpeta_comportamientos = "comportamiento/"
+var carpeta_comportamientos = "comportamiento"
 # Codigo de objetos
 var codigo_objetos = "Objeto"
 # Codigo de comportamientos

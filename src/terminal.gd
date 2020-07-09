@@ -53,6 +53,8 @@ func inicializar(hub):
 			componente[2]
 		):
 			return false
+	for nodo in [self, campo_entrada, campo_mensajes]:
+		HUB.GC.excepcion(nodo)
 	inicializar_input()
 	return true
 

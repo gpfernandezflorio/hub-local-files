@@ -15,12 +15,12 @@ var mapa_de_referencias
 func inicializar(hub):
 	HUB = hub
 	mapa_de_referencias = {}
-	for nodo in [ # Agrego estos como válidos para que el nodo de eventos no los ignore
-		HUB.pantalla, HUB.terminal, HUB.terminal.campo_entrada, HUB.terminal.campo_mensajes
-	]:
-		var id_referencia = str(nodo)
-		mapa_de_referencias[id_referencia] = {"nodo":nodo}
+	excepcion(HUB.pantalla)
 	return true
+
+func excepcion(nodo):
+	var id_referencia = str(nodo)
+	mapa_de_referencias[id_referencia] = {"nodo":nodo}
 
 func crear_nodo(clase):
 	var nodo = clase.new()

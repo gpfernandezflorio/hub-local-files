@@ -48,12 +48,12 @@ func inicializar(hub):
 		[pantalla,     "pantalla",   "Pantalla"],
 		[objetos,      "objetos",    "Objetos"],
 		[bibliotecas,  "bibliotecas","Bibliotecas"],
-		[terminal,     "terminal",   "Terminal"],
 		[errores,      "errores",    "Errores"],
 		[procesos,     "procesos",   "Procesos"],
 		[testing,      "testing",    "Testing"],
 		[GC,           "GC",         "GC"],
 		[nodo_usuario, "usuario",    "Nodo Usuario"],
+		[terminal,     "terminal",   "Terminal"],
 		[varios,       "varios",     "Varios"]
 	]:
 		if not inicializar_componente(

@@ -32,6 +32,11 @@ func tamanio(nueva_resolucion):
 	OS.set_window_size(nueva_resolucion)
 	resolucion = OS.get_window_size()
 
+func coordenadas(x,y):
+	return Vector2(resolucion.x*x/100,resolucion.y*y/100)
+func centrado(vector):
+	return Vector2((resolucion.x-vector.x)/2,(resolucion.y-vector.y)/2)
+
 # Funciones auxiliares
 
 func ventana_escalada(nueva_resolucion):
