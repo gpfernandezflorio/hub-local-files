@@ -97,8 +97,9 @@ func inicializar(hub):
 		["STRING",["EXPR"]],							# 26
 		["STRING",["string"]],							# 27
 		["ARG",["=","variable"]],						# 28 # Bool
-		["C",[]],										# 29
-		["C",["comentario"]]							# 30
+		["STRING",["$","numero"]],						# 29
+		["C",[]],										# 30
+		["C",["comentario"]]							# 31
 	], {
 		"variable":regex_var,		# variables
 		"numero":regex_num, 		# números
@@ -379,6 +380,13 @@ func reduce(produccion, valores):
 	# ARG -> = variable
 	if produccion == 28:
 		return [valores[1],""]
+	# STRING -> $ numero
+	if produccion == 29:
+		var valor = valores[1]
+		valor = obtener_entorno(valor)
+		if valor != null:
+			return valor
+		return HUB.error(HUB.errores.error('No se pasó un argumento número '+valores[1], modulo))
 	return null
 
 # Auxiliares
@@ -572,13 +580,9 @@ func objeto_registrado(clave):
 
 func obtener(clave):
 	# Primero la busco en el entorno
-	for e in pila_entorno:
-		if clave in e["data"]:
-			var valor = e["data"][clave]
-			if es_una_rep(valor):
-				return copiar_rep(valor)
-			else:
-				return valor
+	var obt_ent = obtener_entorno(clave)
+	if obt_ent != null:
+		return obt_ent
 	# Si no está en el entorno, la busco en la cache
 	var path = pila_entorno[0]["path"]
 	if path == null:
@@ -590,6 +594,16 @@ func obtener(clave):
 	var obt_pid = obtener_pid(pid, clave)
 	if obt_pid != null:
 		return obt_pid
+	return null
+
+func obtener_entorno(clave):
+	for e in pila_entorno:
+		if clave in e["data"]:
+			var valor = e["data"][clave]
+			if es_una_rep(valor):
+				return copiar_rep(valor)
+			else:
+				return valor
 	return null
 
 func obtener_pid(pid, clave):
@@ -824,7 +838,8 @@ func agregar_colisionador(body, cs):
 			return HUB.error(HUB.errores.error('Identificador de colisionador inválido: '+id), modulo)
 
 var material_arg_map = {"lista":[
-	{"nombre":"color", "codigo":"c", "default":Color("ffffff"), "validar":"COLOR"}
+	{"nombre":"color", "codigo":"c", "default":Color("ffffff"), "validar":"COLOR"},
+	{"nombre":"textura", "codigo":"t", "default":null}
 ]}
 
 func agregar_material(meshes, mat):
@@ -845,6 +860,11 @@ func agregar_material(meshes, mat):
 	if material == null:
 		material = FixedMaterial.new()
 	material.set("params/diffuse", args["c"])
+	if args["t"] != null:
+		if HUB.archivos.existe_recurso(args["t"] + ".png"):
+			material.set("textures/diffuse", HUB.archivos.abrir_recurso(args["t"] + ".png"))
+		else:
+			HUB.error(HUB.errores.error('Textura "'+args["t"]+'" inválida.', args), modulo)
 	for mi in meshes:
 		mi.material = material
 
