@@ -158,6 +158,10 @@ func validar_argumento(arg, valor, modulo):
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
 		elif validador == "STR":
 			resultado = str(resultado)
+		elif validador == "V2": # TODO
+			resultado = resultado
+		elif validador == "V3": # TODO
+			resultado = resultado
 		elif validador == "NUM":
 			if typeof(valor)==TYPE_STRING and valor.is_valid_integer():
 				resultado = int(resultado)

@@ -66,6 +66,12 @@ func cerrar():
 	HUB.eventos.anular_ventana_escalada(self)
 	HUB.GC.borrar_nodo(self)
 
+func ocultar():
+	set("visibility/visible", false)
+
+func mostrar():
+	set("visibility/visible", true)
+
 func resize(nuevo_tamanio):
 	var size
 	if tamanio == null:

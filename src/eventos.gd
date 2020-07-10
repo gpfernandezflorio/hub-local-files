@@ -204,14 +204,29 @@ func ejecutar(sec):
 	paso = paso.split("|")
 	if paso[0] == "W":
 		return int(paso[1])
+	if paso[0] == "F":
+		var f = paso[1]
+		var args = argumentos(paso)
+		nodo.call(f, args)
 	if paso[0] == "M":
 		var m = paso[1]
-		var args = []
-		for i in range(paso.size()-2):
-			args.append(paso[i+2])
+		var args = argumentos(paso)
 		nodo.mensaje(m, args)
 		return null
 	return -1
+
+func argumentos(l):
+	var args = []
+	for i in range(l.size()-2):
+		args.append(arg(l[i+2]))
+	return args
+
+func arg(x):
+	if x.is_valid_integer():
+		return int(x)
+	elif x.is_valid_float():
+		return float(x)
+	return x
 
 # Constantes del teclado:
 #	KEY_ESCAPE,KEY_F1,KEY_F2,KEY_F3,KEY_F4,KEY_F5,KEY_F6,KEY_F7,KEY_F8,KEY_F9,KEY_F10,KEY_F11,KEY_F12,

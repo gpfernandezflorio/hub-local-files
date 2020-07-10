@@ -17,6 +17,7 @@ func inicializar(hub, yo):
 	set("params/energy", intensidad)
 	set("params/attenuation", atenuacion)
 	set("colors/diffuse", color)
+	set("shadow/shadow", true)
 	yo.interfaz(self, "alternar", {"lista":[]}, true)
 	yo.interfaz(self, "encender", {"lista":[]}, true)
 	yo.interfaz(self, "apagar", {"lista":[]}, true)

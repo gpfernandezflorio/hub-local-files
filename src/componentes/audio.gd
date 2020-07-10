@@ -56,6 +56,8 @@ func finalizar():
 	HUB.eventos.anular_periodico(self)
 
 func silencio(args):
+	player_real.set("stream/loop", false)
+	player_real.set("stream/autoplay", false)
 	player_real.stop()
 
 func sonar(args):

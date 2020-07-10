@@ -29,6 +29,13 @@ func inicializar(hub):
 	add_child(componentes)
 	comportamientos.set_name("Comportamientos")
 	add_child(comportamientos)
+#	interfaz = {
+#	"mover":[self,{"obligatorios":1,
+#		"lista":[{"nombre":"cuanto","codigo":"a","validar":"V3"}]}],
+#	"rotar":[self,{"obligatorios":2,
+#		"lista":[{"nombre":"eje","codigo":"e"},
+#				{"nombre":"cuanto","codigo":"a","validar":"NUM"}]}]
+#	}
 	return true
 
 # Recibe un mensaje
@@ -162,6 +169,14 @@ func mover(cuanto):
 	set_translation(get_transform().origin + cuanto)
 	for c in bodies:
 		c.mover(cuanto)
+
+func rotar(eje, cuanto):
+	if eje == "x":
+		rotate_x(cuanto)
+	elif eje == "y":
+		rotate_y(cuanto)
+	elif eje == "z":
+		rotate_z(cuanto)
 
 func moveme(c):
 	bodies.append(c)

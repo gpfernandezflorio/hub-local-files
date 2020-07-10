@@ -45,7 +45,7 @@ func nuevo(programa, argumentos=[]):
 	while pid in procesos_activos.keys():
 		i += 1
 		pid = programa + "_" + str(i)
-	var nodo = Node.new()
+	var nodo = HUB.GC.crear_nodo(Node)
 	add_child(nodo)
 	nodo.set_name(pid)
 	nodo.set_script(script_programa)

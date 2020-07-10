@@ -22,7 +22,7 @@ var yo
 var t_punto = 100
 var t_raya = 300
 var t_entre_puntos = 100
-var t_entre_letras = 500
+var t_entre_letras = 700
 var t_entre_repeticiones = 2000
 var activo = false
 var secuencia
