@@ -14,3 +14,4 @@ switch:oz-5:oy1.8:ox3:nswitch
 (cube(!.2,.1,!.2):mfixed(fff)&(luz(r=10,i=0.5,c=ba5):oy-.1)):oy2.9:nluz
 estacion/rsa:ox4:ry90:nrsa
 luz(ambient,i=.02):nluz_ambiente
+morse:nmorse:ox-4:oz5:oy2

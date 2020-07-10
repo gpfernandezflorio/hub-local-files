@@ -33,6 +33,7 @@ func alternar(args):
 		encender(args)
 	else:
 		apagar(args)
+	return i==0
 
 func encender(args):
 	env.set("ambient_light/energy",intensidad)

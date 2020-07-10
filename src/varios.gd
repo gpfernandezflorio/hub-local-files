@@ -156,6 +156,8 @@ func validar_argumento(arg, valor, modulo):
 				resultado = true
 			elif typeof(valor)!=TYPE_BOOL:
 				return HUB.error(argumento_tipo_incorrecto(arg.nombre, valor, validador), modulo)
+		elif validador == "STR":
+			resultado = str(resultado)
 		elif validador == "NUM":
 			if typeof(valor)==TYPE_STRING and valor.is_valid_integer():
 				resultado = int(resultado)

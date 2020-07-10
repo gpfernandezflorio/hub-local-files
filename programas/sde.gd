@@ -55,11 +55,15 @@ func crear_sala():
 		ventana = null
 	HUB.eventos.set_modo_mouse(2)
 	jugador = HUB3DLang.crear("fps:ox-4:oz4:ry45")
+	if HUB.errores.fallo(jugador):
+		return jugador
 	sala = HUB3DLang.crear("sde/sala:nsala")
+	if HUB.errores.fallo(sala):
+		return sala
 	light_switch = sala.hijo_nombrado("switch")
 	monitor = sala.hijo_nombrado("rsa").hijo_nombrado("monitor")
 	luz = sala.hijo_nombrado("luz")
-	#morse = sala.hijo_nombrado("morse")
+	morse = sala.hijo_nombrado("morse")
 
 func salir():
 	HUB.procesos.finalizar(self)
@@ -118,10 +122,10 @@ func interruptor_luz(args):
 		texto += " la luz"
 		var label = HUB.nodo_usuario.gui_id("tip")
 		label.set_text(texto)
-	#if encendida:
-	#	morse.mensaje("apagar")
-	#else:
-	#	morse.mensaje("encender")
+	if encendida:
+		morse.mensaje("desactivar")
+	else:
+		morse.mensaje("activar")
 
 # argumentos: [quien, target, que]
 func rsa(args):

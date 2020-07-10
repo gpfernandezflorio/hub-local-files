@@ -13,6 +13,7 @@ var modulo = "EVENTOS"
 # Diccionario que guarda, para cada accion, una lista de pares nodo-función registrados para esa acción
 var registro_eventos = {} # Dicc(string : [{nodo, función}])
 var modo_mouse = 0
+var secuencias = [] # Diccionarios con nodo, id, índice, contador y secuencia
 
 func inicializar(hub):
 	HUB = hub
@@ -88,6 +89,7 @@ func _input(ev):
 
 func _fixed_process(delta):
 	periodico(delta)
+	secuencias(delta)
 
 func registrar_generico(accion, nodo, funcion):
 	if registro_eventos.has(accion):
@@ -157,6 +159,59 @@ func periodico(delta):
 				nodo.call(registro["funcion"], delta)
 			else:
 				registro_eventos["T"].erase(registro)
+
+func registrar_secuencia(nodo, id, secuencia):
+	secuencias.append({
+		"nodo":nodo,
+		"id":id,
+		"i":0,
+		"contador":0,
+		"secuencia":secuencia,
+		"esperando":0
+	})
+
+func anular_secuencia(nodo, id):
+	for sec in secuencias:
+		if sec["nodo"] == nodo and sec["id"] == id:
+			secuencias.erase(sec)
+
+func secuencias(delta):
+	for sec in secuencias:
+		sec["contador"] += delta*1000
+		if sec["contador"] > sec["esperando"]:
+			sec["contador"] = 0
+			avanzar_secuencia(sec)
+
+func avanzar_secuencia(sec):
+	var wait = null
+	while wait == null:
+		wait = ejecutar(sec)
+	if wait < 0:
+		secuencias.erase(sec)
+	else:
+		sec["esperando"] = wait
+
+func ejecutar(sec):
+	var nodo = sec["nodo"]
+	var i = sec["i"]
+	if i >= sec["secuencia"].size():
+		return -1
+	var paso = sec["secuencia"][i]
+	if paso == "R":
+		sec["i"] = 0
+		return null
+	sec["i"] += 1
+	paso = paso.split("|")
+	if paso[0] == "W":
+		return int(paso[1])
+	if paso[0] == "M":
+		var m = paso[1]
+		var args = []
+		for i in range(paso.size()-2):
+			args.append(paso[i+2])
+		nodo.mensaje(m, args)
+		return null
+	return -1
 
 # Constantes del teclado:
 #	KEY_ESCAPE,KEY_F1,KEY_F2,KEY_F3,KEY_F4,KEY_F5,KEY_F6,KEY_F7,KEY_F8,KEY_F9,KEY_F10,KEY_F11,KEY_F12,
