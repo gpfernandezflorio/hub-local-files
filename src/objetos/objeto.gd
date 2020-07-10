@@ -183,6 +183,16 @@ func interfaz(nodo, funcion, arg_map, es_primitiva=false):
 func sabe(funcion):
 	return funcion in interfaz
 
+func pausa(mode=true):
+	for c in componentes():
+		if c.has_method("pausa"):
+			c.pausa(mode)
+	for c in comportamientos():
+		if c.has_method("pausa"):
+			c.pausa(mode)
+	for c in hijos():
+		c.pausa(mode)
+
 # Funciones Auxiliares
 
 func nombrar_sin_colision(nodo, nombre_base, padre):

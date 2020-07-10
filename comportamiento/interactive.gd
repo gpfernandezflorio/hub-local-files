@@ -13,6 +13,7 @@ var arg_map = {
 	"lista":[
 		{"nombre":"script", "codigo":"s", "default":null},
 		{"nombre":"mallas", "codigo":"m", "default":[], "validar":"ARR"},
+		{"nombre":"preview", "codigo":"p", "default":null},
 		{"nombre":"radio", "codigo":"r", "default":2, "validar":"NUM;>0"}
 	]
 }
@@ -23,6 +24,7 @@ var colisionador
 var mallas
 var material_on
 var script
+var preview
 var i = -1
 
 func inicializar(hub, yo, args):
@@ -40,6 +42,22 @@ func inicializar(hub, yo, args):
 			script = [Node.new(), "exec"]
 			script[0].set_script(code)
 			var res_ini = script[0].inicializar(HUB)
+			if HUB.errores.fallo(res_ini):
+				return HUB.error(HUB.errores.error("X", res_ini), modulo)
+		else:
+			return HUB.error(HUB.errores.error("X"), modulo)
+	if args["p"] != null:
+		var nombre_funcion = args["p"]
+		var proceso = HUB.procesos.obtener()
+		if yo.sabe(nombre_funcion):
+			preview = [yo, "mensaje", nombre_funcion]
+		elif proceso.has_method(nombre_funcion):
+			preview = [proceso, nombre_funcion]
+		elif HUB.archivos.existe("scripts", nombre_funcion+".gd"):
+			var code = HUB.archivos.abrir("scripts", nombre_funcion+".gd")
+			preview = [Node.new(), "exec"]
+			preview[0].set_script(code)
+			var res_ini = preview[0].inicializar(HUB)
 			if HUB.errores.fallo(res_ini):
 				return HUB.error(HUB.errores.error("X", res_ini), modulo)
 		else:
@@ -77,11 +95,21 @@ func materiales(mesh):
 		ms.append(mesh.get("surface_" + str(j+1) + "/material"))
 	return ms
 
-func interact_in():
+func interact_in(quien):
 	i = 0
+	if preview != null:
+		if preview.size() == 3:
+			preview[0].call(preview[1], preview[2], [quien, yo, true])
+		else:
+			preview[0].call(preview[1], [quien, yo, true])
 	HUB.eventos.registrar_periodico(self, "periodico")
-func interact_out():
+func interact_out(quien):
 	i = -1
+	if preview != null:
+		if preview.size() == 3:
+			preview[0].call(preview[1], preview[2], [quien, yo, false])
+		else:
+			preview[0].call(preview[1], [quien, yo, false])
 
 func interact(quien, que):
 	if script != null:

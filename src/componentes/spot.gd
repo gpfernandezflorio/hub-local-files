@@ -21,6 +21,7 @@ func inicializar(hub, yo):
 	set("colors/diffuse", color)
 	yo.interfaz(self, "alternar", {"lista":[]}, true)
 	yo.interfaz(self, "encender", {"lista":[]}, true)
+	yo.interfaz(self, "encendida", {"lista":[]}, true)
 	yo.interfaz(self, "apagar", {"lista":[]}, true)
 	return true
 
@@ -36,3 +37,6 @@ func encender(args):
 
 func apagar(args):
 	set("params/energy", 0)
+
+func encendida(args):
+	return get("params/energy")!=0

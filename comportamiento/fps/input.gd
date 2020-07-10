@@ -55,6 +55,12 @@ func inicializar(hub, yo, args):
 func finalizar():
 	anular_inputs()
 
+func pausa(mode=true):
+	if mode:
+		anular_inputs()
+	else:
+		registrar_inputs()
+
 func anular_inputs():
 	if control == "KM":
 		HUB.eventos.anular_mouse_mov(self)

@@ -22,6 +22,7 @@ func inicializar(hub, yo):
 	set_environment(env)
 	yo.interfaz(self, "alternar", {"lista":[]}, true)
 	yo.interfaz(self, "encender", {"lista":[]}, true)
+	yo.interfaz(self, "encendida", {"lista":[]}, true)
 	yo.interfaz(self, "apagar", {"lista":[]}, true)
 	
 	return true
@@ -38,3 +39,6 @@ func encender(args):
 
 func apagar(args):
 	env.set("ambient_light/energy",0)
+
+func encendida(args):
+	return get("ambient_light/energy")!=0

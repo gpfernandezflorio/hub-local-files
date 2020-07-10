@@ -11,6 +11,6 @@ pared:ox-5:ry90:nDerecha:mfixed(c=223)
 pared:ox5:ry-90:nIzquierda:mfixed(c=866)
 (face(!10,!10,-y)&body(static):cbox(!10,1,!10)):nTecho:oy3:mfixed(c=443)
 switch:oz-5:oy1.8:ox3:nswitch
-(cube(!.2,.1,!.2)&(luz(r=10,i=0.5,c=ba5):oy-.1)):oy2.9:nluz
+(cube(!.2,.1,!.2):mfixed(fff)&(luz(r=10,i=0.5,c=ba5):oy-.1)):oy2.9:nluz
 estacion/rsa:ox4:ry90:nrsa
 luz(ambient,i=.02):nluz_ambiente

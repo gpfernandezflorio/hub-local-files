@@ -11,7 +11,8 @@ var HUB
 
 var arg_map = {
 	"lista":[
-		{"nombre":"radio", "codigo":"r", "default":1, "validar":"NUM;>0"}
+		{"nombre":"radio", "codigo":"r", "default":1, "validar":"NUM;>0"},
+		{"nombre":"offset", "codigo":"o", "default":[], "validar":"ARR"}
 	]
 }
 
@@ -31,8 +32,15 @@ func inicializar(hub, yo, args):
 	self.yo = yo
 	colisionador = Area.new()
 	var shape = SphereShape.new()
+	var offset = Transform()
+	if args["o"].size()>2:
+		offset.origin.z = float(args["o"][2])
+	if args["o"].size()>1:
+		offset.origin.y = float(args["o"][1])
+	if args["o"].size()>0:
+		offset.origin.x = float(args["o"][0])
 	shape.set_radius(args["r"])
-	colisionador.add_shape(shape)
+	colisionador.add_shape(shape, offset)
 	colisionador.connect("area_enter_shape", self, "contacto_in")
 	colisionador.connect("area_exit_shape", self, "contacto_out")
 	add_child(colisionador)
@@ -43,9 +51,9 @@ func inicializar(hub, yo, args):
 func contacto_in(i, objeto, a, s):
 	if objeto.get_parent().has_method("interact_in"):
 		var interactive = objeto.get_parent()
-		interactive.interact_in()
+		interactive.interact_in(yo)
 		if not posibilidades.empty():
-			posibilidades[0].interact_out()
+			posibilidades[0].interact_out(yo)
 		posibilidades.push_front(interactive)
 
 func contacto_out(i, objeto, a, s):
@@ -56,7 +64,7 @@ func contacto_out(i, objeto, a, s):
 		var change = posibilidades[0] == interactive
 		posibilidades.erase(interactive)
 		if change:
-			interactive.interact_out()
+			interactive.interact_out(yo)
 			if not posibilidades.empty():
 				var mi_posicion = get_global_transform().origin
 				var candidato = posibilidades[0]
@@ -68,7 +76,7 @@ func contacto_out(i, objeto, a, s):
 						distancia = distancia_c
 				posibilidades.erase(candidato)
 				posibilidades.push_front(candidato)
-				candidato.interact_in()
+				candidato.interact_in(yo)
 
 func interact(args):
 	if not posibilidades.empty():

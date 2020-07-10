@@ -2,7 +2,6 @@ extends Control
 
 var HUB
 var componentes
-var ids = {}
 
 # ARGS:
 #	nodo: Node
@@ -21,7 +20,7 @@ func inicializar(hub, args):
 	componentes = args["componentes"]
 
 	for c in componentes:
-		HUB.nodo_usuario.inicializar_componente(c, ids)
+		HUB.nodo_usuario.inicializar_componente(c)
 		add_child(c["nodo"])
 
 	resize(null)

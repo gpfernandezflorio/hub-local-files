@@ -18,6 +18,12 @@ var HUB3DLang
 var jugador
 var sala
 var ventana
+var tip
+
+var light_switch
+var luz
+var monitor
+var morse
 
 func inicializar(hub, pid, argumentos):
 	HUB = hub
@@ -34,8 +40,8 @@ func pantalla_inicio():
 	ventana = HUB.nodo_usuario.ventana(self,{
 		"tamanio":Vector2(75,75),
 		"botones":[
-			{"texto":"comenzar","accion":"crear_sala"},
-			{"texto":"salir","accion":"salir"}
+			{"texto":"Comenzar","accion":"crear_sala"},
+			{"texto":"Salir","accion":"salir"}
 		],
 		"cuerpo":[
 			{"clase":ScrollContainer,"tamanio":Vector2(95,98),"posicion":"center","args":{"scroll/horizontal":false},
@@ -47,9 +53,13 @@ func crear_sala():
 	if ventana != null:
 		ventana.cerrar()
 		ventana = null
-	HUB.eventos.set_modo_mouse(2)	# Ocultar mouse
+	HUB.eventos.set_modo_mouse(2)
 	jugador = HUB3DLang.crear("fps:ox-4:oz4:ry45")
 	sala = HUB3DLang.crear("sde/sala:nsala")
+	light_switch = sala.hijo_nombrado("switch")
+	monitor = sala.hijo_nombrado("rsa").hijo_nombrado("monitor")
+	luz = sala.hijo_nombrado("luz")
+	#morse = sala.hijo_nombrado("morse")
 
 func salir():
 	HUB.procesos.finalizar(self)
@@ -67,13 +77,65 @@ func finalizar():
 	return null
 
 # argumentos: [quien, target, que]
+func tip(args):
+	if args[2]:
+		if tip != null:
+			tip.cerrar()
+		var texto = "Q: "
+		var item = args[1]
+		if item == light_switch:
+			if luz.mensaje("encendida"):
+				texto += "apagar"
+			else:
+				texto += "encender"
+			texto += " la luz"
+		#elif item == monitor:
+		#	texto = "aa"
+		else:
+			texto += "interactuar"
+		tip = HUB.nodo_usuario.ventana(self,{
+			"titulo":"",
+			"tamanio":Vector2(15,7),
+			"posicion":["bottom-center",Vector2(0,10)],
+			"cuerpo":[
+				{"clase":CenterContainer,"tamanio":Vector2(100,100),
+				"hijos":[{"clase":Label,"id":"tip","args":{"text":texto}}]}
+			]
+		})
+	elif tip != null:
+		tip.cerrar()
+		tip = null
+
+# argumentos: [quien, target, que]
 func interruptor_luz(args):
-	var encendida = sala.hijo_nombrado("luz").mensaje("alternar")
+	var encendida = luz.mensaje("alternar")
+	if tip != null:
+		var texto
+		if luz.mensaje("encendida"):
+			texto = "apagar"
+		else:
+			texto = "encender"
+		texto += " la luz"
+		var label = HUB.nodo_usuario.gui_id("tip")
+		label.set_text(texto)
 	#if encendida:
-	#	sala.hijo_nombrado("morse").mensaje("apagar")
+	#	morse.mensaje("apagar")
 	#else:
-	#	sala.hijo_nombrado("morse").mensaje("encender")
+	#	morse.mensaje("encender")
 
 # argumentos: [quien, target, que]
 func rsa(args):
-	print("RSA")
+	HUB.eventos.set_modo_mouse()
+	jugador.pausa()
+	monitor.mensaje("silencio")
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"tamanio":Vector2(80,80),
+		"titulo":"chat",
+		"botones":[{"texto":"Cerrar","accion":"cerrar_rsa"}]
+	})
+
+func cerrar_rsa():
+	if ventana != null:
+		ventana.cerrar()
+	jugador.pausa(false)
+	HUB.eventos.set_modo_mouse(2)

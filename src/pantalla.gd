@@ -34,8 +34,6 @@ func tamanio(nueva_resolucion):
 
 func coordenadas(x,y):
 	return Vector2(resolucion.x*x/100,resolucion.y*y/100)
-func centrado(vector):
-	return Vector2((resolucion.x-vector.x)/2,(resolucion.y-vector.y)/2)
 
 # Funciones auxiliares
 

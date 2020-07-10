@@ -181,7 +181,7 @@ func reduce(produccion, valores):
 		var resultado = valores[2]
 		if tipos.es_un_numero(resultado):
 			return HUB.error(HUB.errores.error("un número no puede ser la raíz"), modulo)
-		if not tipos.es_una_repH(resultado):
+		if not es_una_repH(resultado):
 			resultado = componente_a_objeto(resultado)
 		registrar_objeto("$", resultado)
 		return null
@@ -402,6 +402,8 @@ func aplicar_modificaciones(algo, mods):
 				hijo_de = HUB.objetos.localizar(mods["p"])
 				if HUB.errores.fallo(hijo_de):
 					return HUB.error(parent_invalido(mods["p"], hijo_de), modulo)
+			else:
+				hijo_de.hijos.append(resultado)
 			resultado.padre = [ubicacion, hijo_de]
 		# SCRIPT
 		elif (modificador == "s"):

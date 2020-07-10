@@ -10,7 +10,7 @@ var posicion
 # ARGS:
 #	nodo: Node
 #	tamanio: Vector2 (null para fullscreen)
-#	posicion: Vector2 (null para centrado)
+#	posicion: String ("top","bottom-left", etc), Vector2 o ambos
 #	titulo:String
 #	[cuerpo]:componentes
 #	[botones]
@@ -26,10 +26,7 @@ func inicializar(hub, args):
 		tamanio = args["tamanio"]
 	else:
 		tamanio = null
-	if "posicion" in args:
-		posicion = args["posicion"]
-	else:
-		posicion = null
+	posicion = args["posicion"]
 
 	header = CenterContainer.new()
 	var titulo = Label.new()
@@ -76,10 +73,22 @@ func resize(nuevo_tamanio):
 	else:
 		size = HUB.pantalla.coordenadas(tamanio.x,tamanio.y)
 	var pos
-	if posicion == null:
-		pos = HUB.pantalla.centrado(size)
-	else:
-		pos = HUB.pantalla.coordenadas(posicion.x,posicion.y)
+
+	var a_y = posicion[0]
+	var a_x = posicion[1]
+	var offset = posicion[2]
+	var marco = HUB.pantalla.resolucion
+	offset = Vector2(marco.x*offset.x/100,marco.y*offset.y/100)
+	var pos = offset
+	if a_x == "r":
+		pos.x = marco.x-size.x-offset.x
+	elif a_x == "c":
+		pos.x = (marco.x-size.x)/2+offset.x
+	if a_y == "b":
+		pos.y = marco.y-size.y-offset.y
+	elif a_y == "c":
+		pos.y = (marco.y-size.y)/2+offset.y
+
 	set_size(size)
 	set_pos(pos)
 	var tamanio_header = Vector2(size.x,header["altura"])

@@ -19,6 +19,7 @@ var mundo
 var carpeta_gui = "gui"
 var script_ventana = "ventana.gd"
 var script_gui = "gui.gd"
+var ids = {}
 
 func inicializar(hub):
 	HUB = hub
@@ -30,6 +31,10 @@ func inicializar(hub):
 	script_ventana = HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_gui), script_ventana)
 	script_gui = HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_gui), script_gui)
 	return true
+
+func gui_id(id):
+	if id in ids.keys():
+		return ids[id]
 
 func gui(nodo, args):
 	args["nodo"] = nodo
@@ -59,6 +64,10 @@ func ventana(nodo, args):
 			completar_componente(c)
 	else:
 		args["cuerpo"] = []
+	if "posicion" in args:
+		args["posicion"] = parse_pos(args["posicion"])
+	else:
+		args["posicion"] = ["c","c",Vector2(0,0)]
 
 	var panel = HUB.GC.crear_nodo(Panel)
 	panel.set_script(script_ventana)
@@ -66,11 +75,11 @@ func ventana(nodo, args):
 	panel.inicializar(HUB, args)
 	return panel
 
-func inicializar_componente(c, dict_ids=null):
+func inicializar_componente(c):
 	var nodo = HUB.GC.crear_nodo(c["clase"])
 	c["nodo"] = nodo
-	if "id" in c and dict_ids != null:
-		dict_ids[c["id"]] = nodo
+	if "id" in c:
+		ids[c["id"]] = nodo
 	if "args" in c:
 		for a in c["args"].keys():
 			nodo.set(a,c["args"][a])
@@ -80,18 +89,7 @@ func inicializar_componente(c, dict_ids=null):
 
 func completar_componente(c):
 	if "posicion" in c:
-		var p = c["posicion"]
-		if typeof(p) == TYPE_STRING:
-			var ps = p.split("-")
-			var a = ["c","c"]
-			if ps.size()==1:
-				a = parse_a(a,p)
-			elif ps.size()==2:
-				a = parse_a_y(a,ps[0])
-				a = parse_a_x(a,ps[1])
-			c["posicion"] = [a[0],a[1],Vector2(0,0)]
-		elif typeof(p) == TYPE_VECTOR2:
-			c["posicion"] = ["t","l",p]
+		c["posicion"] = parse_pos(c["posicion"])
 	else:
 		c["posicion"] = ["t","l",Vector2(0,0)]
 	if not "clase" in c:
@@ -127,6 +125,22 @@ func resize_componente(c, marco=HUB.pantalla.resolucion):
 	nodo.set_pos(pos)
 	for h in c["hijos"]:
 		resize_componente(h, size)
+
+func parse_pos(p):
+	if typeof(p) == TYPE_STRING:
+		var ps = p.split("-")
+		var a = ["c","c"]
+		if ps.size()==1:
+			a = parse_a(a,p)
+		elif ps.size()==2:
+			a = parse_a_y(a,ps[0])
+			a = parse_a_x(a,ps[1])
+		return [a[0],a[1],Vector2(0,0)]
+	elif typeof(p) == TYPE_VECTOR2:
+		return ["t","l",p]
+	else: # Es un par string-vector2
+		var rec = parse_pos(p[0])
+		return [rec[0],rec[1],p[1]]
 
 func parse_a_y(a,p):
 	var res = a

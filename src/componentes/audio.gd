@@ -17,6 +17,7 @@ func inicializar(hub, yo):
 	player_real = StreamPlayer.new() # Para que funcione en HTML5 uso este en lugar del Spatial
 	add_child(player_real)
 	yo.interfaz(self, "sonar", {"lista":[]}, true)
+	yo.interfaz(self, "silencio", {"lista":[]}, true)
 	var audios = []
 	for s in sonidos:
 		var audio = audios.append(HUB.archivos.abrir_recurso(s + ".ogg"))
@@ -45,6 +46,9 @@ func periodico(delta):
 
 func finalizar():
 	HUB.eventos.anular_periodico(self)
+
+func silencio(args):
+	player_real.stop()
 
 func sonar(args):
 	player_real.set_stream(sonidos[0])
