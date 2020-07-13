@@ -1,6 +1,8 @@
 extends Panel
 
 var HUB
+var GUI
+
 var header
 var footer
 var cuerpo
@@ -19,6 +21,7 @@ var posicion
 
 func inicializar(hub, args):
 	HUB = hub
+	GUI = HUB.nodo_usuario
 
 	var nodo = args["nodo"]
 	var opciones = args["botones"]
@@ -29,12 +32,13 @@ func inicializar(hub, args):
 	posicion = args["posicion"]
 
 	header = CenterContainer.new()
-	var titulo = Label.new()
-	titulo.set_text(args["titulo"])
-	header.add_child(titulo)
-	add_child(header)
+	var alura_header = 0
+	if not args["titulo"].empty():
+		header.add_child(GUI.texto({"texto":args["titulo"]}))
+		add_child(header)
+		alura_header = 5
 	header = {"nodo":header,
-		"altura":20}
+		"altura":alura_header}
 
 	cuerpo = Panel.new()
 	var componentes = []
@@ -46,18 +50,19 @@ func inicializar(hub, args):
 	cuerpo = {"nodo":cuerpo,"hijos":componentes}
 
 	footer = CenterContainer.new()
-	var botones = HBoxContainer.new()
-	for opt in opciones:
-		var b = Button.new()
-		if "texto" in opt:
-			b.set_text(opt["texto"])
-		if "accion" in opt:
-			b.connect("button_up", nodo, opt["accion"])
-		botones.add_child(b)
-	footer.add_child(botones)
-	add_child(footer)
+	var altura_footer = 0
+	if not opciones.empty():
+		var botones = HBoxContainer.new()
+		for opt in opciones:
+			var b = GUI.boton(opt)
+			if "accion" in opt:
+				b.connect("button_up", nodo, opt["accion"])
+			botones.add_child(b)
+		footer.add_child(botones)
+		add_child(footer)
+		altura_footer = 7
 	footer = {"nodo":footer,
-		"altura":30}
+		"altura":altura_footer}
 	resize(null)
 	HUB.eventos.registrar_ventana_escalada(self, "resize")
 	return null
@@ -97,9 +102,9 @@ func resize(nuevo_tamanio):
 
 	set_size(size)
 	set_pos(pos)
-	var tamanio_header = Vector2(size.x,header["altura"])
+	var tamanio_header = Vector2(size.x,header["altura"]*marco.y/100)
 	header["nodo"].set_size(tamanio_header)
-	var tamanio_footer = Vector2(size.x,footer["altura"])
+	var tamanio_footer = Vector2(size.x,footer["altura"]*marco.y/100)
 	footer["nodo"].set_size(tamanio_footer)
 	footer["nodo"].set_pos(Vector2(0,size.y-tamanio_footer.y))
 	var tamanio_cuerpo = Vector2(size.x,size.y-tamanio_footer.y-tamanio_header.y)

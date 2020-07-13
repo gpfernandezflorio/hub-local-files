@@ -3,6 +3,8 @@
 
 # Nodo raíz del usuario.
 # Requiere para inicializar:
+	# HUB.archivos
+		# carpeta_recursos
 	# HUB.objetos
 		# crear
 
@@ -20,6 +22,7 @@ var carpeta_gui = "gui"
 var script_ventana = "ventana.gd"
 var script_gui = "gui.gd"
 var ids = {}
+var fonts
 
 func inicializar(hub):
 	HUB = hub
@@ -30,6 +33,9 @@ func inicializar(hub):
 	add_child(mundo)
 	script_ventana = HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_gui), script_ventana)
 	script_gui = HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_gui), script_gui)
+	fonts = Node.new()
+	fonts.set_script(HUB.archivos.abrir(HUB.hub_src.plus_file(carpeta_gui), "fonts.gd"))
+	fonts.inicializar(HUB)
 	return true
 
 func gui_id(id):
@@ -76,13 +82,21 @@ func ventana(nodo, args):
 	return panel
 
 func inicializar_componente(c):
-	var nodo = HUB.GC.crear_nodo(c["clase"])
+	var clase = c["clase"]
+	var nodo
+	if typeof(clase) == TYPE_STRING:
+		var args = {}
+		if "args" in c:
+			args = c["args"]
+		nodo = componente(clase, args)
+	else:
+		nodo = HUB.GC.crear_nodo(clase)
+		if "args" in c:
+			for a in c["args"].keys():
+				nodo.set(a,c["args"][a])
 	c["nodo"] = nodo
 	if "id" in c:
 		ids[c["id"]] = nodo
-	if "args" in c:
-		for a in c["args"].keys():
-			nodo.set(a,c["args"][a])
 	for h in c["hijos"]:
 		inicializar_componente(h)
 		nodo.add_child(h["nodo"])
@@ -99,6 +113,74 @@ func completar_componente(c):
 			completar_componente(h)
 	else:
 		c["hijos"] = []
+
+func componente(clase, c):
+	if clase == "texto":
+		return texto(c)
+	if clase == "texto_entrada":
+		return texto_entrada(c)
+	if clase == "boton":
+		return boton(c)
+
+func texto(c):
+	var args = {}
+	for k in c.keys():
+		args[k] = c[k]
+	if not "font" in args:
+		args["font"] = "FreeSerif"
+	if not "size" in args:
+		args["size"] = 20
+	if not "color" in args:
+		args["color"] = Color(1,1,1)
+	if not "texto" in args:
+		args["texto"] = ""
+	var res = Label.new()
+	var s = args["size"]*HUB.pantalla.resolucion.y/850
+	var font = fonts.fuente(args["font"], s)
+	res.set("custom_fonts/font",font)
+	res.set("custom_colors/font_color",args["color"])
+	res.set_text(args["texto"])
+	return res
+
+func texto_entrada(c):
+	var args = {}
+	for k in c.keys():
+		args[k] = c[k]
+	if not "font" in args:
+		args["font"] = "FreeSerif"
+	if not "size" in args:
+		args["size"] = 20
+	if not "color" in args:
+		args["color"] = Color(1,1,1)
+	if not "texto" in args:
+		args["texto"] = ""
+	var res = LineEdit.new()
+	var s = args["size"]*HUB.pantalla.resolucion.y/850
+	var font = fonts.fuente(args["font"], s)
+	res.set("custom_fonts/font",font)
+	res.set("custom_colors/font_color",args["color"])
+	res.set_text(args["texto"])
+	return res
+
+func boton(c):
+	var args = {}
+	for k in c.keys():
+		args[k] = c[k]
+	if not "font" in args:
+		args["font"] = "FreeSerif"
+	if not "size" in args:
+		args["size"] = 20
+	if not "color" in args:
+		args["color"] = Color(1,1,1)
+	if not "texto" in args:
+		args["texto"] = ""
+	var res = Button.new()
+	var s = args["size"]*HUB.pantalla.resolucion.y/850
+	var font = fonts.fuente(args["font"], s)
+	res.set("custom_fonts/font",font)
+	res.set("custom_colors/font_color",args["color"])
+	res.set_text(args["texto"])
+	return res
 
 func resize_componente(c, marco=HUB.pantalla.resolucion):
 	var nodo = c["nodo"]
