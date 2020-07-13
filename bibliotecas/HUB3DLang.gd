@@ -1196,10 +1196,14 @@ class FaceRep:
 		for i in range(vs.size() - uvs.size()):
 			self.uvs.append(-1)
 	func plus(v, u):
-		for i in range(vertexes.size()):
-			vertexes[i] += v
-		for i in range(uvs.size()):
-			uvs[i] += u
+		var new_vertexes = []
+		var new_uvs = []
+		for i in vertexes:
+			new_vertexes.append(i+v)
+		for i in uvs:
+			new_uvs.append(i+u)
+		vertexes = new_vertexes
+		uvs = new_uvs
 	func size():
 		return vertexes.size()
 
@@ -1244,6 +1248,33 @@ var componentes_validos = {
 	"camara":Camera,
 	"audio":Spatial # Caso especial. Lo maneja el script 'audio.gd'
 }
+
+func parse_uvs(args, w, h):
+	var uv_w = args["u"]
+	var uv_h = args["v"]
+	if uv_w == null: # Mantengo tamaño cara
+		uv_w = w
+		uv_h = h
+	elif uv_h == null: # Tamaño cuadrado
+		if not tipos.es_un_numero(uv_w):
+			return HUB.error(HUB.errores.error("UVs"), modulo)
+		uv_h = uv_w
+	else:
+		if not tipos.es_un_numero(uv_w):
+			return HUB.error(HUB.errores.error("UVs"), modulo)
+		if not tipos.es_un_numero(uv_h):
+			return HUB.error(HUB.errores.error("UVs"), modulo)
+	var uv_x = -args["x"]
+	var uv_y = -args["y"]
+	uv_w = w/uv_w
+	uv_h = h/uv_h
+	uv_x *= uv_w
+	uv_y *= uv_h
+	uv_w += uv_x
+	var tmp = uv_y
+	uv_y = 1-(uv_y+uv_h)
+	uv_h = 1-tmp
+	return [Vector2(uv_w,uv_h),Vector2(uv_w,uv_y),Vector2(uv_x,uv_y),Vector2(uv_x,uv_h)]
 
 # Errores
 

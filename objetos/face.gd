@@ -14,7 +14,11 @@ var arg_map = {
 	"lista":[
 		{"nombre":"ancho", "codigo":"w", "default":"!1"},
 		{"nombre":"alto", "codigo":"h", "default":"!1"},
-		{"nombre":"eje", "codigo":"a", "default":"y",}
+		{"nombre":"eje", "codigo":"a", "default":"y"},
+		{"nombre":"ancho_uvs", "codigo":"u", "default":null},
+		{"nombre":"alto_uvs", "codigo":"v", "default":null},
+		{"nombre":"offset_x_uvs", "codigo":"x", "default":0, "validar":"NUM"},
+		{"nombre":"offset_y_uvs", "codigo":"y", "default":0, "validar":"NUM"}
 	]
 }
 
@@ -79,14 +83,18 @@ func gen(argumentos):
 		vertexes = [Vector3(x1,y0,0),Vector3(x1,y1,0),Vector3(x0,y1,0),Vector3(x0,y0,0)]
 	else:
 		return HUB.error(HUB.errores.error('eje "' + argumentos["a"] + '" inválido'), h3.modulo)
+	var uvs = h3.parse_uvs(argumentos, w, h)
 	if invert:
 		var tmp = vertexes[1]
 		vertexes[1] = vertexes[3]
 		vertexes[3] = tmp
+		tmp = uvs[1]
+		uvs[1] = uvs[3]
+		uvs[3] = tmp
 	var resultado = h3.nuevo_mesh_rep(
 		vertexes,
 		[h3.nueva_cara([0,1,2,3], [0,1,2,3])],
-		[Vector2(1,1),Vector2(1,0),Vector2(0,0),Vector2(0,1)],
+		uvs,
 		"cara"
 	)
 	var rotacion = float(HUB.varios.str_desde(eje, 1))
