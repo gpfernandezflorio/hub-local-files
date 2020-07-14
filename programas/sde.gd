@@ -29,6 +29,8 @@ var morse
 var tapa_cofre
 var candado
 var mensaje_cofre
+var segundos_restantes
+var colores
 
 var rsa_encriptado = false
 
@@ -36,7 +38,9 @@ var textos = {
 	"se_warn":"Estás enviando texto plano por un canal\nsin encriptar.\nOtras personas en esta red podrían verlo.\n¿Estás seguro de que deseás continuar?",
 	"no_enviar_se":"¡Muy bien! Es importante usar encriptación al\nenviar mensajes con información sensible.",
 	"si_enviar_se":"El mensaje que enviaste podría haber sido\ninterceptado.\nSi no querés que esto pase, tenés que\nabrir el chat encriptado.",
-	"light_off":"Apagá la luz"
+	"light_off":"Apagá la luz",
+	"coloreo":"Colorear cada provincia con un color de forma que\nsi dos provincias son limítrofes, sus colores sean distintos.",
+	"tsp":"Encontrar el mejor camino para pasar\npor todas las ciudades partiendo de Fortran."
 }
 
 var msgs_juan = [
@@ -60,6 +64,7 @@ func pantalla_inicio():
 	HUB.eventos.set_modo_mouse()	# Mostrar mouse
 	var texto_intro = HUB.archivos.leer("data/sde","intro.txt")
 	ventana = HUB.nodo_usuario.ventana(self,{
+		"titulo":"Sala de Escape Científica - Edición Virtual",
 		"tamanio":Vector2(75,75),
 		"botones":[
 			{"texto":"Comenzar","accion":"crear_sala"},
@@ -92,6 +97,45 @@ func crear_sala():
 	tapa_cofre = cofre.hijo_nombrado("tapa")
 	candado = cofre.hijo_nombrado("candado")
 	mensaje_cofre = cofre.hijo_nombrado("mensaje")
+	colores = [
+		{"actual":0,"correcto":4,"pos":Vector2(52,44)},# ALOLA
+		{"actual":0,"correcto":3,"pos":Vector2(60,33)},# NORTHERN
+		{"actual":0,"correcto":1,"pos":Vector2(49,61)},# JOHTO
+		{"actual":0,"correcto":4,"pos":Vector2(61,12)},# ALDERAAN
+		{"actual":0,"correcto":3,"pos":Vector2(45,74)},# TATOOINE
+		{"actual":0,"correcto":2,"pos":Vector2(36,36)},# SCRABB
+		{"actual":0,"correcto":4,"pos":Vector2(33,60)},# GONDOR
+		{"actual":0,"correcto":3,"pos":Vector2(24,39)},# NABOO
+		{"actual":0,"correcto":4,"pos":Vector2(27,21)},# HOTH
+		{"actual":0,"correcto":2,"pos":Vector2(31,79)},# KALOS
+		{"actual":0,"correcto":0,"pos":Vector2(12,54)},# RIVENDELL
+		{"actual":0,"correcto":0,"pos":Vector2(22,77)},# DALARAN
+		{"actual":0,"correcto":0,"pos":Vector2(25,86)},# BOOTY
+		{"actual":0,"correcto":0,"pos":Vector2(61,80)},# UNOVA
+		{"actual":0,"correcto":0,"pos":Vector2(75,68)},# PLUNDER
+		{"actual":0,"correcto":0,"pos":Vector2(81,40)},# MORDOR
+		{"actual":0,"correcto":0,"pos":Vector2(83,27)} # LUCRE
+	]
+	HUB.nodo_usuario.gui(self, {"componentes":[{
+	"clase":Panel,"posicion":"top-center","tamanio":Vector2(15,8),
+	"hijos":[{"id":"timer","clase":"texto","posicion":"center",
+	"args":{"texto":"20:00","size":30}}]}]})
+	segundos_restantes = 20*60
+	HUB.eventos.registrar_secuencia(self, "TIMER", ["W|1000","F|timer","R"])
+
+func timer(args):
+	if segundos_restantes > 0:
+		segundos_restantes -= 1
+		var l = HUB.nodo_usuario.gui_id("timer")
+		var m = str(int(segundos_restantes/60))
+		if m.length() == 1:
+			m = "0"+m
+		var s = str(int(segundos_restantes%60))
+		if s.length() == 1:
+			s = "0"+s
+		l.set_text(m+":"+s)
+	else:
+		pass # PERDISTE!
 
 func salir():
 	HUB.procesos.finalizar(self)
@@ -168,7 +212,86 @@ func interruptor_luz(args):
 
 # argumentos: [quien, target, que]
 func coloreo(args):
-	pass
+	HUB.eventos.set_modo_mouse()
+	jugador.pausa()
+	if ventana != null:
+		ventana.cerrar()
+	var opciones_coloreo = [{"clase":TextureFrame,"tamanio":Vector2(100,100),"args":
+		{"size_flags/vertical":TextureFrame.SIZE_EXPAND,"size_flags/horizontal":TextureFrame.SIZE_EXPAND,
+		"expand":true,"stretch_mode":TextureFrame.STRETCH_SCALE,"texture":HUB.archivos.abrir_recurso("mapa.png")}}]
+	for i in range(colores.size()):
+		opciones_coloreo.append({"clase":"opcion","id":"color_"+str(i),
+		"args":{"opciones":["ninguno","rojo","azul","verde","amarillo"]},"posicion":colores[i]["pos"]})
+	for i in [
+		["rojo", Vector2(50,27)], # LORDAERON
+		["verde", Vector2(46,49)],# MIDGARD
+		["azul", Vector2(61,53)], # ASGARD
+		["rojo", Vector2(28,61)], # KALIMDOR
+		["rojo", Vector2(22,20)]]:# KANTO
+		opciones_coloreo.append({"clase":"texto","args":{"texto":i[0],"color":Color(0,0,0)},"posicion":i[1]})
+	opciones_coloreo.append({"clase":"boton","args":{"texto":" ? "},"posicion":"top-right","id":"coloreo?"})
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"titulo":"Coloreando provincias",
+		"tamanio":Vector2(80,75),
+		"botones":[
+			{"texto":"Cerrar","accion":"cerrar_ventana"}
+		],
+		"cuerpo":[{"clase":Container,"tamanio":Vector2(95,98),"posicion":"center","hijos":opciones_coloreo}]
+	})
+	for i in range(colores.size()):
+		var opt = HUB.nodo_usuario.gui_id("color_"+str(i))
+		opt.select(colores[i]["actual"])
+		opt.connect("item_selected", self, "colorear", [i])
+	HUB.nodo_usuario.gui_id("coloreo?").connect("button_up", self, "info_colorear")
+
+func info_colorear():
+	if ventana != null:
+		ventana.ocultar()
+	if ventana_warn != null:
+		ventana_warn.cerrar()
+	ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Instrucciones",
+	"tamanio":Vector2(40,35),"cuerpo":[{"clase":"texto",
+	"posicion":"center","args":{"texto":textos["coloreo"]}}],
+	"botones":[{"texto":"Aceptar","accion":"warn_ok"}]})
+
+# argumentos: [quien, target, que]
+func tsp(args):
+	HUB.eventos.set_modo_mouse()
+	jugador.pausa()
+	if ventana != null:
+		ventana.cerrar()
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"titulo":"El camino que debo recorrer",
+		"tamanio":Vector2(80,75),
+		"botones":[
+			{"texto":"Cerrar","accion":"cerrar_ventana"}
+		],
+		"cuerpo":[{"clase":Container,"tamanio":Vector2(95,98),"posicion":"center","hijos":[
+			{"clase":TextureFrame,"tamanio":Vector2(100,100),"args":
+			{"size_flags/vertical":TextureFrame.SIZE_EXPAND,"size_flags/horizontal":TextureFrame.SIZE_EXPAND,
+			"expand":true,"stretch_mode":TextureFrame.STRETCH_SCALE,"texture":HUB.archivos.abrir_recurso("tsp.png")}},
+			{"clase":"boton","args":{"texto":" ? "},"posicion":"top-right","id":"coloreo?"}]}]
+	})
+	HUB.nodo_usuario.gui_id("coloreo?").connect("button_up", self, "info_tsp")
+
+func info_tsp():
+	if ventana != null:
+		ventana.ocultar()
+	if ventana_warn != null:
+		ventana_warn.cerrar()
+	ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Instrucciones",
+	"tamanio":Vector2(40,35),"cuerpo":[{"clase":"texto",
+	"posicion":"center","args":{"texto":textos["tsp"]}}],
+	"botones":[{"texto":"Aceptar","accion":"warn_ok"}]})
+
+func warn_ok():
+	if ventana_warn != null:
+		ventana_warn.cerrar()
+	if ventana != null:
+		ventana.mostrar()
+
+func colorear(color,nodo):
+	colores[nodo]["actual"] = color
 
 # argumentos: [quien, target, que]
 func rsa(args):

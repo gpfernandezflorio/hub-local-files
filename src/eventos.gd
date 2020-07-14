@@ -204,11 +204,12 @@ func ejecutar(sec):
 	paso = paso.split("|")
 	if paso[0] == "W":
 		return int(paso[1])
-	if paso[0] == "F":
+	elif paso[0] == "F":
 		var f = paso[1]
 		var args = argumentos(paso)
 		nodo.call(f, args)
-	if paso[0] == "M":
+		return null
+	elif paso[0] == "M":
 		var m = paso[1]
 		var args = argumentos(paso)
 		nodo.mensaje(m, args)

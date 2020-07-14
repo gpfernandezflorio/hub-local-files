@@ -120,6 +120,8 @@ func componente(clase, args):
 		return texto_entrada(args)
 	if clase == "boton":
 		return boton(args)
+	if clase == "opcion":
+		return opcion(args)
 
 func texto(args):
 	if not "font" in args:
@@ -174,6 +176,14 @@ func boton(args):
 	res.set("custom_fonts/font",font)
 	res.set("custom_colors/font_color",args["color"])
 	res.set_text(args["texto"])
+	return res
+
+func opcion(args):
+	if not "opciones" in args:
+		args["opciones"] = []
+	var res = OptionButton.new()
+	for opt in args["opciones"]:
+		res.add_item(opt)
 	return res
 
 func resize(c):

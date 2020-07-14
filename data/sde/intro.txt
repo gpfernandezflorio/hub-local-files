@@ -1,7 +1,17 @@
 INTRUCCIONES
 
-* ...
+* Una vez iniciada la sala, contarás con 20 minutos para resolverla y escapar.
+
+* En la sala hay varias estaciones. Algunas requieren que se resuelvan otras antes pero no hay un orden establecido.
+
+* No se pueden pedir pistas.
 
 CONTROLES
 
-* ...
+* Movete por la sala usando las teclas WASD.
+
+* Mirá lo que te rodea arrastrando el mouse a los bordes de la pantalla.
+
+* Interactuá con la sala usando la tecla Q cuando sea posible.
+
+¡Mucha suerte!

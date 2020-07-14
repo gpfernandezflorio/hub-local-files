@@ -21,3 +21,4 @@ estacion/cofre:ncofre:oyh:ry-90:ox-4.8
 luz(ambient,i=.02):nluz_ambiente
 poster(morse):oz4.99:ry180
 morse:nmorse:ox-4:oz5:oy2
+estacion/tsp:ntsp:oz-4:ox-2
