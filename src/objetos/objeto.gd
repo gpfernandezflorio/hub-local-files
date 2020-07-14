@@ -74,6 +74,8 @@ func agregar_comportamiento(nombre_script, args=[[],{}]):
 func quitar_componente(nombre):
 	for componente in componentes.get_children():
 		if componente.get_name() == nombre:
+			if componente.has_method("finalizar"):
+				componente.finalizar()
 			componente.remove_child(componente)
 			componente.queue_free()
 			return null
@@ -83,7 +85,9 @@ func quitar_componente(nombre):
 func quitar_comportamiento(nombre):
 	for comportamiento in comportamientos.get_children():
 		if comportamiento.get_name() == nombre:
-			comportamiento.remove_child(comportamiento)
+			if comportamiento.has_method("finalizar"):
+				comportamiento.finalizar()
+			#comportamiento.remove_child(comportamiento)
 			comportamiento.queue_free()
 			return null
 	return HUB.error(comportamiento_inexistente(nombre), get_name())

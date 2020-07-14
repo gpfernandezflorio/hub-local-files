@@ -88,6 +88,9 @@ func inicializar(hub, yo, args):
 func finalizar():
 	if i > -1:
 		HUB.eventos.anular_periodico(self)
+	for m in mallas:
+		for j in range(m[0].get_surface_count()):
+			m[0].set("surface_" + str(j+1) + "/material",m[1][j])
 
 func materiales(mesh):
 	var ms = []

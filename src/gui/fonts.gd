@@ -10,7 +10,7 @@ func inicializar(hub):
 	carpeta_recursos = hub.archivos.carpeta_recursos
 	return true
 
-func fuente(nombre, tamanio):
+func fuente(nombre="FreeSerif", tamanio=20):
 	var id = "%s-%s" % [nombre, tamanio]
 	if id in fonts:
 		return fonts[id]

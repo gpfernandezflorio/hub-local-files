@@ -85,10 +85,9 @@ func inicializar_componente(c):
 	var clase = c["clase"]
 	var nodo
 	if typeof(clase) == TYPE_STRING:
-		var args = {}
-		if "args" in c:
-			args = c["args"]
-		nodo = componente(clase, args)
+		if not "args" in c:
+			c["args"] = {}
+		nodo = componente(clase, c["args"])
 	else:
 		nodo = HUB.GC.crear_nodo(clase)
 		if "args" in c:
@@ -114,18 +113,15 @@ func completar_componente(c):
 	else:
 		c["hijos"] = []
 
-func componente(clase, c):
+func componente(clase, args):
 	if clase == "texto":
-		return texto(c)
+		return texto(args)
 	if clase == "texto_entrada":
-		return texto_entrada(c)
+		return texto_entrada(args)
 	if clase == "boton":
-		return boton(c)
+		return boton(args)
 
-func texto(c):
-	var args = {}
-	for k in c.keys():
-		args[k] = c[k]
+func texto(args):
 	if not "font" in args:
 		args["font"] = "FreeSerif"
 	if not "size" in args:
@@ -142,10 +138,7 @@ func texto(c):
 	res.set_text(args["texto"])
 	return res
 
-func texto_entrada(c):
-	var args = {}
-	for k in c.keys():
-		args[k] = c[k]
+func texto_entrada(args):
 	if not "font" in args:
 		args["font"] = "FreeSerif"
 	if not "size" in args:
@@ -154,18 +147,19 @@ func texto_entrada(c):
 		args["color"] = Color(1,1,1)
 	if not "texto" in args:
 		args["texto"] = ""
+	if not "edit" in args:
+		args["edit"] = true
 	var res = LineEdit.new()
 	var s = args["size"]*HUB.pantalla.resolucion.y/850
 	var font = fonts.fuente(args["font"], s)
 	res.set("custom_fonts/font",font)
 	res.set("custom_colors/font_color",args["color"])
+	res.set("size_flags/horizontal", Container.SIZE_EXPAND_FILL)
 	res.set_text(args["texto"])
+	res.set("editable",args["edit"])
 	return res
 
-func boton(c):
-	var args = {}
-	for k in c.keys():
-		args[k] = c[k]
+func boton(args):
 	if not "font" in args:
 		args["font"] = "FreeSerif"
 	if not "size" in args:
@@ -182,7 +176,15 @@ func boton(c):
 	res.set_text(args["texto"])
 	return res
 
+func resize(c):
+	if c["clase"] in ["texto","texto_entrada","boton"]:
+		var s = c["args"]["size"]*HUB.pantalla.resolucion.y/850
+		var font = fonts.fuente(c["args"]["font"], s)
+		c["nodo"].set("custom_fonts/font",font)
+
 func resize_componente(c, marco=HUB.pantalla.resolucion):
+	if typeof(c["clase"]) == TYPE_STRING:
+		resize(c)
 	var nodo = c["nodo"]
 	var size
 	if "tamanio" in c:

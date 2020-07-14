@@ -37,8 +37,7 @@ func inicializar(hub, args):
 		header.add_child(GUI.texto({"texto":args["titulo"]}))
 		add_child(header)
 		alura_header = 5
-	header = {"nodo":header,
-		"altura":alura_header}
+	header = {"nodo":header,"altura":alura_header}
 
 	cuerpo = Panel.new()
 	var componentes = []
@@ -61,8 +60,7 @@ func inicializar(hub, args):
 		footer.add_child(botones)
 		add_child(footer)
 		altura_footer = 7
-	footer = {"nodo":footer,
-		"altura":altura_footer}
+	footer = {"nodo":footer,"altura":altura_footer}
 	resize(null)
 	HUB.eventos.registrar_ventana_escalada(self, "resize")
 	return null
