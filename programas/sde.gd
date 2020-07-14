@@ -141,6 +141,8 @@ func salir():
 	HUB.procesos.finalizar(self)
 
 func finalizar():
+	# Eliminar el timer en la gui
+	HUB.eventos.anular_secuencia(self, "TIMER")
 	if ventana != null:
 		ventana.cerrar()
 	if ventana_rsa != null:

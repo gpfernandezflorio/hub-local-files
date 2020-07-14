@@ -66,7 +66,7 @@ def escribir_dir_en_txt(f,d):
         f.write("D|"+l+"\n")
         escribir_dir_en_txt(f,os.path.join(d,l))
         f.write("||\n")
-      elif l.endswith(".gd"):
+      elif l.endswith(".gd") or l.endswith(".txt"):
         f.write("F|"+l+"\n")
 
 if __name__ == '__main__':

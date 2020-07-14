@@ -19,11 +19,11 @@ var arg_map = {
 var modulo = "Morse"
 var yo
 
-var t_punto = 100
-var t_raya = 300
-var t_entre_puntos = 100
-var t_entre_letras = 700
-var t_entre_repeticiones = 2000
+var t_punto = 300 # 100
+var t_raya = 500 # 300
+var t_entre_puntos = 200 # 100
+var t_entre_letras = 1000 # 700
+var t_entre_repeticiones = 3000 # 2000
 var activo = false
 var secuencia
 var luz
