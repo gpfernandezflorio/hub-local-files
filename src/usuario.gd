@@ -40,7 +40,11 @@ func inicializar(hub):
 
 func gui_id(id):
 	if id in ids.keys():
-		return ids[id]
+		var res = ids[id]
+		if HUB.GC.es_valido(res):
+			return res
+		ids.erase(id)
+		return null
 
 func gui(nodo, args):
 	args["nodo"] = nodo
@@ -132,7 +136,7 @@ func texto(args):
 		args["color"] = Color(1,1,1)
 	if not "texto" in args:
 		args["texto"] = ""
-	var res = Label.new()
+	var res = HUB.GC.crear_nodo(Label)
 	var s = args["size"]*HUB.pantalla.resolucion.y/850
 	var font = fonts.fuente(args["font"], s)
 	res.set("custom_fonts/font",font)
@@ -151,7 +155,7 @@ func texto_entrada(args):
 		args["texto"] = ""
 	if not "edit" in args:
 		args["edit"] = true
-	var res = LineEdit.new()
+	var res = HUB.GC.crear_nodo(LineEdit)
 	var s = args["size"]*HUB.pantalla.resolucion.y/850
 	var font = fonts.fuente(args["font"], s)
 	res.set("custom_fonts/font",font)
@@ -170,7 +174,7 @@ func boton(args):
 		args["color"] = Color(1,1,1)
 	if not "texto" in args:
 		args["texto"] = ""
-	var res = Button.new()
+	var res = HUB.GC.crear_nodo(Button)
 	var s = args["size"]*HUB.pantalla.resolucion.y/850
 	var font = fonts.fuente(args["font"], s)
 	res.set("custom_fonts/font",font)
@@ -181,7 +185,7 @@ func boton(args):
 func opcion(args):
 	if not "opciones" in args:
 		args["opciones"] = []
-	var res = OptionButton.new()
+	var res = HUB.GC.crear_nodo(OptionButton)
 	for opt in args["opciones"]:
 		res.add_item(opt)
 	return res

@@ -44,12 +44,25 @@ var textos = {
 }
 
 var msgs_juan = [
+	# 0
 	"Hola Claudia, ¿me pasás la contraseña del maletín?",
+	# 1
 	"Qué bueno que pusiste el chat seguro, así hablamos más tranquilos. Ahora sí, pasame la contraseña que debe estar escondida por ahí.",
+	# 2
 	"No entiendo nada de lo que pusiste. Acordate de encriptar tus mensajes con mi clave pública.",
+	# 3
 	"Uh, no estaba lo que buscaba. Dentro sólo había un papel que decía '01011101', no sé para qué servirá.",
-	"Si querés después te llamo y hablamos bien, pero ahora necesito urgente la clave de la caja de seguridad."
+	# 4
+	"Si querés después te llamo y hablamos bien, pero ahora necesito urgente la clave de la caja de seguridad.",
+	# 5
+	"Desactivaste el chat seguro. Volvé a activarlo así hablamos más tranquilos."
 ]
+
+var paso_rsa = 0
+var mi_clave_publica = "2bd6b4"
+var mi_clave_privada = "07a8c3"
+var clave_publica_juan = "fcadeb"
+var clave_privada_juan = "59be8f"
 
 func inicializar(hub, pid, argumentos):
 	HUB = hub
@@ -264,7 +277,7 @@ func tsp(args):
 		ventana.cerrar()
 	ventana = HUB.nodo_usuario.ventana(self,{
 		"titulo":"El camino que debo recorrer",
-		"tamanio":Vector2(80,75),
+		"tamanio":Vector2(60,50),
 		"botones":[
 			{"texto":"Cerrar","accion":"cerrar_ventana"}
 		],
@@ -281,6 +294,7 @@ func info_tsp():
 		ventana.ocultar()
 	if ventana_warn != null:
 		ventana_warn.cerrar()
+		ventana_warn = null
 	ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Instrucciones",
 	"tamanio":Vector2(40,35),"cuerpo":[{"clase":"texto",
 	"posicion":"center","args":{"texto":textos["tsp"]}}],
@@ -289,21 +303,12 @@ func info_tsp():
 func warn_ok():
 	if ventana_warn != null:
 		ventana_warn.cerrar()
+		ventana_warn = null
 	if ventana != null:
 		ventana.mostrar()
 
 func colorear(color,nodo):
 	colores[nodo]["actual"] = color
-
-# argumentos: [quien, target, que]
-func rsa(args):
-	HUB.eventos.set_modo_mouse()
-	jugador.pausa()
-	monitor.mensaje("silencio")
-	if ventana_rsa == null:
-		ventana_rsa()
-	else:
-		ventana_rsa.mostrar()
 
 # argumentos: [quien, target, que]
 func candado(args):
@@ -387,21 +392,59 @@ func mensaje_cofre(args):
 	jugador.pausa()
 	if ventana_warn != null:
 		ventana_warn.cerrar()
+		ventana_warn = null
 	ventana = HUB.nodo_usuario.ventana(self, {"titulo":"Mensaje",
 	"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
 	"posicion":"center","args":{"texto":textos["light_off"]}}],
 	"botones":[{"texto":"Cerrar","accion":"cerrar_ventana"}]})
 
-func rsa_enviar():
-	if rsa_encriptado:
-		pass
+# argumentos: [quien, target, que]
+func rsa(args):
+	HUB.eventos.set_modo_mouse()
+	jugador.pausa()
+	monitor.mensaje("silencio")
+	if ventana_rsa == null:
+		ventana_rsa()
 	else:
-		if ventana_rsa != null:
+		ventana_rsa.mostrar()
+
+func rsa_enviar():
+	if ventana_rsa != null:
+		anular_seleccion()
+		if paso_rsa == 3:
 			ventana_rsa.ocultar()
-		ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Advertencia",
-		"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
-		"posicion":"center","args":{"texto":textos["se_warn"]}}],
-		"botones":[{"texto":"Sí","accion":"rsa_warn_si"},{"texto":"No","accion":"rsa_warn_no"}]})
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Error",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":"Juanchi está desconectado"}}],
+			"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+			return
+		var txt = HUB.nodo_usuario.gui_id("rsa_msg_s").get_text()
+		HUB.nodo_usuario.gui_id("rsa_msg_s").set_text("")
+		if txt.empty():
+			ventana_rsa.ocultar()
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Error",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":"No se puede enviar un mensaje vacío"}}],
+			"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+		elif rsa_encriptado:
+			deshabilitar_botones()
+			HUB.nodo_usuario.gui_id("rsa_msg_r").set_text("")
+			HUB.nodo_usuario.gui_id("rsa_msg_h").set_text("Recibiendo mensaje...")
+			if fue_encriptado_con(txt, clave_publica_juan):
+				var msg = desencriptar(txt, clave_privada_juan)
+				if msg.find("2811306") == -1:
+					paso_rsa = 4
+				else:
+					paso_rsa = 3
+			else:
+				paso_rsa = 2
+			HUB.eventos.registrar_secuencia(self, "RSA", ["W|1500","F|recibir_mensaje_rsa"])
+		else:
+			ventana_rsa.ocultar()
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Advertencia",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":textos["se_warn"]}}],
+			"botones":[{"texto":"Sí","accion":"rsa_warn_si"},{"texto":"No","accion":"rsa_warn_no"}]})
 
 func rsa_warn_si():
 	if ventana_warn != null:
@@ -422,13 +465,27 @@ func rsa_warn_no():
 func rsa_warn_ok():
 	if ventana_warn != null:
 		ventana_warn.cerrar()
+		ventana_warn = null
 	if ventana_rsa != null:
 		ventana_rsa.mostrar()
 
 func rsa_modo():
+	if paso_rsa == 3:
+		if ventana_rsa != null:
+			ventana_rsa.ocultar()
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Error",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":"Juanchi está desconectado"}}],
+			"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+		return
+
 	if ventana_rsa != null:
 		ventana_rsa.cerrar()
 	rsa_encriptado = not rsa_encriptado
+	if rsa_encriptado:
+		paso_rsa = 1
+	else:
+		paso_rsa = 5
 	ventana_rsa()
 
 func ventana_rsa():
@@ -439,28 +496,31 @@ func ventana_rsa():
 
 func rsa_sin_encriptar():
 	ventana_rsa = HUB.nodo_usuario.ventana(self,{
-		"tamanio":Vector2(50,40),
+		"tamanio":Vector2(60,30),
 		"titulo":"Chat sin encriptar",
 		"cuerpo":[
 			{"clase":"boton","id":"boton_rsa","posicion":["top-right",Vector2(5,-12)],
 				"args":{"texto":"Activar encripción"}},
-			{"clase":VBoxContainer,"tamanio":Vector2(96,90),"posicion":["top-left",Vector2(3,0)],
+			{"clase":VBoxContainer,"tamanio":Vector2(96,90),"posicion":["top-left",Vector2(3,10)],
 			"hijos":[{"clase":VBoxContainer,"tamanio":Vector2(96,50),"hijos":[
 			{"clase":"texto","id":"rsa_msg_h","args":{"texto":"Recibiendo mensaje..."}},
 			{"clase":"texto_entrada","id":"rsa_msg_r","args":{"edit":false}}]},
 			{"clase":VBoxContainer,"tamanio":Vector2(96,50),
 			"hijos":[{"clase":"texto","args":{"texto":"Responder:"}},
+			{"clase":HBoxContainer,"hijos":[
 			{"clase":"texto_entrada","id":"rsa_msg_s"},
-			{"clase":"boton","id":"boton_enviar","args":{"texto":"Enviar"}}]}]}],
+			{"clase":"boton","id":"boton_enviar","args":{"texto":"Enviar"}}]}]}]}],
 		"botones":[{"texto":"Cerrar","accion":"cerrar_rsa"}]
 	})
 	HUB.eventos.registrar_secuencia(self, "RSA", ["W|1500","F|recibir_mensaje_rsa"])
 	HUB.nodo_usuario.gui_id("boton_enviar").connect("button_up", self, "rsa_enviar")
 	HUB.nodo_usuario.gui_id("boton_rsa").connect("button_up", self, "rsa_modo")
+	HUB.nodo_usuario.gui_id("boton_enviar").set_disabled(true)
+	HUB.nodo_usuario.gui_id("boton_rsa").set_disabled(true)
 
 func rsa_encriptado():
 	ventana_rsa = HUB.nodo_usuario.ventana(self,{
-		"tamanio":Vector2(65,60),
+		"tamanio":Vector2(85,70),
 		"titulo":"Chat encriptado",
 		"cuerpo":[
 			{"clase":"boton","id":"boton_rsa","posicion":["top-right",Vector2(5,-7)],
@@ -473,48 +533,82 @@ func rsa_encriptado():
 				{"clase":"texto_entrada","id":"rsa_msg_r","args":{"edit":false}}]},
 			{"clase":VBoxContainer,"hijos":[
 #			{"clase":TabContainer,"tamanio":Vector2(96,50),"hijos":[
-			{"clase":HBoxContainer,"tamanio":Vector2(96,50),"hijos":[
+			{"clase":VBoxContainer,"tamanio":Vector2(96,50),"hijos":[
 				{"clase":VBoxContainer,"args":{"size_flags/horizontal":Container.SIZE_EXPAND_FILL},"hijos":[
+					{"clase":"texto","args":{"texto":" "}},
 					{"clase":"texto","args":{"texto":"DESENCRIPTAR MENSAJE ENTRANTE:"},"posicion":"top-center"},
-					{"clase":GridContainer,"args":{"columns":2},"hijos":[
-						{"clase":"texto","args":{"texto":"mensaje para desencriptar"}},
+					{"clase":HBoxContainer,"hijos":[
+						{"clase":"texto","args":{"texto":"Mensaje para desencriptar"}},
 						{"clase":"texto_entrada","id":"rsa_dcrypt_msg_in"},
-						{"clase":"texto","args":{"texto":"clave para desencriptar"}},
-						{"clase":"texto_entrada","id":"rsa_dcrypt_key"},
 					]},
-					{"clase":"boton","args":{"texto":"desencriptar"}},
-					{"clase":"texto","args":{"texto":"mensaje desencriptado"}},
-					{"clase":"texto_entrada","id":"rsa_dcrypt_msg_out","args":{"edit":false}}
+					{"clase":HBoxContainer,"hijos":[
+						{"clase":"texto","args":{"texto":"Clave para desencriptar"}},
+						{"clase":"texto_entrada","id":"rsa_dcrypt_key"},
+						{"clase":"boton","args":{"texto":"Desencriptar"},"id":"btn_d_crypt"}
+					]},
+					{"clase":HBoxContainer,"hijos":[
+						{"clase":"texto","args":{"texto":"Mensaje desencriptado"}},
+						{"clase":"texto_entrada","id":"rsa_dcrypt_msg_out","args":{"edit":false}}
+					]}
 				]},
 				{"clase":VBoxContainer,"args":{"size_flags/horizontal":Container.SIZE_EXPAND_FILL},"hijos":[
+					{"clase":"texto","args":{"texto":" "}},
 					{"clase":"texto","args":{"texto":"ENCRIPTAR MENSAJE SALIENTE:"}},
-					{"clase":GridContainer,"args":{"columns":2},"hijos":[
-						{"clase":"texto","args":{"texto":"mensaje para encriptar"}},
+					{"clase":HBoxContainer,"hijos":[
+						{"clase":"texto","args":{"texto":"Mensaje para encriptar"}},
 						{"clase":"texto_entrada","id":"rsa_crypt_msg_in"},
-						{"clase":"texto","args":{"texto":"clave para encriptar"}},
-						{"clase":"texto_entrada","id":"rsa_crypt_key"},
 					]},
-					{"clase":"boton","args":{"texto":"encriptar"}},
-					{"clase":"texto","args":{"texto":"mensaje encriptado"}},
-					{"clase":"texto_entrada","id":"rsa_crypt_msg_out","args":{"edit":false}}
+					{"clase":HBoxContainer,"hijos":[
+						{"clase":"texto","args":{"texto":"Clave para encriptar"}},
+						{"clase":"texto_entrada","id":"rsa_crypt_key"},
+						{"clase":"boton","args":{"texto":"Encriptar"},"id":"btn_crypt"}
+					]},
+					{"clase":HBoxContainer,"hijos":[
+						{"clase":"texto","args":{"texto":"Mensaje encriptado"}},
+						{"clase":"texto_entrada","id":"rsa_crypt_msg_out","args":{"edit":false}}
+					]}
 				]}
 			]}]},
-			{"clase":VBoxContainer,"tamanio":Vector2(96,10),
+			{"clase":"texto","args":{"texto":" "}},
+			{"clase":HBoxContainer,"tamanio":Vector2(96,10),
 			"posicion":["bottom-left",Vector2(3,0)],
 			"hijos":[{"clase":"texto","args":{"texto":"Responder:"}},
-			{"clase":"texto_entrada","id":"rsa_msg_s"},
-			{"clase":"boton","id":"boton_enviar","args":{"texto":"Enviar"}}]}]}]}],
+				{"clase":"texto_entrada","id":"rsa_msg_s"},
+				{"clase":"boton","id":"boton_enviar","args":{"texto":"Enviar"}}
+			]}]}]}],
 		"botones":[{"texto":"Cerrar","accion":"cerrar_rsa"}]
 	})
-	HUB.eventos.registrar_secuencia(self, "RSA", ["W|1500","F|recibir_mensaje_rsa"])
 	HUB.nodo_usuario.gui_id("boton_enviar").connect("button_up", self, "rsa_enviar")
 	HUB.nodo_usuario.gui_id("boton_rsa").connect("button_up", self, "rsa_modo")
+	HUB.nodo_usuario.gui_id("btn_crypt").connect("button_up", self, "btn_crypt")
+	HUB.nodo_usuario.gui_id("btn_d_crypt").connect("button_up", self, "btn_d_crypt")
+	HUB.nodo_usuario.gui_id("boton_enviar").set_disabled(true)
+	HUB.nodo_usuario.gui_id("boton_rsa").set_disabled(true)
+	HUB.nodo_usuario.gui_id("btn_crypt").set_disabled(true)
+	HUB.nodo_usuario.gui_id("btn_d_crypt").set_disabled(true)
+	HUB.eventos.registrar_secuencia(self, "RSA", ["W|1500","F|recibir_mensaje_rsa"])
 
 func recibir_mensaje_rsa(args):
 	monitor.mensaje("sonar", ["whatsapp"])
 	if ventana_rsa != null:
+		var msg = msgs_juan[paso_rsa]
+		if rsa_encriptado:
+			msg = encriptar(msg, mi_clave_publica)
 		HUB.nodo_usuario.gui_id("rsa_msg_h").set_text("Mensaje de juanchi:")
-		HUB.nodo_usuario.gui_id("rsa_msg_r").set_text(msgs_juan[0])
+		HUB.nodo_usuario.gui_id("rsa_msg_r").set_text(msg)
+		if paso_rsa == 3:
+			HUB.eventos.registrar_secuencia(self, "RSA", ["W|500","F|fin_rsa"])
+		else:
+			habilitar_botones()
+
+func fin_rsa(args):
+	if ventana_rsa != null:
+		ventana_rsa.ocultar()
+		ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Notificación",
+		"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+		"posicion":"center","args":{"texto":"Juanchi se ha desconectado"}}],
+		"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+		habilitar_botones()
 
 func cerrar_ventana():
 	if ventana != null:
@@ -528,3 +622,123 @@ func cerrar_rsa():
 		ventana_rsa.ocultar()
 	jugador.pausa(false)
 	HUB.eventos.set_modo_mouse(2)
+
+var cryptos = {
+	mi_clave_privada:{},
+	mi_clave_publica:{},
+	clave_privada_juan:{},
+	clave_publica_juan:{}
+}
+
+var d_crypts = {}
+
+func encriptar(msg, clave):
+	if clave in cryptos.keys():
+		if msg in cryptos[clave].keys():
+			return cryptos[clave][msg]
+		var random = random_msg()
+		cryptos[clave][msg] = random
+		return random
+	var random = random_msg()
+	cryptos[clave] = {msg:random}
+	return random
+
+func desencriptar(msg, clave):
+	var clave_opuesta = null
+	if clave == mi_clave_privada:
+		clave_opuesta = mi_clave_publica
+	elif clave == mi_clave_publica:
+		clave_opuesta = mi_clave_privada
+	elif clave == clave_privada_juan:
+		clave_opuesta = clave_publica_juan
+	elif clave == clave_publica_juan:
+		clave_opuesta = clave_privada_juan
+	if clave_opuesta == null:
+		return random_d_crypt(clave, msg)
+	for k in cryptos[clave_opuesta].keys():
+		if cryptos[clave_opuesta][k] == msg:
+			return k
+	return random_d_crypt(clave_opuesta, msg)
+
+func random_d_crypt(clave, msg):
+	if clave in d_crypts.keys():
+		if msg in d_crypts[clave]:
+			return d_crypts[clave][msg]
+		var random = random_msg()
+		d_crypts[clave][msg] = random
+		return random
+	var random = random_msg()
+	d_crypts[clave] = {msg:random}
+	return random
+
+var char = "1234567890qwertyuiopasdfghjklzxcvbnm-?.:,;_¿¡!'´+*-/#$%&()=[]{}^`~<>|°¬@QWERTYUIOPASDFGHJKLZXCVBNM"
+
+func random_msg():
+	var res = ""
+	for i in range(50):
+		res += char[randi() % char.length()]
+	return res
+
+func btn_crypt():
+	if ventana_rsa != null:
+		anular_seleccion()
+		var msg = HUB.nodo_usuario.gui_id("rsa_crypt_msg_in").get_text()
+		var clave = HUB.nodo_usuario.gui_id("rsa_crypt_key").get_text()
+		if msg.empty():
+			ventana_rsa.ocultar()
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Error",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":"No se puede encriptar un mensaje vacío"}}],
+			"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+		elif clave.empty():
+			ventana_rsa.ocultar()
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Error",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":"No se ingresó ninguna clave para encriptar"}}],
+			"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+		else:
+			HUB.nodo_usuario.gui_id("rsa_crypt_msg_out").set_text(encriptar(msg, clave))
+
+func btn_d_crypt():
+	if ventana_rsa != null:
+		anular_seleccion()
+		var msg = HUB.nodo_usuario.gui_id("rsa_dcrypt_msg_in").get_text()
+		var clave = HUB.nodo_usuario.gui_id("rsa_dcrypt_key").get_text()
+		if msg.empty():
+			ventana_rsa.ocultar()
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Error",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":"No se puede desencriptar un mensaje vacío"}}],
+			"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+		elif clave.empty():
+			ventana_rsa.ocultar()
+			ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Error",
+			"tamanio":Vector2(30,30),"cuerpo":[{"clase":"texto",
+			"posicion":"center","args":{"texto":"No se ingresó ninguna clave para desencriptar"}}],
+			"botones":[{"texto":"Aceptar","accion":"rsa_warn_ok"}]})
+		else:
+			HUB.nodo_usuario.gui_id("rsa_dcrypt_msg_out").set_text(desencriptar(msg, clave))
+
+func fue_encriptado_con(msg, clave):
+	for k in cryptos[clave].keys():
+		if cryptos[clave][k] == msg:
+			return true
+	return false
+
+func anular_seleccion():
+	for id in ["rsa_msg_r","rsa_msg_s","rsa_crypt_key","rsa_crypt_msg_in","rsa_crypt_msg_out","rsa_dcrypt_key","rsa_dcrypt_msg_in","rsa_dcrypt_msg_out"]:
+		var campo = HUB.nodo_usuario.gui_id(id)
+		if campo != null:
+			campo.select(0,0)
+
+func habilitar_botones():
+	for id in ["boton_enviar","boton_rsa","btn_crypt","btn_d_crypt"]:
+		var btn = HUB.nodo_usuario.gui_id(id)
+		if btn != null:
+			btn.set_disabled(false)
+
+func deshabilitar_botones():
+	for id in ["boton_enviar","boton_rsa","btn_crypt","btn_d_crypt"]:
+		var btn = HUB.nodo_usuario.gui_id(id)
+		if btn != null:
+			btn.set_disabled(true)
