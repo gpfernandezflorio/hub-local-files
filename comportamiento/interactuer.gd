@@ -50,10 +50,10 @@ func inicializar(hub, yo, args):
 
 func contacto_in(i, objeto, a, s):
 	if objeto.get_parent().has_method("interact_in"):
-		var interactive = objeto.get_parent()
-		interactive.interact_in(yo)
 		if not posibilidades.empty():
 			posibilidades[0].interact_out(yo)
+		var interactive = objeto.get_parent()
+		interactive.interact_in(yo)
 		posibilidades.push_front(interactive)
 
 func contacto_out(i, objeto, a, s):

@@ -127,6 +127,12 @@ func componente(clase, args):
 	if clase == "opcion":
 		return opcion(args)
 
+var halign = {
+	"center":Label.ALIGN_CENTER,
+	"left":Label.ALIGN_LEFT,
+	"right":Label.ALIGN_RIGHT
+}
+
 func texto(args):
 	if not "font" in args:
 		args["font"] = "FreeSerif"
@@ -136,12 +142,15 @@ func texto(args):
 		args["color"] = Color(1,1,1)
 	if not "texto" in args:
 		args["texto"] = ""
+	if not "align" in args:
+		args["align"] = "left"
 	var res = HUB.GC.crear_nodo(Label)
 	var s = args["size"]*HUB.pantalla.resolucion.y/850
 	var font = fonts.fuente(args["font"], s)
 	res.set("custom_fonts/font",font)
 	res.set("custom_colors/font_color",args["color"])
 	res.set_text(args["texto"])
+	res.set_align(halign[args["align"]])
 	return res
 
 func texto_entrada(args):

@@ -55,6 +55,12 @@ func inicializar(hub, yo, args):
 	HUB.eventos.registrar_periodico(self, "periodico")
 	return null
 
+func pausa(mode=true):
+	if mode:
+		HUB.eventos.anular_periodico(self)
+	else:
+		HUB.eventos.registrar_periodico(self, "periodico")
+
 func finalizar():
 	HUB.eventos.anular_periodico(self)
 

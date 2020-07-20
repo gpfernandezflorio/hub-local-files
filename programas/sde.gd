@@ -15,6 +15,7 @@ var lib_map = [
 var modulo = "SdE"
 var HUB3DLang
 
+var tm = 20 # Límite de tiempo en minutos
 var jugador
 var sala
 var ventana
@@ -29,8 +30,12 @@ var morse
 var tapa_cofre
 var candado
 var mensaje_cofre
+var cerradura
+var cajon1
+var cajon2
 var segundos_restantes
 var colores
+var mascara_numeros
 
 var rsa_encriptado = false
 
@@ -39,8 +44,10 @@ var textos = {
 	"no_enviar_se":"¡Muy bien! Es importante usar encriptación al\nenviar mensajes con información sensible.",
 	"si_enviar_se":"El mensaje que enviaste podría haber sido\ninterceptado.\nSi no querés que esto pase, tenés que\nabrir el chat encriptado.",
 	"light_off":"Apagá la luz",
-	"coloreo":"Colorear cada provincia con un color de forma que\nsi dos provincias son limítrofes, sus colores sean distintos.",
-	"tsp":"Encontrar el mejor camino para pasar\npor todas las ciudades partiendo de Fortran."
+	"coloreo":"No asignar a dos provincias\nlimítrofes el mismo color.",
+	"tsp":"Tengo que pasar por todas las ciudades una sola vez\ny sólo me quedan $550 de presupuesto.",
+	"final":"Has logrado escapar",
+	"perdiste":"Se acabó el tiempo"
 }
 
 var msgs_juan = [
@@ -63,6 +70,7 @@ var mi_clave_publica = "2bd6b4"
 var mi_clave_privada = "07a8c3"
 var clave_publica_juan = "fcadeb"
 var clave_privada_juan = "59be8f"
+var str_colores = ["ninguno","rojo","azul","verde","amarillo"]
 
 func inicializar(hub, pid, argumentos):
 	HUB = hub
@@ -89,6 +97,8 @@ func pantalla_inicio():
 		]
 	})
 
+var estilos_panel = []
+
 func crear_sala():
 	if jugador != null:
 		return
@@ -110,30 +120,43 @@ func crear_sala():
 	tapa_cofre = cofre.hijo_nombrado("tapa")
 	candado = cofre.hijo_nombrado("candado")
 	mensaje_cofre = cofre.hijo_nombrado("mensaje")
+	cerradura = sala.hijo_nombrado("puerta").hijo_nombrado("cerradura")
+	cajon1 = sala.hijo_nombrado("cajonera").hijo_nombrado("cajon1")
+	cajon2 = sala.hijo_nombrado("cajonera").hijo_nombrado("cajon2")
 	colores = [
-		{"actual":0,"correcto":4,"pos":Vector2(52,44)},# ALOLA
-		{"actual":0,"correcto":3,"pos":Vector2(60,33)},# NORTHERN
-		{"actual":0,"correcto":1,"pos":Vector2(49,61)},# JOHTO
-		{"actual":0,"correcto":4,"pos":Vector2(61,12)},# ALDERAAN
-		{"actual":0,"correcto":3,"pos":Vector2(45,74)},# TATOOINE
-		{"actual":0,"correcto":2,"pos":Vector2(36,36)},# SCRABB
-		{"actual":0,"correcto":4,"pos":Vector2(33,60)},# GONDOR
-		{"actual":0,"correcto":3,"pos":Vector2(24,39)},# NABOO
-		{"actual":0,"correcto":4,"pos":Vector2(27,21)},# HOTH
-		{"actual":0,"correcto":2,"pos":Vector2(31,79)},# KALOS
-		{"actual":0,"correcto":0,"pos":Vector2(12,54)},# RIVENDELL
-		{"actual":0,"correcto":0,"pos":Vector2(22,77)},# DALARAN
-		{"actual":0,"correcto":0,"pos":Vector2(25,86)},# BOOTY
-		{"actual":0,"correcto":0,"pos":Vector2(61,80)},# UNOVA
-		{"actual":0,"correcto":0,"pos":Vector2(75,68)},# PLUNDER
-		{"actual":0,"correcto":0,"pos":Vector2(81,40)},# MORDOR
-		{"actual":0,"correcto":0,"pos":Vector2(83,27)} # LUCRE
+		{"actual":0,"correcto":4,"pos":Vector2(65,37), "nombre":"ALOLA"},
+		{"actual":0,"correcto":3,"pos":Vector2(78,25), "nombre":"NORTHERN"},
+		{"actual":0,"correcto":1,"pos":Vector2(67,61), "nombre":"JOHTO"},
+		{"actual":0,"correcto":4,"pos":Vector2(80,02), "nombre":"ALDERAAN"},
+		{"actual":0,"correcto":3,"pos":Vector2(75,85), "nombre":"TATOOINE"},
+		{"actual":0,"correcto":2,"pos":Vector2(53,04), "nombre":"SCRABB"},
+		{"actual":0,"correcto":4,"pos":Vector2(42,63), "nombre":"GONDOR"},
+		{"actual":0,"correcto":3,"pos":Vector2(28,38), "nombre":"NABOO"},
+		{"actual":0,"correcto":4,"pos":Vector2(34,10), "nombre":"HOTH"},
+		{"actual":0,"correcto":2,"pos":Vector2(48,83), "nombre":"KALOS"},
+		{"actual":0,"correcto":0,"pos":Vector2(05,77), "nombre":"RIVENDELL"},
+		{"actual":0,"correcto":0,"pos":Vector2(26,90), "nombre":"DALARAN"}
 	]
+	var style_r = StyleBoxFlat.new()
+	style_r.set_bg_color(Color(1,0,0,.5))
+	var style_g = StyleBoxFlat.new()
+	style_g.set_bg_color(Color(0,1,0,.5))
+	var style_b = StyleBoxFlat.new()
+	style_b.set_bg_color(Color(0,0,1,.5))
+	var style_a = StyleBoxFlat.new()
+	style_a.set_bg_color(Color(1,1,0,.5))
+	var style_n = StyleBoxFlat.new()
+	style_n.set_bg_color(Color(1,1,1,.5))
+	estilos_panel.append(style_n)
+	estilos_panel.append(style_r)
+	estilos_panel.append(style_b)
+	estilos_panel.append(style_g)
+	estilos_panel.append(style_a)
 	HUB.nodo_usuario.gui(self, {"componentes":[{
 	"clase":Panel,"posicion":"top-center","tamanio":Vector2(15,8),
 	"hijos":[{"id":"timer","clase":"texto","posicion":"center",
 	"args":{"texto":"20:00","size":30}}]}]})
-	segundos_restantes = 20*60
+	segundos_restantes = tm*60
 	HUB.eventos.registrar_secuencia(self, "TIMER", ["W|1000","F|timer","R"])
 
 func timer(args):
@@ -148,7 +171,7 @@ func timer(args):
 			s = "0"+s
 		l.set_text(m+":"+s)
 	else:
-		pass # PERDISTE!
+		perder()
 
 func salir():
 	HUB.procesos.finalizar(self)
@@ -162,6 +185,7 @@ func finalizar():
 		ventana_rsa.cerrar()
 	if tip != null:
 		tip.cerrar()
+		tip = null
 	if ventana_warn != null:
 		ventana_warn.cerrar()
 	if jugador != null:
@@ -189,7 +213,7 @@ func tip(args):
 			texto += " la luz"
 		#elif item == monitor:
 		#	texto += "aa"
-		elif item == candado:
+		elif item == candado or item.nombre().begins_with("cajon"):
 			texto += "abrir"
 		elif item == mensaje_cofre:
 			texto += "leer"
@@ -235,15 +259,26 @@ func coloreo(args):
 		{"size_flags/vertical":TextureFrame.SIZE_EXPAND,"size_flags/horizontal":TextureFrame.SIZE_EXPAND,
 		"expand":true,"stretch_mode":TextureFrame.STRETCH_SCALE,"texture":HUB.archivos.abrir_recurso("mapa.png")}}]
 	for i in range(colores.size()):
-		opciones_coloreo.append({"clase":"opcion","id":"color_"+str(i),
-		"args":{"opciones":["ninguno","rojo","azul","verde","amarillo"]},"posicion":colores[i]["pos"]})
+		opciones_coloreo.append(
+		{"clase":Panel,"id":"color_l_"+str(i),"args":{"custom_styles/panel":estilos_panel[colores[i]["actual"]]},
+		"posicion":colores[i]["pos"],"tamanio":Vector2(12,12),
+		"hijos":[{"clase":VBoxContainer,"posicion":"center","hijos":[
+			{"clase":"texto", "args":{"texto":colores[i]["nombre"],"color":Color(0,0,0)}},
+			{"clase":"opcion","id":"color_"+str(i),
+			"args":{"opciones":str_colores}}
+		]}]})
+
 	for i in [
-		["rojo", Vector2(50,27)], # LORDAERON
-		["verde", Vector2(46,49)],# MIDGARD
-		["azul", Vector2(61,53)], # ASGARD
-		["rojo", Vector2(28,61)], # KALIMDOR
-		["rojo", Vector2(22,20)]]:# KANTO
-		opciones_coloreo.append({"clase":"texto","args":{"texto":i[0],"color":Color(0,0,0)},"posicion":i[1]})
+		[1, Vector2(63,19), "LORDAERON"],
+		[3, Vector2(50,41), "MIDGARD"],
+		[2, Vector2(80,46), "ASGARD"],
+		[1, Vector2(28,63), "KALIMDOR"],
+		[1, Vector2(14,03), "KANTO"]]:
+		opciones_coloreo.append(
+		{"clase":Panel,"posicion":i[1],"tamanio":Vector2(12,8),"args":{"custom_styles/panel":estilos_panel[i[0]]},
+			"hijos":[{"clase":VBoxContainer,"posicion":"center","hijos":[
+			{"clase":"texto","args":{"texto":i[2],"color":Color(0,0,0)}}
+		]}]})
 	opciones_coloreo.append({"clase":"boton","args":{"texto":" ? "},"posicion":"top-right","id":"coloreo?"})
 	ventana = HUB.nodo_usuario.ventana(self,{
 		"titulo":"Coloreando provincias",
@@ -309,6 +344,9 @@ func warn_ok():
 
 func colorear(color,nodo):
 	colores[nodo]["actual"] = color
+	var p = HUB.nodo_usuario.gui_id("color_l_"+str(nodo))
+	p.add_style_override("panel", estilos_panel[color])
+	HUB.nodo_usuario.gui_id("color_"+str(nodo)).release_focus()
 
 # argumentos: [quien, target, que]
 func candado(args):
@@ -364,6 +402,7 @@ func boton_candado(x):
 			clave.set_text("___")
 			enter.set_disabled(true)
 			clear.set_disabled(true)
+			candado.mensaje("sonar", ["error"])
 		return
 	candado.mensaje("sonar")
 	clear.set_disabled(false)
@@ -742,3 +781,151 @@ func deshabilitar_botones():
 		var btn = HUB.nodo_usuario.gui_id(id)
 		if btn != null:
 			btn.set_disabled(true)
+
+# argumentos: [quien, target, que]
+func salida(args):
+	HUB.eventos.set_modo_mouse()
+	jugador.pausa()
+	if ventana != null:
+		ventana.cerrar()
+	var combinacion = []
+	for i in range(4):
+		combinacion.append({"clase":"boton","args":{"texto":"+"},"id":"btn_i_up_"+str(i)})
+	for i in range(4):
+		combinacion.append({"clase":"texto","args":{"texto":"0","size":30},"id":"i_"+str(i)})
+	for i in range(4):
+		combinacion.append({"clase":"boton","args":{"texto":"-"},"id":"btn_i_dw_"+str(i)})
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"titulo":"Clave del candado",
+		"tamanio":Vector2(30,30),
+		"botones":[
+			{"texto":"Cerrar","accion":"cerrar_ventana"}
+		],
+		"cuerpo":[{"clase":VBoxContainer,"tamanio":Vector2(95,98),"hijos":[
+			{"clase":CenterContainer,"hijos":[{"clase":"texto","args":{"texto":"Ingrese la combinación para abrir la cerradura"}}]},
+			{"clase":CenterContainer,"hijos":[
+			{"clase":HBoxContainer,"hijos":[
+				{"clase":GridContainer,"tamanio":Vector2(95,98),"posicion":"center",
+				"args":{"columns":4},"hijos":combinacion},
+				{"clase":"boton","args":{"texto":"Ingresar"},"id":"btn_ingresar"}
+			]}]}
+		]}]})
+	HUB.nodo_usuario.gui_id("btn_ingresar").connect("button_up", self, "ingresar")
+	for i in range(4):
+		HUB.nodo_usuario.gui_id("btn_i_up_"+str(i)).connect("button_up", self, "ingresar_up", [i])
+		HUB.nodo_usuario.gui_id("btn_i_dw_"+str(i)).connect("button_up", self, "ingresar_dw", [i])
+
+func ingresar():
+	var ingresado = ""
+	for i in range(4):
+		ingresado += HUB.nodo_usuario.gui_id("i_"+str(i)).get_text()
+	if ingresado == "3593":
+		ganar()
+	else:
+		cerradura.mensaje("sonar", ["error"])
+
+func perder():
+	HUB.eventos.anular_secuencia(self, "TIMER")
+	if ventana != null:
+		ventana.cerrar()
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"titulo":"Lástima",
+		"tamanio":Vector2(30,30),
+		"botones":[
+			{"texto":"Salir","accion":"salir"}
+		],
+		"cuerpo":[{"clase":CenterContainer,"tamanio":Vector2(90,90),"hijos":[
+		{"clase":"texto","args":{"texto":textos["perdiste"]}}]}]})
+
+func ganar():
+	HUB.eventos.anular_secuencia(self, "TIMER")
+	if ventana != null:
+		ventana.cerrar()
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"titulo":"Felicitaciones",
+		"tamanio":Vector2(30,30),
+		"botones":[
+			{"texto":"Salir","accion":"salir"}
+		],
+		"cuerpo":[{"clase":CenterContainer,"tamanio":Vector2(90,90),"hijos":[
+		{"clase":"texto","args":{"texto":textos["final"]}}]}]})
+
+func ingresar_up(i):
+	var l = HUB.nodo_usuario.gui_id("i_"+str(i))
+	l.set_text(str((int(l.get_text())+1)%10))
+func ingresar_dw(i):
+	var l = HUB.nodo_usuario.gui_id("i_"+str(i))
+	l.set_text(str((int(l.get_text())+9)%10))
+
+# argumentos: [quien, target, que]
+func cajon(args):
+	args[1].quitar_comportamiento("interactive")
+	HUB.eventos.registrar_secuencia(self, args[1].nombre(), ["W|10","F|abrir_cajon|"+args[1].nombre(),"R"])
+
+# args = [nombre]
+func abrir_cajon(args):
+	var nombre = args[0]
+	var c = cajon1
+	if nombre == "cajon2":
+		c = cajon2
+	c.mover(Vector3(0,0,.05))
+	if c.get_transform().origin.z > 0.47:
+		HUB.eventos.anular_secuencia(self, nombre)
+		if c==cajon1:
+			var plantilla_colores = c.hijo_nombrado("mensaje")
+			plantilla_colores.agregar_comportamiento("interactive",[[],{"s":"plantilla_colores","m":"mensaje","p":"tip","r":0.5}])
+
+# argumentos: [quien, target, que]
+func plantilla_colores(args):
+	HUB.eventos.set_modo_mouse()
+	jugador.pausa()
+	if ventana != null:
+		ventana.cerrar()
+	ventana = HUB.nodo_usuario.ventana(self,{
+		"titulo":"",
+		"tamanio":Vector2(60,85),
+		"botones":[
+			{"texto":"Cerrar","accion":"cerrar_ventana"}
+		],
+		"cuerpo":[{"clase":Container,"tamanio":Vector2(95,98),"posicion":"center","hijos":[
+			{"clase":TextureFrame,"tamanio":Vector2(80,70),"posicion":"top-center","args":
+			{"size_flags/vertical":TextureFrame.SIZE_EXPAND,"size_flags/horizontal":TextureFrame.SIZE_EXPAND,
+				"expand":true,"stretch_mode":TextureFrame.STRETCH_SCALE,"texture":HUB.archivos.abrir_recurso("colores.png")}},
+			{"clase":TextureFrame,"id":"numeros","tamanio":Vector2(80,70),"posicion":"top-center","args":
+			{"size_flags/vertical":TextureFrame.SIZE_EXPAND,"size_flags/horizontal":TextureFrame.SIZE_EXPAND,
+			"expand":true,"stretch_mode":TextureFrame.STRETCH_SCALE,"texture":HUB.archivos.abrir_recurso("numeros.png")}},
+			{"clase":VSlider,"posicion":["right",Vector2(-5,0)],"tamanio":Vector2(10,100),"id":"slider"}]},
+			{"clase":Panel,"posicion":["bottom",Vector2(-20,3)],"tamanio":Vector2(12,9),"id":"p_H","args":{"custom_styles/panel":estilos_panel[0]},"hijos":[
+			{"clase":VBoxContainer,"hijos":[{"clase":"texto","args":{"align":"center","texto":"HOTH"}},
+			{"clase":CenterContainer,"hijos":[{"clase":"opcion","id":"color_H","args":{"opciones":str_colores}}]}]}]},
+			{"clase":Panel,"posicion":["bottom",Vector2(0,3)],"tamanio":Vector2(12,9),"id":"p_N","args":{"custom_styles/panel":estilos_panel[0]},"hijos":[
+			{"clase":VBoxContainer,"hijos":[{"clase":"texto","args":{"align":"center","texto":"NABOO"}},
+			{"clase":CenterContainer,"hijos":[{"clase":"opcion","id":"color_N","args":{"opciones":str_colores}}]}]}]},
+			{"clase":Panel,"posicion":["bottom",Vector2(20,3)],"tamanio":Vector2(12,9),"id":"p_K","args":{"custom_styles/panel":estilos_panel[0]},"hijos":[
+			{"clase":VBoxContainer,"hijos":[{"clase":"texto","args":{"align":"center","texto":"KALOS"}},
+			{"clase":CenterContainer,"hijos":[{"clase":"opcion","id":"color_K","args":{"opciones":str_colores}}]}]}]},
+			]
+	})
+	HUB.nodo_usuario.gui_id("color_H").connect("item_selected", self, "colorxn", ["H"])
+	HUB.nodo_usuario.gui_id("color_N").connect("item_selected", self, "colorxn", ["N"])
+	HUB.nodo_usuario.gui_id("color_K").connect("item_selected", self, "colorxn", ["K"])
+	mascara_numeros = HUB.nodo_usuario.gui_id("numeros")
+	var y = mascara_numeros.get_pos().y
+	var h = mascara_numeros.get_size().y
+	var slider = HUB.nodo_usuario.gui_id("slider")
+	slider.connect("value_changed", self, "slider")
+	slider.set_min(y)
+	slider.set_max(y+h)
+	slider.set_val(y)
+	mascara_numeros.set_pos(Vector2(mascara_numeros.get_pos().x,y+h))
+
+func slider(val):
+	var slider = HUB.nodo_usuario.gui_id("slider")
+	var m = slider.get_min()
+	var M = slider.get_max()
+	val = M - (val-m)
+	mascara_numeros.set_pos(Vector2(mascara_numeros.get_pos().x,val))
+
+func colorxn(color,i):
+	HUB.nodo_usuario.gui_id("p_"+i).set("custom_styles/panel",estilos_panel[color])
+	HUB.nodo_usuario.gui_id("color_"+i).release_focus()
