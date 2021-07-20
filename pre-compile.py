@@ -17,7 +17,7 @@ def main():
   #renombrar_gd_a_h("shell")
   #renombrar_gd_a_h("objetos", objeto_HUB3DLang)
 
-  raw_input('\nConversión completa. Presione ENTER para revertir\n')
+  input('\nConversión completa. Presione ENTER para revertir\n')
 
   #renombrar_h_a_gd("shell")
   #renombrar_h_a_gd("objetos")

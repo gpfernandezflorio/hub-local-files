@@ -21,6 +21,7 @@ var pila_entorno = []	# Diccionarios con "path", "pid", "caching"
 						# "namespace" (para objetos que todavía no se agregaron al árbol) y
 						# "data" (sólo para argumentos)
 
+var FixedMaterial = SpatialMaterial#@3
 func inicializar(hub):
 	HUB = hub
 	tipos = HUB.bibliotecas.importar("tipos")
@@ -120,7 +121,6 @@ func crear(texto, entorno={}):
 	if not "caching" in entorno:
 		entorno["caching"] = true
 	var nuevos_objetos = [] # El texto podría contener varias líneas
-	var raiz = null
 	pila_entorno.push_front(entorno)
 	for linea in texto.split("\n"):
 		if not linea.begins_with("#") and linea.length() > 0:
@@ -418,15 +418,15 @@ func aplicar_modificaciones(algo, mods):
 			if not es_una_repH(resultado):
 				resultado = componente_a_objeto(resultado)
 			var scripts = mods["s"]
-			for script in scripts:
+			for codigo in scripts:
 				var args = [[],{}]
-				if tipos.es_una_lista(script):
-					for i in script[1][0]:
+				if tipos.es_una_lista(codigo):
+					for i in codigo[1][0]:
 						args[0].append(i)
-					for i in script[1][1].keys():
-						args[1][i] = script[1][1][i]
-					script = script[0]
-				resultado.comportamientos.append([script,args])
+					for i in codigo[1][1].keys():
+						args[1][i] = codigo[1][1][i]
+					codigo = codigo[0]
+				resultado.comportamientos.append([codigo,args])
 		# OFFSET
 		elif (modificador.begins_with("o")):
 			var local = false # ¿relativo a la rotación?
@@ -1028,16 +1028,16 @@ class CRep:			# Componente genérico
 	var tipo
 	var nombre
 	var clase			# Class
-	var script			# String
+	var codigo			# String
 	var transform		# Spatial
 	var params			# Dict
 	var HUB
 	var pi_180 = PI/180.0
-	func _init(HUB, tipo, clase, script, nombre):
+	func _init(HUB, tipo, clase, codigo, nombre):
 		self.tipo = tipo
 		self.nombre = nombre
 		self.clase = clase
-		self.script = script
+		self.codigo = codigo
 		transform = Spatial.new()
 		params = {}
 		self.HUB = HUB
@@ -1058,12 +1058,13 @@ class CRep:			# Componente genérico
 		var resultado = HUB.GC.crear_nodo(clase)
 		if nombre != null:
 			resultado.set_name(nombre)
-		if script != null:
-			resultado.set_script(script)
+		if codigo != null:
+			resultado.set_script(codigo)
 		for p in params.keys():
 			if p in resultado:
 				resultado.set(p, params[p])
-		resultado.set_transform(transform.get_transform())
+		if resultado.has_method('set_transform'):
+			resultado.set_transform(transform.get_transform())
 		return resultado
 
 class BodyRep extends CRep:
@@ -1089,7 +1090,7 @@ func copiar_rep_c(original):
 	var clase = CRep
 	if original.tipo == "BODY":
 		clase = BodyRep
-	var copia = clase.new(HUB, original.tipo, original.clase, original.script, original.nombre)
+	var copia = clase.new(HUB, original.tipo, original.clase, original.codigo, original.nombre)
 	copia.transform = Spatial.new()
 	copia.transform.set_transform(original.transform.get_transform())
 	for p in original.params:
@@ -1152,6 +1153,7 @@ class MeshRep:
 	func make():
 		var mesh = Mesh.new()
 		var st = SurfaceTool.new()
+		var VS = Mesh#@3
 		st.begin(VS.PRIMITIVE_TRIANGLES)
 		for f in faces:
 			if (f.size()==3 or f.size()==4):
@@ -1227,11 +1229,11 @@ func nuevo_audio():
 
 func nuevo_componente(tipo, grupo, nombre, baseRep = CRep):
 	if tipo in componentes_validos.keys():
-		var script = null
+		var codigo = null
 		var ruta_componentes = HUB.objetos.ruta_componentes()
 		if HUB.archivos.existe(ruta_componentes, tipo+".gd"):
-			script = HUB.archivos.abrir(ruta_componentes, tipo+".gd")
-		return baseRep.new(HUB, grupo, componentes_validos[tipo], script, nombre)
+			codigo = HUB.archivos.abrir(ruta_componentes, tipo+".gd")
+		return baseRep.new(HUB, grupo, componentes_validos[tipo], codigo, nombre)
 	return HUB.error(HUB.errores.error('Componente desconocido: '+tipo), modulo)
 
 var componentes_validos = {

@@ -229,7 +229,7 @@ func resize_componente(c, marco=HUB.pantalla.resolucion):
 	elif a_y == "c":
 		pos.y = (marco.y-size.y)/2+offset.y
 	nodo.set_size(size)
-	nodo.set_pos(pos)
+	nodo.set_position(pos)
 	for h in c["hijos"]:
 		resize_componente(h, size)
 

@@ -40,7 +40,10 @@ func inicializar(hub, yo, args):
 	if args["o"].size()>0:
 		offset.origin.x = float(args["o"][0])
 	shape.set_radius(args["r"])
-	colisionador.add_shape(shape, offset)
+#	colisionador.add_shape(shape, offset)#@2
+	var s_owner = colisionador.create_shape_owner(null)#@3
+	colisionador.shape_owner_add_shape(s_owner, shape)#@3
+	colisionador.shape_owner_set_transform(s_owner, offset)#@3
 	colisionador.connect("area_enter_shape", self, "contacto_in")
 	colisionador.connect("area_exit_shape", self, "contacto_out")
 	add_child(colisionador)

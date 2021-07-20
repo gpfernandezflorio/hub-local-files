@@ -100,9 +100,9 @@ class TesterComando:
 # Verificadores
 
 func verificador_trivial():
-	return VerificadorTrivial.new()
+	return VerificadorTrivial.new(HUB)
 func verificador_nulo():
-	return VerificadorNulo.new()
+	return VerificadorNulo.new(HUB)
 func verificador_por_igualdad(resultado_esperado):
 	return VerificadorIgualdad.new(HUB, resultado_esperado)
 func verificador_error(error_esperado):

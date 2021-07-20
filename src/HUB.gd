@@ -6,8 +6,11 @@
 
 extends Node
 
+var userfs
 # Ruta a la carpeta de archivos de usuario
 var ruta_raiz
+# Ruta a la carpeta de archivos de recursos (para cuando compilo sin userfs)
+var ruta_recursos
 # Ruta a la carpeta de archivos fuente de HUB
 var hub_src = "src"
 
@@ -40,7 +43,9 @@ var varios = Node.new()
 var os
 
 func inicializar(hub):
+	userfs = get_parent().userfs
 	ruta_raiz = get_parent().ruta_raiz
+	ruta_recursos = get_parent().ruta_recursos
 	os = OS.get_name()
 	for componente in [
 		[archivos,     "archivos",   "Archivos"],

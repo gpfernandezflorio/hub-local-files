@@ -23,6 +23,12 @@ func inicializar(hub):
 	grab_focus()
 	return true
 
+func set_cursor_pos(i):#@3
+	caret_position = i#@3
+
+func get_cursor_pos():#@3
+	return caret_position#@3
+
 func historial_arriba():
 	if (indice_historial < historial.size()-1):
 		indice_historial += 1
@@ -83,7 +89,7 @@ func autocompletar():
 	if HUB.errores.fallo(posibilidades):
 		return posibilidades
 	if posibilidades.size() == 1:
-		var i_igual = preludio.find("=")
+		i_igual = preludio.find("=")
 		var opt = posibilidades[0]
 		if (carpeta+opt).find(" ") != -1 and not inicio.ends_with('"'):
 			inicio += '"'
@@ -160,7 +166,7 @@ func filtrar_posibilidades_ruta(ruta, preludio, carpeta, posibilidades, incluir_
 			opt = carpeta.plus_file(archivo)
 		if opt.begins_with(preludio):
 			if HUB.archivos.es_archivo(ruta.plus_file(carpeta), archivo):
-				var opt = archivo
+				opt = archivo
 				if not incluir_extension:
 					opt = archivo.split(".")[0]
 				if incluir_extension or (not incluir_extension and archivo.ends_with(".gd")):
@@ -218,5 +224,11 @@ func posibilidades_PROC(preludio):
 	return ps
 
 func ventana_escalada(nueva_resolucion):
-	set_pos(Vector2(5, nueva_resolucion.y-25))
+	set_position(Vector2(5, nueva_resolucion.y-25))
 	set_size(Vector2(nueva_resolucion.x-10,0))
+
+func set_hidden(h):#@3
+	if h:#@3
+		hide()#@3
+	else:#@3
+		show()#@3

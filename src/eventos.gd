@@ -75,19 +75,22 @@ func set_modo_mouse(modo=0):
 
 func iniciar():
 	set_process_input(true)
-	set_fixed_process(true)
+#	set_fixed_process(true)#@2
 	get_tree().get_root().connect("size_changed", self, "ventana_escalada")
 
 func _input(ev):
-	if ev.type == InputEvent.MOUSE_MOTION:
+#	if ev.type == InputEvent.MOUSE_MOTION:#@2
+	if ev is InputEventMouseMotion:#@3
 		mouse_movido(ev)
-	if ev.type == InputEvent.KEY:
+#	if ev.type == InputEvent.KEY:#@2
+	if ev is InputEventKey:#@3
 		if ev.pressed:
 			tecla_presionada(ev)
 		else:
 			tecla_soltada(ev)
 
-func _fixed_process(delta):
+#func _fixed_process(delta):#@2
+func _physics_process(delta):#@3
 	periodico(delta)
 	secuencias(delta)
 
@@ -107,7 +110,8 @@ func anular_generico(accion, nodo):
 
 func mouse_movido(ev):
 	if registro_eventos.has("MM"):
-		var mov = ev.relative_pos
+#		var mov = ev.relative_pos#@2
+		var mov = ev.relative#@3
 		if HUB.os == "HTML5":
 			mov = 2.2*ev.global_pos/HUB.pantalla.resolucion - Vector2(1.1,1.1)
 			mov = 10*Vector2(pow(mov.x,9),pow(mov.y,9))

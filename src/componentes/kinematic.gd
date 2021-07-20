@@ -17,7 +17,7 @@ func inicializar(hub, yo):
 	body_real = KinematicBody.new()
 	body_real.set_name("BODY REAL")
 	for s in shapes:
-		body_real.add_shape(s[0], s[1])
+		add_shape(s[0], s[1])
 	var hijos = get_children()
 	add_child(body_real)
 	for h in hijos:
@@ -48,6 +48,9 @@ func get_collision_normal():
 
 func add_shape(shape, transform=Transform()):
 	if body_real:
-		body_real.add_shape(shape, transform)
+#		body_real.add_shape(shape, transform)#@2
+		var s_owner = body_real.create_shape_owner(null)#@3
+		body_real.shape_owner_add_shape(s_owner, shape)#@3
+		body_real.shape_owner_set_transform(s_owner, transform)#@3
 	else:
 		shapes.append([shape, transform])

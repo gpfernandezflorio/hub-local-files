@@ -41,7 +41,7 @@ func copiar_conjunto(conjunto):
 	return conjunto_con_elementos(conjunto.elementos)
 
 func unir_conjuntos(conjunto_1, conjunto_2):
-	var resultado = copiar_conjnunto(conjunto_1)
+	var resultado = copiar_conjunto(conjunto_1)
 	resultado.union(conjunto_2)
 	return resultado
 

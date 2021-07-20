@@ -22,8 +22,8 @@ var carpeta_recursos = "recursos"
 func inicializar(hub):
 	HUB = hub
 	file_system = FileSystem.new(HUB.ruta_raiz)
-	if not OS.is_debug_build() and not Globals.get("userfs"):
-		carpeta_recursos = Globals.get("res_dir").plus_file(carpeta_recursos)
+	if not OS.is_debug_build() and not HUB.userfs:
+		carpeta_recursos = HUB.ruta_recursos.plus_file(carpeta_recursos)
 	else:
 		carpeta_recursos = HUB.ruta_raiz.plus_file(carpeta_recursos)
 	return true

@@ -20,8 +20,9 @@ func error(mensaje, stack_error = null):
 
 # Retorna si el resultado de una función generó un error
 func fallo(resultado):
-	if typeof(resultado) == 18: # No es un built-in type
-		return resultado.get_type() == "Error"
+	if typeof(resultado) == TYPE_OBJECT: # No es un built-in type
+#		return resultado.get_type() == "Error"#@2
+		return resultado is Error#@3
 	return false
 
 # Intenta ejecutar una función en un nodo

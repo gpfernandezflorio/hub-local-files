@@ -23,7 +23,7 @@ var yo
 var colisionador
 var mallas
 var material_on
-var script
+var codigo
 var preview
 var i = -1
 
@@ -34,14 +34,14 @@ func inicializar(hub, yo, args):
 		var nombre_funcion = args["s"]
 		var proceso = HUB.procesos.obtener()
 		if yo.sabe(nombre_funcion):
-			script = [yo, "mensaje", nombre_funcion]
+			codigo = [yo, "mensaje", nombre_funcion]
 		elif proceso.has_method(nombre_funcion):
-			script = [proceso, nombre_funcion]
+			codigo = [proceso, nombre_funcion]
 		elif HUB.archivos.existe("scripts", nombre_funcion+".gd"):
 			var code = HUB.archivos.abrir("scripts", nombre_funcion+".gd")
-			script = [Node.new(), "exec"]
-			script[0].set_script(code)
-			var res_ini = script[0].inicializar(HUB)
+			codigo = [Node.new(), "exec"]
+			codigo[0].set_script(code)
+			var res_ini = codigo[0].inicializar(HUB)
 			if HUB.errores.fallo(res_ini):
 				return HUB.error(HUB.errores.error("X", res_ini), modulo)
 		else:
@@ -66,20 +66,25 @@ func inicializar(hub, yo, args):
 	for m in args["m"]:
 		if yo.tiene_componente_nombrado(m):
 			var malla = yo.componente_nombrado(m)
-			if malla.get_type() != "MeshInstance":
+#			if malla.get_type() != "MeshInstance":#@2
+			if not malla is MeshInstance:#@3
 				return HUB.error(HUB.errores.error("X"), modulo)
 			mallas.append([malla.get_mesh(), materiales(malla.get_mesh())])
 		elif yo.tiene_hijo_nombrado(m):
 			var hijo = yo.hijo_nombrado(m)
 			for componente in hijo.componentes():
-				if componente.get_type() == "MeshInstance":
+#				if componente.get_type() == "MeshInstance":#@2
+				if componente is MeshInstance:#@3
 					mallas.append([componente.get_mesh(), materiales(componente.get_mesh())])
 	colisionador = Area.new()
 	var shape = SphereShape.new()
 	shape.set_radius(args["r"])
-	colisionador.add_shape(shape)
+#	colisionador.add_shape(shape)#@2
+	var s_owner = colisionador.create_shape_owner(null)#@3
+	colisionador.shape_owner_add_shape(s_owner, shape)#@3
 	add_child(colisionador)
-	material_on = FixedMaterial.new()
+#	material_on = FixedMaterial.new()#@2
+	material_on = SpatialMaterial.new()#@3
 	material_on.set("params/emission",Color(.5,.5,.2))
 	material_on.set("params/specular_exp",1)
 	material_on.set("params/glow",8)
@@ -115,11 +120,11 @@ func interact_out(quien):
 			preview[0].call(preview[1], [quien, yo, false])
 
 func interact(quien, que):
-	if script != null:
-		if script.size() == 3:
-			script[0].call(script[1], script[2], [quien, yo, que])
+	if codigo != null:
+		if codigo.size() == 3:
+			codigo[0].call(codigo[1], codigo[2], [quien, yo, que])
 		else:
-			script[0].call(script[1], [quien, yo, que])
+			codigo[0].call(codigo[1], [quien, yo, que])
 
 func periodico(delta):
 	if i < 0:

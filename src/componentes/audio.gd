@@ -17,7 +17,9 @@ var volumen
 func inicializar(hub, yo):
 	HUB = hub
 	self.yo = yo
-	player_real = StreamPlayer.new() # Para que funcione en HTML5 uso este en lugar del Spatial
+	# Para que funcione en HTML5 uso este en lugar del Spatial
+#	player_real = StreamPlayer.new()#@2
+	player_real = AudioStreamPlayer.new()#@3
 	add_child(player_real)
 	var audios = {}
 	for s in sonidos:

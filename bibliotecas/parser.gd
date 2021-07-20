@@ -211,9 +211,12 @@ func tokenizar_cadena(token_rules, cadena):
 			var j = 0
 			for token in token_rules.keys():
 				var regex = token_rules[token]
-				var token_encontrado = regex.find(reglon, i)
-				if token_encontrado == i:
-					token_encontrado = regex.get_capture(0)
+#				var token_encontrado = regex.find(reglon, i)#@2
+				var token_encontrado = regex.search(reglon, i)#@3
+#				if token_encontrado == i:#@2
+				if token_encontrado != null and token_encontrado.get_start() == i:#@3
+#					token_encontrado = regex.get_capture(0)#@2
+					token_encontrado = token_encontrado.get_string()#@3
 					if token_encontrado.length() > j:
 						j = token_encontrado.length()
 						token_candidato = token

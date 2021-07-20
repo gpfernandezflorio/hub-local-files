@@ -139,11 +139,13 @@ func inicializar_componente(nodo, script, nombre):
 	return nodo.inicializar(HUB)
 
 func inicializar_input():
+#	var tecla_enter = KEY_RETURN#@2
+	var tecla_enter = KEY_ENTER#@3
 	HUB.eventos.registrar_press(KEY_TAB, self, "autocompletar_o_abrir")
 	HUB.eventos.registrar_press(KEY_ESCAPE, self, "cerrar")
 	HUB.eventos.registrar_press(KEY_UP, campo_entrada, "historial_arriba")
 	HUB.eventos.registrar_press(KEY_DOWN, campo_entrada, "historial_abajo")
-	HUB.eventos.registrar_press(KEY_RETURN, campo_entrada, "ingresar")
+	HUB.eventos.registrar_press(tecla_enter, campo_entrada, "ingresar")
 
 func autocompletar_o_abrir():
 	if modo_visible == 0:

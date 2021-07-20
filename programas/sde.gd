@@ -38,6 +38,7 @@ var colores
 var mascara_numeros
 
 var rsa_encriptado = false
+var TextureFrame = TextureRect#@3
 
 var textos = {
 	"se_warn":"Estás enviando texto plano por un canal\nsin encriptar.\nOtras personas en esta red podrían verlo.\n¿Estás seguro de que deseás continuar?",
@@ -710,12 +711,12 @@ func random_d_crypt(clave, msg):
 	d_crypts[clave] = {msg:random}
 	return random
 
-var char = "1234567890qwertyuiopasdfghjklzxcvbnm-?.:,;_¿¡!'´+*-/#$%&()=[]{}^`~<>|°¬@QWERTYUIOPASDFGHJKLZXCVBNM"
+var letras = "1234567890qwertyuiopasdfghjklzxcvbnm-?.:,;_¿¡!'´+*-/#$%&()=[]{}^`~<>|°¬@QWERTYUIOPASDFGHJKLZXCVBNM"
 
 func random_msg():
 	var res = ""
 	for i in range(50):
-		res += char[randi() % char.length()]
+		res += letras[randi() % letras.length()]
 	return res
 
 func btn_crypt():
@@ -917,14 +918,14 @@ func plantilla_colores(args):
 	slider.set_min(y)
 	slider.set_max(y+h)
 	slider.set_val(y)
-	mascara_numeros.set_pos(Vector2(mascara_numeros.get_pos().x,y+h))
+	mascara_numeros.set_position(Vector2(mascara_numeros.get_pos().x,y+h))
 
 func slider(val):
 	var slider = HUB.nodo_usuario.gui_id("slider")
 	var m = slider.get_min()
 	var M = slider.get_max()
 	val = M - (val-m)
-	mascara_numeros.set_pos(Vector2(mascara_numeros.get_pos().x,val))
+	mascara_numeros.set_position(Vector2(mascara_numeros.get_pos().x,val))
 
 func colorxn(color,i):
 	HUB.nodo_usuario.gui_id("p_"+i).set("custom_styles/panel",estilos_panel[color])
