@@ -51,9 +51,9 @@ func comando(argumentos):
 class AtributosNodo:
 	var args
 	var printer
-	func _init(args, printer):
-		self.args = args
-		self.printer = printer
+	func _init(args_recibido, printer_recibido):
+		self.args = args_recibido
+		self.printer = printer_recibido
 	func nombre_de_nodo(nodo):
 		var txt = nodo.get_name()
 		for arg in self.args:

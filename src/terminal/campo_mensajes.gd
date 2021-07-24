@@ -30,12 +30,12 @@ func inicializar(hub):
 	var color_string = Color(.5,.8,.2)
 	var color_sender = Color(.8,.8,.2)
 	set_syntax_coloring(true)
-#	set_symbol_color(color_principal)#@2
-	add_color_override("symbol_color", color_principal)#@3
+	set_symbol_color(color_principal)#@2
+#	add_color_override("symbol_color", color_principal)#@3
 	for p in ["member_variable","function","symbol","caret_background","selection","caret","breakpoint","font","line_number","completion_font","completion_scroll","number","brace","completion_background","brace_mismatch","completion_selected","mark","word_highlighted","completion_existing"]:
 		set("custom_colors/"+p+"_color", color_principal)
-#	set_custom_bg_color(color_fondo)#@2
-	add_color_override("background_color", color_fondo)#@3
+	set_custom_bg_color(color_fondo)#@2
+#	add_color_override("background_color", color_fondo)#@3
 	set("custom_colors/current_line_color", Color(1,1,1,0))
 	add_color_region(pre_entorno,"\n", color_entorno, true)
 	add_color_region(pre_usuario,"\n", color_usuario, true)
@@ -59,11 +59,11 @@ func mensaje(texto, entorno=""):
 	cursor_set_line(get_line_count(), true)
 
 func ventana_escalada(nueva_resolucion):
-	set_position(Vector2(5,5))
+	set_pos(Vector2(5,5))
 	set_size(Vector2(nueva_resolucion.x-10,nueva_resolucion.y-35))
 
-func set_hidden(h):#@3
-	if h:#@3
-		hide()#@3
-	else:#@3
-		show()#@3
+#func set_hidden(h):#@3
+#	if h:#@3
+#		hide()#@3
+#	else:#@3
+#		show()#@3

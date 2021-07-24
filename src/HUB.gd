@@ -42,7 +42,7 @@ var varios = Node.new()
 # OS: “Android”, “BlackBerry 10”, “Flash”, “Haiku”, “iOS”, “HTML5”, “OSX”, “Server”, “Windows”, “WinRT”, “X11”
 var os
 
-func inicializar(hub):
+func inicializar():
 	userfs = get_parent().userfs
 	ruta_raiz = get_parent().ruta_raiz
 	ruta_recursos = get_parent().ruta_recursos

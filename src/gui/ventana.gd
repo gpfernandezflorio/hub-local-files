@@ -75,7 +75,7 @@ func ocultar():
 func mostrar():
 	set("visibility/visible", true)
 
-func resize(nuevo_tamanio):
+func resize(_nuevo_tamanio):
 	var size
 	if tamanio == null:
 		size = HUB.pantalla.coordenadas(100,100)
@@ -98,14 +98,14 @@ func resize(nuevo_tamanio):
 		pos.y = (marco.y-size.y)/2+offset.y
 
 	set_size(size)
-	set_position(pos)
+	set_pos(pos)
 	var tamanio_header = Vector2(size.x,header["altura"]*marco.y/100)
 	header["nodo"].set_size(tamanio_header)
 	var tamanio_footer = Vector2(size.x,footer["altura"]*marco.y/100)
 	footer["nodo"].set_size(tamanio_footer)
-	footer["nodo"].set_position(Vector2(0,size.y-tamanio_footer.y))
+	footer["nodo"].set_pos(Vector2(0,size.y-tamanio_footer.y))
 	var tamanio_cuerpo = Vector2(size.x,size.y-tamanio_footer.y-tamanio_header.y)
 	cuerpo["nodo"].set_size(tamanio_cuerpo)
-	cuerpo["nodo"].set_position(Vector2(0,tamanio_header.y))
+	cuerpo["nodo"].set_pos(Vector2(0,tamanio_header.y))
 	for c in cuerpo["hijos"]:
 		HUB.nodo_usuario.resize_componente(c,tamanio_cuerpo)

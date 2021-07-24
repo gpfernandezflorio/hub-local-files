@@ -18,9 +18,9 @@ var arg_map_empujar = {
 var body_real
 var shapes = []
 
-func inicializar(hub, yo):
+func inicializar(hub, yo_recibido):
 	HUB = hub
-	self.yo = yo
+	self.yo = yo_recibido
 	body_real = RigidBody.new()
 	body_real.set_name("BODY REAL")
 	for s in shapes:
@@ -38,7 +38,7 @@ func inicializar(hub, yo):
 func finalizar():
 	HUB.eventos.anular_periodico(self)
 
-func periodico(delta):
+func periodico(_delta):
 	if body_real.get_mode() == 0:
 		yo.set_global_transform(body_real.get_global_transform())
 		yo.translate(-get_translation())
@@ -64,9 +64,9 @@ func get_collision_normal():
 
 func add_shape(shape, transform=Transform()):
 	if body_real:
-#		body_real.add_shape(shape, transform)#@2
-		var s_owner = body_real.create_shape_owner(null)#@3
-		body_real.shape_owner_add_shape(s_owner, shape)#@3
-		body_real.shape_owner_set_transform(s_owner, transform)#@3
+		body_real.add_shape(shape, transform)#@2
+#		var s_owner = body_real.create_shape_owner(null)#@3
+#		body_real.shape_owner_add_shape(s_owner, shape)#@3
+#		body_real.shape_owner_set_transform(s_owner, transform)#@3
 	else:
 		shapes.append([shape, transform])

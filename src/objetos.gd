@@ -108,8 +108,8 @@ func agregar_comportamiento_a_objeto(objeto, nombre_script, args=[[],{}]):
 	if HUB.errores.fallo(comportamiento):
 		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', comportamiento), modulo)
 	var nombre = nombre_script.replace("/","-")
-	nombre = objeto.nombrar_sin_colision(comportamiento, nombre, objeto.comportamientos)
-	objeto.comportamientos.add_child(comportamiento)
+	nombre = objeto.nombrar_sin_colision(comportamiento, nombre, objeto.nodo_comportamientos)
+	objeto.nodo_comportamientos.add_child(comportamiento)
 	var argumentos = HUB.varios.parsear_argumentos_comportamientos(comportamiento, args, modulo)
 	if HUB.errores.fallo(argumentos):
 		return HUB.error(HUB.errores.error('No se pudo agregar el comportamiento "' + nombre_script + '".', argumentos), modulo)
@@ -200,7 +200,7 @@ func objeto_inexistente(nombre_completo, desde, stack_error=null):
 		'".', stack_error)
 
 # Generador inexistente
-func generador_inexistente(nombre, desde, stack_error=null):
+func generador_inexistente(nombre, _desde, stack_error=null):
 	return HUB.errores.error('No se encontró ningún generador de objetos con nombre "' + \
 		nombre + '".', stack_error)
 

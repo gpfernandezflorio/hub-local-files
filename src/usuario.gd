@@ -14,7 +14,7 @@ var HUB
 var modulo = "USUARIO"
 
 # Nodo raíz para la interfaz gráfica
-var gui = Control.new()
+var nodo_gui = Control.new()
 # Objeto raíz de la jerarquía de objetos
 var mundo
 
@@ -26,8 +26,8 @@ var fonts
 
 func inicializar(hub):
 	HUB = hub
-	gui.set_name("GUI")
-	add_child(gui)
+	nodo_gui.set_name("GUI")
+	add_child(nodo_gui)
 	mundo = HUB.objetos.crear(null)
 	mundo.set_name("Mundo")
 	add_child(mundo)
@@ -56,7 +56,7 @@ func gui(nodo, args):
 
 	var control = HUB.GC.crear_nodo(Control)
 	control.set_script(script_gui)
-	gui.add_child(control)
+	nodo_gui.add_child(control)
 	control.inicializar(HUB, args)
 	return control
 
@@ -81,7 +81,7 @@ func ventana(nodo, args):
 
 	var panel = HUB.GC.crear_nodo(Panel)
 	panel.set_script(script_ventana)
-	gui.add_child(panel)
+	nodo_gui.add_child(panel)
 	panel.inicializar(HUB, args)
 	return panel
 
@@ -229,7 +229,7 @@ func resize_componente(c, marco=HUB.pantalla.resolucion):
 	elif a_y == "c":
 		pos.y = (marco.y-size.y)/2+offset.y
 	nodo.set_size(size)
-	nodo.set_position(pos)
+	nodo.set_pos(pos)
 	for h in c["hijos"]:
 		resize_componente(h, size)
 

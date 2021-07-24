@@ -20,9 +20,9 @@ var fichas
 var piso
 var luz
 
-func inicializar(hub, pid, argumentos):
+func inicializar(hub, mi_pid, _argumentos):
 	HUB = hub
-	self.pid = pid
+	self.pid = mi_pid
 	HUB3DLang = lib_map["HUB3DLang"]
 	HUB.pantalla.completa()			# Pantalla completa
 	HUB.eventos.set_modo_mouse(2)	# Ocultar mouse

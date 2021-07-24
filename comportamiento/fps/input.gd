@@ -45,9 +45,9 @@ var controles = {
 	"J":{}
 }
 
-func inicializar(hub, yo, args):
+func inicializar(hub, yo_recibido, args):
 	HUB = hub
-	self.yo = yo
+	self.yo = yo_recibido
 	control = args["c"]
 	registrar_inputs()
 	return null

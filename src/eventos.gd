@@ -75,24 +75,25 @@ func set_modo_mouse(modo=0):
 
 func iniciar():
 	set_process_input(true)
-#	set_fixed_process(true)#@2
-	get_tree().get_root().connect("size_changed", self, "ventana_escalada")
+	set_fixed_process(true)#@2
+#	set_physics_process(true)#@3
+	return get_tree().get_root().connect("size_changed", self, "ventana_escalada")
 
 func _input(ev):
-#	if ev.type == InputEvent.MOUSE_MOTION:#@2
-	if ev is InputEventMouseMotion:#@3
+	if ev.type == InputEvent.MOUSE_MOTION:#@2
+#	if ev is InputEventMouseMotion:#@3
 		mouse_movido(ev)
-#	if ev.type == InputEvent.KEY:#@2
-	if ev is InputEventKey:#@3
+	if ev.type == InputEvent.KEY:#@2
+#	if ev is InputEventKey:#@3
 		if ev.pressed:
 			tecla_presionada(ev)
 		else:
 			tecla_soltada(ev)
 
-#func _fixed_process(delta):#@2
-func _physics_process(delta):#@3
+func _fixed_process(delta):#@2
+#func _physics_process(delta):#@3
 	periodico(delta)
-	secuencias(delta)
+	procesar_secuencias(delta)
 
 func registrar_generico(accion, nodo, funcion):
 	if registro_eventos.has(accion):
@@ -110,8 +111,8 @@ func anular_generico(accion, nodo):
 
 func mouse_movido(ev):
 	if registro_eventos.has("MM"):
-#		var mov = ev.relative_pos#@2
-		var mov = ev.relative#@3
+		var mov = ev.relative_pos#@2
+#		var mov = ev.relative#@3
 		if HUB.os == "HTML5":
 			mov = 2.2*ev.global_pos/HUB.pantalla.resolucion - Vector2(1.1,1.1)
 			mov = 10*Vector2(pow(mov.x,9),pow(mov.y,9))
@@ -179,7 +180,7 @@ func anular_secuencia(nodo, id):
 		if sec["nodo"] == nodo and sec["id"] == id:
 			secuencias.erase(sec)
 
-func secuencias(delta):
+func procesar_secuencias(delta):
 	for sec in secuencias:
 		sec["contador"] += delta*1000
 		if sec["contador"] > sec["esperando"]:

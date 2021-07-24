@@ -65,7 +65,7 @@ func parsear_cadena(parser, cadena):
 			var p = int(str_desde(accion,1))
 			acciones.push_front(p)
 			p = parser.G.P[p]
-			for i in range(p[1].size()):
+			for _i in range(p[1].size()):
 				pila.pop_front()
 			estado = pila[0][0]
 			accion = parser.tabla_action_goto[estado][p[0]]
@@ -211,12 +211,12 @@ func tokenizar_cadena(token_rules, cadena):
 			var j = 0
 			for token in token_rules.keys():
 				var regex = token_rules[token]
-#				var token_encontrado = regex.find(reglon, i)#@2
-				var token_encontrado = regex.search(reglon, i)#@3
-#				if token_encontrado == i:#@2
-				if token_encontrado != null and token_encontrado.get_start() == i:#@3
-#					token_encontrado = regex.get_capture(0)#@2
-					token_encontrado = token_encontrado.get_string()#@3
+				var token_encontrado = regex.find(reglon, i)#@2
+#				var token_encontrado = regex.search(reglon, i)#@3
+				if token_encontrado == i:#@2
+#				if token_encontrado != null and token_encontrado.get_start() == i:#@3
+					token_encontrado = regex.get_capture(0)#@2
+#					token_encontrado = token_encontrado.get_string()#@3
 					if token_encontrado.length() > j:
 						j = token_encontrado.length()
 						token_candidato = token
@@ -421,8 +421,8 @@ func error_semantico(cadena, stack_error = null):
 
 class AtributosNodo:
 	var mostrar_valores
-	func _init(mostrar_valores):
-		self.mostrar_valores = mostrar_valores
+	func _init(mostrar):
+		self.mostrar_valores = mostrar
 	func nombre_de_nodo(nodo):
 		return nodo["nombre"]+ ("    ( " + \
 		(str(nodo["valor"]) if nodo.has("valor") else "?") + " )" \
@@ -435,11 +435,11 @@ class Parser:
 	var G
 	var token_rules = {}
 	var tds = null
-	func _init(tabla_action_goto, G, token_rules, tds):
-		self.tabla_action_goto = tabla_action_goto
-		self.G = G
-		self.token_rules = token_rules
-		self.tds = tds
+	func _init(tabla, G_recibido, rules, tds_recibida):
+		self.tabla_action_goto = tabla
+		self.G = G_recibido
+		self.token_rules = rules
+		self.tds = tds_recibida
 	func tabla():
 		var fila = [" "]
 		for vt in G.VT:
@@ -476,8 +476,8 @@ class Gramatica:
 class Estado:
 	var kernel
 	var transiciones
-	func _init(kernel):
-		self.kernel = kernel
+	func _init(kernel_recibido):
+		self.kernel = kernel_recibido
 		self.transiciones = {}
 	func agregar_transicion(simbolo, indice):
 		transiciones[simbolo] = indice

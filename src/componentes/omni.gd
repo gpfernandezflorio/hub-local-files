@@ -12,9 +12,9 @@ var color
 var atenuacion
 var radio
 
-func inicializar(hub, yo):
+func inicializar(hub, yo_recibido):
 	HUB = hub
-	self.yo = yo
+	self.yo = yo_recibido
 	set("params/energy", intensidad)
 	set("params/radius", radio)
 	set("params/attenuation", atenuacion)
@@ -35,11 +35,11 @@ func alternar(args):
 		apagar(args)
 	return i==0
 
-func encender(args):
+func encender(_args):
 	set("params/energy", intensidad)
 
-func apagar(args):
+func apagar(_args):
 	set("params/energy", 0)
 
-func encendida(args):
+func encendida(_args):
 	return get("params/energy")!=0

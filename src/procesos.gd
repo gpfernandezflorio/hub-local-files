@@ -133,8 +133,8 @@ func pila_comandos(proceso=null):
 class Proceso:
 	var pila_comandos = []
 	var nodo
-	func _init(nodo):
-		self.nodo = nodo
+	func _init(nodo_recibido):
+		self.nodo = nodo_recibido
 	func apilar(comando):
 		pila_comandos.push_front(comando)
 	func desapilar():
@@ -151,11 +151,11 @@ func programa_no_cargado(programa, stack_error=null):
 	return HUB.errores.error('No se pudo cargar el programa "' + programa + '".', stack_error)
 
 # pid inexistente
-func pid_inexistente(pid, stack_error=null):
+func pid_inexistente(pid, _stack_error=null):
 	return HUB.errores.error('No hay ningún proceso con identificador "' + \
 	pid + '".')
 
 # pid invalido
-func pid_invalido(pid, stack_error=null):
+func pid_invalido(pid, _stack_error=null):
 	return HUB.errores.error('No se puede finalizar el proceso con identificador "' + \
 	pid + '".')

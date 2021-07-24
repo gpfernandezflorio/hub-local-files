@@ -26,9 +26,9 @@ var mirada = null
 var velocidad_base
 var rango_y = [-35,40] # grados
 
-func inicializar(hub, yo, args):
+func inicializar(hub, yo_recibido, args):
 	HUB = hub
-	self.yo = yo
+	self.yo = yo_recibido
 	velocidad_base = args["v"]
 	var nombre_cuerpo = args["c"]
 	if nombre_cuerpo == null:
@@ -80,7 +80,8 @@ func calcular_angulo():
 	var angulo = -yo.get_rotation().y
 	if (yo.get_rotation().z < -0.01):
 		angulo = PI-angulo
-	return angulo
+	return angulo#@2
+#	return -angulo#@3
 
 func calcular_movimiento(velocidad, delta):
 	var movimiento = velocidad*delta
@@ -91,10 +92,12 @@ func calcular_movimiento(velocidad, delta):
 		movimiento = cn.slide(movimiento)
 	return movimiento
 
-func calcular_rotacion(delta):
+func calcular_rotacion(d):
+	var _delta = d
 	var entrada = yo.dame("input_rot", Vector2(0,0))
+#	entrada = -entrada#@3
 	if yo.dame("input_mouse", false): # El valor se debe tomar como un inmediato y no como input constante
-		delta = 1
+		_delta = 1
 		yo.pone("input_rot", Vector2(0,0))
 	yo.rotate_y(entrada.x/60.0)
 	if mirada:

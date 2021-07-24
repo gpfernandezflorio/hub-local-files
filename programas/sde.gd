@@ -21,15 +21,15 @@ var sala
 var ventana
 var ventana_rsa
 var ventana_warn
-var tip
+var tip_actual
 
 var light_switch
 var luz
 var monitor
 var morse
 var tapa_cofre
-var candado
-var mensaje_cofre
+var desafio_candado
+var contenido_cofre
 var cerradura
 var cajon1
 var cajon2
@@ -38,7 +38,7 @@ var colores
 var mascara_numeros
 
 var rsa_encriptado = false
-var TextureFrame = TextureRect#@3
+#var TextureFrame = TextureRect#@3
 
 var textos = {
 	"se_warn":"Estás enviando texto plano por un canal\nsin encriptar.\nOtras personas en esta red podrían verlo.\n¿Estás seguro de que deseás continuar?",
@@ -73,9 +73,9 @@ var clave_publica_juan = "fcadeb"
 var clave_privada_juan = "59be8f"
 var str_colores = ["ninguno","rojo","azul","verde","amarillo"]
 
-func inicializar(hub, pid, argumentos):
+func inicializar(hub, mi_pid, _argumentos):
 	HUB = hub
-	self.pid = pid
+	self.pid = mi_pid
 	HUB3DLang = lib_map["HUB3DLang"]
 	HUB.pantalla.completa()			# Pantalla completa
 	HUB.terminal.cerrar()			# Ocultar terminal
@@ -119,8 +119,8 @@ func crear_sala():
 	morse = sala.hijo_nombrado("morse")
 	var cofre = sala.hijo_nombrado("cofre")
 	tapa_cofre = cofre.hijo_nombrado("tapa")
-	candado = cofre.hijo_nombrado("candado")
-	mensaje_cofre = cofre.hijo_nombrado("mensaje")
+	desafio_candado = cofre.hijo_nombrado("candado")
+	contenido_cofre = cofre.hijo_nombrado("mensaje")
 	cerradura = sala.hijo_nombrado("puerta").hijo_nombrado("cerradura")
 	cajon1 = sala.hijo_nombrado("cajonera").hijo_nombrado("cajon1")
 	cajon2 = sala.hijo_nombrado("cajonera").hijo_nombrado("cajon2")
@@ -160,7 +160,7 @@ func crear_sala():
 	segundos_restantes = tm*60
 	HUB.eventos.registrar_secuencia(self, "TIMER", ["W|1000","F|timer","R"])
 
-func timer(args):
+func timer(_args):
 	if segundos_restantes > 0:
 		segundos_restantes -= 1
 		var l = HUB.nodo_usuario.gui_id("timer")
@@ -184,9 +184,9 @@ func finalizar():
 		ventana.cerrar()
 	if ventana_rsa != null:
 		ventana_rsa.cerrar()
-	if tip != null:
-		tip.cerrar()
-		tip = null
+	if tip_actual != null:
+		tip_actual.cerrar()
+		tip_actual = null
 	if ventana_warn != null:
 		ventana_warn.cerrar()
 	if jugador != null:
@@ -202,8 +202,8 @@ func finalizar():
 # argumentos: [quien, target, que]
 func tip(args):
 	if args[2]:
-		if tip != null:
-			tip.cerrar()
+		if tip_actual != null:
+			tip_actual.cerrar()
 		var texto = "Q: "
 		var item = args[1]
 		if item == light_switch:
@@ -214,13 +214,13 @@ func tip(args):
 			texto += " la luz"
 		#elif item == monitor:
 		#	texto += "aa"
-		elif item == candado or item.nombre().begins_with("cajon"):
+		elif item == desafio_candado or item.nombre().begins_with("cajon"):
 			texto += "abrir"
-		elif item == mensaje_cofre:
+		elif item == contenido_cofre:
 			texto += "leer"
 		else:
 			texto += "inspeccionar"
-		tip = HUB.nodo_usuario.ventana(self,{
+		tip_actual = HUB.nodo_usuario.ventana(self,{
 			"titulo":"",
 			"tamanio":Vector2(15,7),
 			"posicion":["bottom-center",Vector2(0,10)],
@@ -229,14 +229,14 @@ func tip(args):
 				"hijos":[{"clase":"texto","id":"tip","args":{"texto":texto}}]}
 			]
 		})
-	elif tip != null:
-		tip.cerrar()
-		tip = null
+	elif tip_actual != null:
+		tip_actual.cerrar()
+		tip_actual = null
 
 # argumentos: [quien, target, que]
-func interruptor_luz(args):
+func interruptor_luz(_args):
 	var encendida = luz.mensaje("alternar")
-	if tip != null:
+	if tip_actual != null:
 		var texto = "Q: "
 		if luz.mensaje("encendida"):
 			texto += "apagar"
@@ -251,7 +251,7 @@ func interruptor_luz(args):
 		morse.mensaje("activar")
 
 # argumentos: [quien, target, que]
-func coloreo(args):
+func coloreo(_args):
 	HUB.eventos.set_modo_mouse()
 	jugador.pausa()
 	if ventana != null:
@@ -306,7 +306,7 @@ func info_colorear():
 	"botones":[{"texto":"Aceptar","accion":"warn_ok"}]})
 
 # argumentos: [quien, target, que]
-func tsp(args):
+func tsp(_args):
 	HUB.eventos.set_modo_mouse()
 	jugador.pausa()
 	if ventana != null:
@@ -350,7 +350,7 @@ func colorear(color,nodo):
 	HUB.nodo_usuario.gui_id("color_"+str(nodo)).release_focus()
 
 # argumentos: [quien, target, que]
-func candado(args):
+func candado(_args):
 	HUB.eventos.set_modo_mouse()
 	jugador.pausa()
 	if ventana != null:
@@ -395,17 +395,17 @@ func boton_candado(x):
 		return
 	elif x==10:
 		if texto == "856":
-			candado.quitar_comportamiento("interactive")
+			desafio_candado.quitar_comportamiento("interactive")
 			cerrar_ventana()
 			abrir_cofre()
-			mensaje_cofre.agregar_comportamiento("interactive",[[],{"s":"mensaje_cofre","m":"mensaje","p":"tip","r":0.5}])
+			contenido_cofre.agregar_comportamiento("interactive",[[],{"s":"mensaje_cofre","m":"mensaje","p":"tip","r":0.5}])
 		else:
 			clave.set_text("___")
 			enter.set_disabled(true)
 			clear.set_disabled(true)
-			candado.mensaje("sonar", ["error"])
+			desafio_candado.mensaje("sonar", ["error"])
 		return
-	candado.mensaje("sonar")
+	desafio_candado.mensaje("sonar")
 	clear.set_disabled(false)
 	var i = 0
 	while i<3 and texto[i] != "_":
@@ -427,7 +427,7 @@ func abrir_cofre_step(delta):
 		HUB.eventos.anular_periodico(self)
 
 # argumentos: [quien, target, que]
-func mensaje_cofre(args):
+func mensaje_cofre(_args):
 	HUB.eventos.set_modo_mouse()
 	jugador.pausa()
 	if ventana_warn != null:
@@ -439,12 +439,12 @@ func mensaje_cofre(args):
 	"botones":[{"texto":"Cerrar","accion":"cerrar_ventana"}]})
 
 # argumentos: [quien, target, que]
-func rsa(args):
+func rsa(_args):
 	HUB.eventos.set_modo_mouse()
 	jugador.pausa()
 	monitor.mensaje("silencio")
 	if ventana_rsa == null:
-		ventana_rsa()
+		abrir_ventana_rsa()
 	else:
 		ventana_rsa.mostrar()
 
@@ -526,15 +526,15 @@ func rsa_modo():
 		paso_rsa = 1
 	else:
 		paso_rsa = 5
-	ventana_rsa()
+	abrir_ventana_rsa()
 
-func ventana_rsa():
+func abrir_ventana_rsa():
 	if rsa_encriptado:
-		rsa_encriptado()
+		abrir_rsa_encriptado()
 	else:
-		rsa_sin_encriptar()
+		abrir_rsa_sin_encriptar()
 
-func rsa_sin_encriptar():
+func abrir_rsa_sin_encriptar():
 	ventana_rsa = HUB.nodo_usuario.ventana(self,{
 		"tamanio":Vector2(60,30),
 		"titulo":"Chat sin encriptar",
@@ -558,7 +558,7 @@ func rsa_sin_encriptar():
 	HUB.nodo_usuario.gui_id("boton_enviar").set_disabled(true)
 	HUB.nodo_usuario.gui_id("boton_rsa").set_disabled(true)
 
-func rsa_encriptado():
+func abrir_rsa_encriptado():
 	ventana_rsa = HUB.nodo_usuario.ventana(self,{
 		"tamanio":Vector2(85,70),
 		"titulo":"Chat encriptado",
@@ -628,7 +628,7 @@ func rsa_encriptado():
 	HUB.nodo_usuario.gui_id("btn_d_crypt").set_disabled(true)
 	HUB.eventos.registrar_secuencia(self, "RSA", ["W|1500","F|recibir_mensaje_rsa"])
 
-func recibir_mensaje_rsa(args):
+func recibir_mensaje_rsa(_args):
 	monitor.mensaje("sonar", ["whatsapp"])
 	if ventana_rsa != null:
 		var msg = msgs_juan[paso_rsa]
@@ -641,7 +641,7 @@ func recibir_mensaje_rsa(args):
 		else:
 			habilitar_botones()
 
-func fin_rsa(args):
+func fin_rsa(_args):
 	if ventana_rsa != null:
 		ventana_rsa.ocultar()
 		ventana_warn = HUB.nodo_usuario.ventana(self, {"titulo":"Notificación",
@@ -715,7 +715,7 @@ var letras = "1234567890qwertyuiopasdfghjklzxcvbnm-?.:,;_¿¡!'´+*-/#$%&()=[]{}
 
 func random_msg():
 	var res = ""
-	for i in range(50):
+	for _i in range(50):
 		res += letras[randi() % letras.length()]
 	return res
 
@@ -784,7 +784,7 @@ func deshabilitar_botones():
 			btn.set_disabled(true)
 
 # argumentos: [quien, target, que]
-func salida(args):
+func salida(_args):
 	HUB.eventos.set_modo_mouse()
 	jugador.pausa()
 	if ventana != null:
@@ -877,7 +877,7 @@ func abrir_cajon(args):
 			plantilla_colores.agregar_comportamiento("interactive",[[],{"s":"plantilla_colores","m":"mensaje","p":"tip","r":0.5}])
 
 # argumentos: [quien, target, que]
-func plantilla_colores(args):
+func plantilla_colores(_args):
 	HUB.eventos.set_modo_mouse()
 	jugador.pausa()
 	if ventana != null:
@@ -918,14 +918,14 @@ func plantilla_colores(args):
 	slider.set_min(y)
 	slider.set_max(y+h)
 	slider.set_val(y)
-	mascara_numeros.set_position(Vector2(mascara_numeros.get_pos().x,y+h))
+	mascara_numeros.set_pos(Vector2(mascara_numeros.get_pos().x,y+h))
 
 func slider(val):
 	var slider = HUB.nodo_usuario.gui_id("slider")
 	var m = slider.get_min()
 	var M = slider.get_max()
 	val = M - (val-m)
-	mascara_numeros.set_position(Vector2(mascara_numeros.get_pos().x,val))
+	mascara_numeros.set_pos(Vector2(mascara_numeros.get_pos().x,val))
 
 func colorxn(color,i):
 	HUB.nodo_usuario.gui_id("p_"+i).set("custom_styles/panel",estilos_panel[color])

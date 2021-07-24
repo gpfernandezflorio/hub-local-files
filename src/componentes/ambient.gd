@@ -12,9 +12,9 @@ var env
 var intensidad
 var color
 
-func inicializar(hub, yo):
+func inicializar(hub, yo_recibido):
 	HUB = hub
-	self.yo = yo
+	self.yo = yo_recibido
 	env = Environment.new()
 	env.set("ambient_light/enabled",true)
 	env.set("ambient_light/color",color)
@@ -35,11 +35,11 @@ func alternar(args):
 		apagar(args)
 	return i==0
 
-func encender(args):
+func encender(_args):
 	env.set("ambient_light/energy",intensidad)
 
-func apagar(args):
+func apagar(_args):
 	env.set("ambient_light/energy",0)
 
-func encendida(args):
+func encendida(_args):
 	return get("ambient_light/energy")!=0

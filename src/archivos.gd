@@ -150,7 +150,7 @@ func crear_carpetas_intermedias(ruta):
 func fs_load(ruta):
 	return load(HUB.ruta_raiz.plus_file(ruta))
 
-func verificar_encabezado(contenido, ruta, archivo, nombre, codigo_tipo):
+func verificar_encabezado(contenido, _ruta, archivo, nombre, codigo_tipo):
 	var subtipo = null # En caso de éxito, devuelvo el subtipo, si hay uno
 	if contenido.size() < 2:
 		return HUB.error(encabezado_faltante(archivo), modulo)
@@ -209,10 +209,10 @@ class FileSystem:
 	var file
 	var dir
 	var ruta_raiz
-	func _init(ruta_raiz):
+	func _init(ruta):
 		self.file = File.new()
 		self.dir = Directory.new()
-		self.ruta_raiz = ruta_raiz
+		self.ruta_raiz = ruta
 	func leer(ruta):
 		file.open(ruta_raiz.plus_file(ruta), File.READ)
 		var contenido = file.get_as_text()

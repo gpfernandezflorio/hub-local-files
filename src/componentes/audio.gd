@@ -18,8 +18,8 @@ func inicializar(hub, yo):
 	HUB = hub
 	self.yo = yo
 	# Para que funcione en HTML5 uso este en lugar del Spatial
-#	player_real = StreamPlayer.new()#@2
-	player_real = AudioStreamPlayer.new()#@3
+	player_real = StreamPlayer.new()#@2
+#	player_real = AudioStreamPlayer.new()#@3
 	add_child(player_real)
 	var audios = {}
 	for s in sonidos:

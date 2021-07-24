@@ -21,8 +21,8 @@ func error(mensaje, stack_error = null):
 # Retorna si el resultado de una función generó un error
 func fallo(resultado):
 	if typeof(resultado) == TYPE_OBJECT: # No es un built-in type
-#		return resultado.get_type() == "Error"#@2
-		return resultado is Error#@3
+		return resultado.get_type() == "Error"#@2
+#		return resultado is Error#@3
 	return false
 
 # Intenta ejecutar una función en un nodo
@@ -68,9 +68,9 @@ func argumento_invalido(argumento, stack_error=null):
 class Error:
 	var mensaje = ""
 	var stack_error = null
-	func _init(mensaje, stack_error = null):
-		self.mensaje = mensaje
-		self.stack_error = stack_error
+	func _init(mensaje_recibido, stack_error_recibido = null):
+		self.mensaje = mensaje_recibido
+		self.stack_error = stack_error_recibido
 	func trace():
 		var txt = mensaje
 		if stack_error:

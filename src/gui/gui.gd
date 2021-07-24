@@ -31,6 +31,6 @@ func cerrar():
 	HUB.eventos.anular_ventana_escalada(self)
 	HUB.GC.borrar_nodo(self)
 
-func resize(nuevo_tamanio):
+func resize(_nuevo_tamanio):
 	for c in componentes:
 		HUB.nodo_usuario.resize_componente(c)

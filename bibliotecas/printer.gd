@@ -28,7 +28,7 @@ func imprimir_arbol(arbol, function_object, nivel = ""):
 	var mensaje = function_object.nombre_de_nodo(arbol)
 	var hijos = function_object.hijos_de_nodo(arbol)
 	for hijo in hijos:
-		var nombre = function_object.nombre_de_nodo(hijo)
+		var _nombre = function_object.nombre_de_nodo(hijo)
 	if not hijos.empty():
 		for i in range(0, hijos.size()):
 			var hijo = hijos[i]

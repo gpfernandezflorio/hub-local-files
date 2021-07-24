@@ -23,11 +23,11 @@ func inicializar(hub):
 	grab_focus()
 	return true
 
-func set_cursor_pos(i):#@3
-	caret_position = i#@3
+#func set_cursor_pos(i):#@3
+#	caret_position = i#@3
 
-func get_cursor_pos():#@3
-	return caret_position#@3
+#func get_cursor_pos():#@3
+#	return caret_position#@3
 
 func historial_arriba():
 	if (indice_historial < historial.size()-1):
@@ -224,11 +224,11 @@ func posibilidades_PROC(preludio):
 	return ps
 
 func ventana_escalada(nueva_resolucion):
-	set_position(Vector2(5, nueva_resolucion.y-25))
+	set_pos(Vector2(5, nueva_resolucion.y-25))
 	set_size(Vector2(nueva_resolucion.x-10,0))
 
-func set_hidden(h):#@3
-	if h:#@3
-		hide()#@3
-	else:#@3
-		show()#@3
+#func set_hidden(h):#@3
+#	if h:#@3
+#		hide()#@3
+#	else:#@3
+#		show()#@3

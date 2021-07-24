@@ -21,7 +21,7 @@ var pila_entorno = []	# Diccionarios con "path", "pid", "caching"
 						# "namespace" (para objetos que todavía no se agregaron al árbol) y
 						# "data" (sólo para argumentos)
 
-var FixedMaterial = SpatialMaterial#@3
+#var FixedMaterial = SpatialMaterial#@3
 func inicializar(hub):
 	HUB = hub
 	tipos = HUB.bibliotecas.importar("tipos")
@@ -162,8 +162,8 @@ func crear(texto, entorno={}):
 
 class HUB3DLangTDS:
 	var modulo
-	func _init(modulo):
-		self.modulo = modulo
+	func _init(modulo_recibido):
+		self.modulo = modulo_recibido
 	func reduce(produccion, valores):
 		return modulo.reduce(produccion, valores)
 
@@ -551,7 +551,6 @@ func definir(clave, valor_original):
 		pila_entorno[0]["data"][clave] = copia
 
 func definir_pid(pid, clave, valor):
-	var dict = cache["PID"]
 	if pid in cache["PID"]:
 		cache["PID"][pid][clave] = valor
 	else:
@@ -987,13 +986,13 @@ class HRep:			# Hobjeto
 	var transform		# Spatial
 	var HUB
 	var pi_180 = PI/180.0
-	func _init(HUB):
+	func _init(hub):
 		nombre = null
 		componentes = []
 		comportamientos = []
 		hijos = []
 		transform = Spatial.new()
-		self.HUB = HUB
+		self.HUB = hub
 		padre = null
 	func offset(movimiento, local):
 		if local:
@@ -1033,14 +1032,14 @@ class CRep:			# Componente genérico
 	var params			# Dict
 	var HUB
 	var pi_180 = PI/180.0
-	func _init(HUB, tipo, clase, codigo, nombre):
-		self.tipo = tipo
-		self.nombre = nombre
-		self.clase = clase
-		self.codigo = codigo
+	func _init(hub, tipo_recibido, clase_recibida, codigo_recibido, nombre_recibido):
+		self.tipo = tipo_recibido
+		self.nombre = nombre_recibido
+		self.clase = clase_recibida
+		self.codigo = codigo_recibido
 		transform = Spatial.new()
 		params = {}
-		self.HUB = HUB
+		self.HUB = hub
 	func rotate_x(a):
 		transform.rotate_x(a*pi_180)
 	func rotate_y(a):
@@ -1124,11 +1123,11 @@ class MeshRep:
 	var faces		# FaceRep
 	var pi_180 = PI/180.0
 	var material = null
-	func _init(vs, fs, uvs, nombre="malla"):
-		self.nombre = nombre
-		self.vertexes = vs
-		self.faces = fs
-		self.uvs = uvs
+	func _init(vs_recibidos, fs_recibidas, uvs_recibidos, nombre_recibido="malla"):
+		self.nombre = nombre_recibido
+		self.vertexes = vs_recibidos
+		self.faces = fs_recibidas
+		self.uvs = uvs_recibidos
 	func merge(otro):
 		for f in otro.faces:
 			f.plus(vertexes.size(),uvs.size())
@@ -1147,13 +1146,13 @@ class MeshRep:
 	func rotate_z(a):
 		for i in range(vertexes.size()):
 			vertexes[i] = vertexes[i].rotated(Vector3(0.0,0.0,1.0),a*pi_180)
-	func offset(a, local): # IGNORO argumento "local"
+	func offset(a, _local): # IGNORO argumento "local"
 		for i in range(vertexes.size()):
 			vertexes[i] += a
 	func make():
 		var mesh = Mesh.new()
 		var st = SurfaceTool.new()
-		var VS = Mesh#@3
+#		var VS = Mesh#@3
 		st.begin(VS.PRIMITIVE_TRIANGLES)
 		for f in faces:
 			if (f.size()==3 or f.size()==4):
@@ -1191,11 +1190,11 @@ class FaceRep:
 	var vertexes	# int
 	var uvs			# int
 	#var groups		# ??
-	func _init(vs, uvs):
+	func _init(vs, uvs_recibidos):
 		self.vertexes = vs
-		self.uvs = uvs
+		self.uvs = uvs_recibidos
 		# Me aseguro que los tamaños coincidan:
-		for i in range(vs.size() - uvs.size()):
+		for _i in range(vs.size() - uvs.size()):
 			self.uvs.append(-1)
 	func plus(v, u):
 		var new_vertexes = []

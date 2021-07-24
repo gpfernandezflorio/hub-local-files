@@ -9,26 +9,26 @@ extends Spatial
 var HUB
 
 # Nodo vacío que tiene como hijos a los nodos que representan los objetos hijos de este objeto
-var hijos = Spatial.new()
+var nodo_hijos = Spatial.new()
 # Nodo vacío que tiene como hijos a los nodos que representan los componentes de este objeto
-var componentes = Spatial.new()
+var nodo_componentes = Spatial.new()
 # Nodo vacío que tiene como hijos a los nodos que representan los comportamientos de este objeto
-var comportamientos = Spatial.new()
+var nodo_comportamientos = Spatial.new()
 # Diccionario de propiedades para que los comporamientos interactúen entre sí
 var propiedades = {}
 # Diccionario de funciones de los comporamientos
-var interfaz = {}
+var dic_interfaz = {}
 # Si tengo componentes de tipo RigidBody tengo que "avisarles" cuando me muevo
 var bodies = []
 
 func inicializar(hub):
 	HUB = hub
-	hijos.set_name("Hijos")
-	add_child(hijos)
-	componentes.set_name("Componentes")
-	add_child(componentes)
-	comportamientos.set_name("Comportamientos")
-	add_child(comportamientos)
+	nodo_hijos.set_name("Hijos")
+	add_child(nodo_hijos)
+	nodo_componentes.set_name("Componentes")
+	add_child(nodo_componentes)
+	nodo_comportamientos.set_name("Comportamientos")
+	add_child(nodo_comportamientos)
 #	interfaz = {
 #	"mover":[self,{"obligatorios":1,
 #		"lista":[{"nombre":"cuanto","codigo":"a","validar":"V3"}]}],
@@ -40,8 +40,8 @@ func inicializar(hub):
 
 # Recibe un mensaje
 func mensaje(nombre, colaboradores=[]):
-	if nombre in interfaz:
-		var metodo = interfaz[nombre]
+	if nombre in dic_interfaz:
+		var metodo = dic_interfaz[nombre]
 		var argumentos = HUB.varios.parsear_argumentos_general(metodo[1], [colaboradores,{}], nombre())
 		if HUB.errores.fallo(argumentos):
 			return HUB.error(HUB.errores.error("X", argumentos), nombre())
@@ -60,8 +60,8 @@ func agregar_componente(componente, nombre=null):
 		nuevo_nombre = componente.get_name()
 		if (nuevo_nombre == null or nuevo_nombre.empty()):
 			nuevo_nombre = "componente sin nombre"
-	nuevo_nombre = nombrar_sin_colision(componente, nuevo_nombre, componentes)
-	componentes.add_child(componente)
+	nuevo_nombre = nombrar_sin_colision(componente, nuevo_nombre, nodo_componentes)
+	nodo_componentes.add_child(componente)
 	if componente.has_method("inicializar"):
 		componente.inicializar(HUB, self)
 	return nuevo_nombre # Devuelve el nuevo nombre
@@ -72,7 +72,7 @@ func agregar_comportamiento(nombre_script, args=[[],{}]):
 
 # Quita un componente del objeto
 func quitar_componente(nombre):
-	for componente in componentes.get_children():
+	for componente in nodo_componentes.get_children():
 		if componente.get_name() == nombre:
 			if componente.has_method("finalizar"):
 				componente.finalizar()
@@ -83,7 +83,7 @@ func quitar_componente(nombre):
 
 # Quita un script de comportamiento
 func quitar_comportamiento(nombre):
-	for comportamiento in comportamientos.get_children():
+	for comportamiento in nodo_comportamientos.get_children():
 		if comportamiento.get_name() == nombre:
 			if comportamiento.has_method("finalizar"):
 				comportamiento.finalizar()
@@ -95,8 +95,8 @@ func quitar_comportamiento(nombre):
 # Agrega a otro objeto como hijo en la jerarquía de objetos
 func agregar_hijo(objeto):
 	# TODO: ¿error si el objeto ya tiene padre? ¿o se lo saco al otro?
-	var nombre = nombrar_sin_colision(objeto, objeto.get_name(), hijos)
-	hijos.add_child(objeto)
+	var nombre = nombrar_sin_colision(objeto, objeto.get_name(), nodo_hijos)
+	nodo_hijos.add_child(objeto)
 	return nombre # Devuelve el nuevo nombre
 
 # Quita un objeto hijo
@@ -104,13 +104,13 @@ func quitar_hijo(objeto):
 	if not es_hijo(objeto):
 		return HUB.error(hijo_inexistente(objeto.nombre()), get_name())
 	if objeto.is_inside_tree():
-		hijos.remove_child(objeto)
+		nodo_hijos.remove_child(objeto)
 
 # Quita un objeto hijo
 func quitar_hijo_nombrado(nombre):
 	if not tiene_hijo_nombrado(nombre):
 		return HUB.error(hijo_inexistente(nombre), get_name())
-	hijos.remove_child(hijo_nombrado(nombre))
+	nodo_hijos.remove_child(hijo_nombrado(nombre))
 
 # Devuelve si otro objeto es hijo de este
 func es_hijo(objeto):
@@ -148,15 +148,15 @@ func componente_nombrado(nombre):
 
 # Devuelve la lista de hijos en la jerarquía de objetos
 func hijos():
-	return hijos.get_children()
+	return nodo_hijos.get_children()
 
 # Devuelve la lista de componentes
 func componentes():
-	return componentes.get_children()
+	return nodo_componentes.get_children()
 
 # Devuelve la lista de comportamientos
 func comportamientos():
-	return comportamientos.get_children()
+	return nodo_comportamientos.get_children()
 
 # Devuelve el objeto padre
 func padre():
@@ -196,11 +196,11 @@ func pone(clave, valor):
 	propiedades[clave] = valor
 
 # Agrega una función a la interfaz del objeto
-func interfaz(nodo, funcion, arg_map, es_primitiva=false):
-	interfaz[funcion] = [nodo, arg_map]
+func interfaz(nodo, funcion, arg_map, _es_primitiva=false):
+	dic_interfaz[funcion] = [nodo, arg_map]
 
 func sabe(funcion):
-	return funcion in interfaz
+	return funcion in dic_interfaz
 
 func pausa(mode=true):
 	for c in componentes():

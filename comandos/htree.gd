@@ -37,9 +37,9 @@ func comando(argumentos):
 class AtributosNodo:
 	var printer
 	var atributos
-	func _init(printer, atributos = []):
-		self.printer = printer
-		self.atributos = atributos
+	func _init(printer_recibido, atributos_recibidos = []):
+		self.printer = printer_recibido
+		self.atributos = atributos_recibidos
 	func nombre_de_nodo(nodo):
 		var nombre = nodo.get_name()
 		if atributos["t"]:

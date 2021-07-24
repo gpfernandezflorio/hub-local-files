@@ -27,9 +27,9 @@ var codigo
 var preview
 var i = -1
 
-func inicializar(hub, yo, args):
+func inicializar(hub, yo_recibido, args):
 	HUB = hub
-	self.yo = yo
+	self.yo = yo_recibido
 	if args["s"] != null:
 		var nombre_funcion = args["s"]
 		var proceso = HUB.procesos.obtener()
@@ -66,25 +66,25 @@ func inicializar(hub, yo, args):
 	for m in args["m"]:
 		if yo.tiene_componente_nombrado(m):
 			var malla = yo.componente_nombrado(m)
-#			if malla.get_type() != "MeshInstance":#@2
-			if not malla is MeshInstance:#@3
+			if malla.get_type() != "MeshInstance":#@2
+#			if not malla is MeshInstance:#@3
 				return HUB.error(HUB.errores.error("X"), modulo)
 			mallas.append([malla.get_mesh(), materiales(malla.get_mesh())])
 		elif yo.tiene_hijo_nombrado(m):
 			var hijo = yo.hijo_nombrado(m)
 			for componente in hijo.componentes():
-#				if componente.get_type() == "MeshInstance":#@2
-				if componente is MeshInstance:#@3
+				if componente.get_type() == "MeshInstance":#@2
+#				if componente is MeshInstance:#@3
 					mallas.append([componente.get_mesh(), materiales(componente.get_mesh())])
 	colisionador = Area.new()
 	var shape = SphereShape.new()
 	shape.set_radius(args["r"])
-#	colisionador.add_shape(shape)#@2
-	var s_owner = colisionador.create_shape_owner(null)#@3
-	colisionador.shape_owner_add_shape(s_owner, shape)#@3
+	colisionador.add_shape(shape)#@2
+#	var s_owner = colisionador.create_shape_owner(null)#@3
+#	colisionador.shape_owner_add_shape(s_owner, shape)#@3
 	add_child(colisionador)
-#	material_on = FixedMaterial.new()#@2
-	material_on = SpatialMaterial.new()#@3
+	material_on = FixedMaterial.new()#@2
+#	material_on = SpatialMaterial.new()#@3
 	material_on.set("params/emission",Color(.5,.5,.2))
 	material_on.set("params/specular_exp",1)
 	material_on.set("params/glow",8)

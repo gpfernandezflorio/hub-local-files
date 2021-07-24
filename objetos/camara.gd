@@ -22,6 +22,6 @@ func inicializar(hub):
 	h3 = lib_map.HUB3DLang
 	return null
 
-func gen(argumentos):
+func gen(_argumentos):
 	var resultado = h3.nueva_camara()
 	return resultado

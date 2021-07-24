@@ -27,9 +27,14 @@ var yo
 var colisionador
 var posibilidades
 
-func inicializar(hub, yo, args):
+var signal_entrada = "area_enter_shape"#@2
+#var signal_entrada = "area_shape_entered"#@3
+var signal_salida = "area_exit_shape"#@2
+#var signal_salida = "area_shape_exited"#@3
+
+func inicializar(hub, yo_recibido, args):
 	HUB = hub
-	self.yo = yo
+	self.yo = yo_recibido
 	colisionador = Area.new()
 	var shape = SphereShape.new()
 	var offset = Transform()
@@ -40,18 +45,18 @@ func inicializar(hub, yo, args):
 	if args["o"].size()>0:
 		offset.origin.x = float(args["o"][0])
 	shape.set_radius(args["r"])
-#	colisionador.add_shape(shape, offset)#@2
-	var s_owner = colisionador.create_shape_owner(null)#@3
-	colisionador.shape_owner_add_shape(s_owner, shape)#@3
-	colisionador.shape_owner_set_transform(s_owner, offset)#@3
-	colisionador.connect("area_enter_shape", self, "contacto_in")
-	colisionador.connect("area_exit_shape", self, "contacto_out")
+	colisionador.add_shape(shape, offset)#@2
+#	var s_owner = colisionador.create_shape_owner(null)#@3
+#	colisionador.shape_owner_add_shape(s_owner, shape)#@3
+#	colisionador.shape_owner_set_transform(s_owner, offset)#@3
+	colisionador.connect(signal_entrada, self, "contacto_in")
+	colisionador.connect(signal_salida, self, "contacto_out")
 	add_child(colisionador)
 	posibilidades = []
 	yo.interfaz(self, "interact", arg_map_interact)
 	return null
 
-func contacto_in(i, objeto, a, s):
+func contacto_in(_i, objeto, _a, _s):
 	if objeto.get_parent().has_method("interact_in"):
 		if not posibilidades.empty():
 			posibilidades[0].interact_out(yo)
@@ -59,7 +64,7 @@ func contacto_in(i, objeto, a, s):
 		interactive.interact_in(yo)
 		posibilidades.push_front(interactive)
 
-func contacto_out(i, objeto, a, s):
+func contacto_out(_i, objeto, _a, _s):
 	if objeto == null:
 		return
 	if objeto.get_parent().has_method("interact_out"):

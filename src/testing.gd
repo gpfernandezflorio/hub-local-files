@@ -91,9 +91,9 @@ func tester_comando(comando_a_ejecutar):
 class TesterComando:
 	var HUB
 	var comando_a_ejecutar
-	func _init(hub, comando_a_ejecutar):
+	func _init(hub, comando):
 		HUB = hub
-		self.comando_a_ejecutar = comando_a_ejecutar
+		self.comando_a_ejecutar = comando
 	func test():
 		return HUB.terminal.ejecutar(comando_a_ejecutar)
 
@@ -112,7 +112,7 @@ class VerificadorTrivial:
 	var HUB
 	func _init(hub):
 		HUB = hub
-	func verificar(resultado):
+	func verificar(_resultado):
 		return ""
 
 class VerificadorNulo:
@@ -142,9 +142,9 @@ class VerificadorIgualdad:
 class VerificadorError:
 	var HUB
 	var error_esperado
-	func _init(hub, error_esperado):
+	func _init(hub, error):
 		HUB = hub
-		self.error_esperado = error_esperado
+		self.error_esperado = error
 	func verificar_error(resultado):
 		var error_encontrado = resultado
 		while error_encontrado.stack_error != null:
@@ -153,7 +153,7 @@ class VerificadorError:
 			return ""
 		return "Se esperaba el error\n\t" + error_esperado.mensaje.replace("\n","\n\t") + \
 		"\nPero se obtuvo el error\n\t" + error_encontrado.mensaje.replace("\n","\n\t")
-	func verificar(resultado):
+	func verificar(_resultado):
 		return "Se esperaba el error\n\t" + error_esperado.mensaje.replace("\n","\n\t") + \
 		"\nPero no se generó ningún error."
 
